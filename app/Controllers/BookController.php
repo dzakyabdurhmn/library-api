@@ -40,9 +40,8 @@ class BookController extends ResourceController
             'title' => 'required|min_length[5]|max_length[100]',
             'publisher_id'   => 'required|min_length[1]|max_length[1000]',
             'publication_year'   => 'required|min_length[4]|max_length[1000]',
-            'isbn'   => 'required|min_length[10]|max_length[1000]',
+            'isbn'   => 'required|min_length[5]|max_length[1000]',
             'author_id'   => 'required|min_length[1]|max_length[1000]',
-            // ADD LOGIC STOCK
         ];
 
         if (!$this->validate($rules)) {
@@ -126,4 +125,41 @@ class BookController extends ResourceController
 
         return $this->respondDeleted($response);
     }
+
+
+   public function update_stock($book_id = null)
+    {
+    if ($book_id === null) {
+        return $this->fail('Book ID is required', 400);
+    }
+
+    $rules = [
+        'stock_quantity' => 'required|min_length[1]|max_length[100]',
+    ];
+
+    if (!$this->validate($rules)) {
+        return $this->failValidationErrors($this->validator->getErrors());
+    }
+
+    $db = \Config\Database::connect();
+    $query = "UPDATE catalog_books SET stock_quantity = :stock_quantity: WHERE book_id = :book_id:";
+    $params = [
+        'stock_quantity' => $this->request->getVar('stock_quantity'),
+        'book_id'   => $book_id,
+    ];
+    $db->query($query, $params);
+
+    if ($db->affectedRows() == 0) {
+        return $this->failNotFound('Book not found or no changes made');
+    }
+
+    $response = [
+        'status' => 200,
+        'message' => 'Stock updated',
+    ];
+
+    return $this->respond($response);
+    }
+
+
 }

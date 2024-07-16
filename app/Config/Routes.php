@@ -30,6 +30,7 @@ $routes->group('books', ['namespace' => 'App\Controllers'], function($routes) {
     $routes->post('', 'BookController::create');         
     $routes->put('(:num)', 'BookController::update/$1');   
     $routes->delete('(:num)', 'BookController::delete/$1');
+    $routes->put('stock/(:num)', 'BookController::update_stock/$1');    
 });
 
 $routes->group('author', ['namespace' => 'App\Controllers'], function($routes) {
