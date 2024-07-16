@@ -11,10 +11,10 @@ class BookController extends ResourceController
     public function index()
     {
         $db = \Config\Database::connect();
-        $query = $db->query("SELECT * FROM catalog_buku");
-        $catalog_buku = $query->getResult();
+        $query = $db->query("SELECT * FROM catalog_books");
+        $catalog_books = $query->getResult();
 
-        return $this->respond($catalog_buku);
+        return $this->respond($catalog_books);
     }
 
     public function show($book_id = null)
@@ -24,7 +24,7 @@ class BookController extends ResourceController
         }
 
         $db = \Config\Database::connect();
-        $query = $db->query("SELECT * FROM catalog_buku WHERE book_id = ?", [$book_id]);
+        $query = $db->query("SELECT * FROM catalog_books WHERE book_id = ?", [$book_id]);
         $author = $query->getRow();
 
         if (!$author) {
@@ -50,7 +50,7 @@ class BookController extends ResourceController
         }
 
         $db = \Config\Database::connect();
-        $query = "INSERT INTO catalog_buku (title, publisher_id, publication_year, isbn, author_id) VALUES (:title:, :publisher_id:, :publication_year:, :isbn:, :author_id:)";
+        $query = "INSERT INTO catalog_books (title, publisher_id, publication_year, isbn, author_id) VALUES (:title:, :publisher_id:, :publication_year:, :isbn:, :author_id:)";
         $params = [
             'title' => $this->request->getVar('title'),
             'publisher_id'   => $this->request->getVar('publisher_id'),
@@ -111,7 +111,7 @@ class BookController extends ResourceController
         }
 
         $db = \Config\Database::connect();
-        $query = "DELETE FROM book_id WHERE book_id = :book_id:";
+        $query = "DELETE FROM catalog_books WHERE book_id = :book_id:";
         $params = ['book_id' => $book_id];
         $db->query($query, $params);
 
