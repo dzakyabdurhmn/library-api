@@ -1,0 +1,228 @@
+ERROR - 2024-07-16 02:32:24 --> mysqli_sql_exception: Unknown column 'address' in 'field list' in C:\laragon\www\codeigniter\system\Database\MySQLi\Connection.php:312
+Stack trace:
+#0 C:\laragon\www\codeigniter\system\Database\MySQLi\Connection.php(312): mysqli->query('INSERT INTO adm...', 0)
+#1 C:\laragon\www\codeigniter\system\Database\BaseConnection.php(734): CodeIgniter\Database\MySQLi\Connection->execute('INSERT INTO adm...')
+#2 C:\laragon\www\codeigniter\system\Database\BaseConnection.php(648): CodeIgniter\Database\BaseConnection->simpleQuery('INSERT INTO adm...')
+#3 C:\laragon\www\codeigniter\app\Controllers\AdminController.php(35): CodeIgniter\Database\BaseConnection->query('INSERT INTO adm...', Array)
+#4 C:\laragon\www\codeigniter\system\CodeIgniter.php(933): App\Controllers\AdminController->register()
+#5 C:\laragon\www\codeigniter\system\CodeIgniter.php(509): CodeIgniter\CodeIgniter->runController(Object(App\Controllers\AdminController))
+#6 C:\laragon\www\codeigniter\system\CodeIgniter.php(355): CodeIgniter\CodeIgniter->handleRequest(NULL, Object(Config\Cache), false)
+#7 C:\laragon\www\codeigniter\system\Boot.php(325): CodeIgniter\CodeIgniter->run()
+#8 C:\laragon\www\codeigniter\system\Boot.php(67): CodeIgniter\Boot::runCodeIgniter(Object(CodeIgniter\CodeIgniter))
+#9 C:\laragon\www\codeigniter\public\index.php(56): CodeIgniter\Boot::bootWeb(Object(Config\Paths))
+#10 C:\laragon\www\codeigniter\system\rewrite.php(44): require_once('C:\\laragon\\www\\...')
+#11 {main}
+CRITICAL - 2024-07-16 02:32:24 --> CodeIgniter\Database\Exceptions\DatabaseException: Unknown column 'address' in 'field list'
+[Method: POST, Route: admin/register]
+in SYSTEMPATH\Database\BaseConnection.php on line 688.
+ 1 APPPATH\Controllers\AdminController.php(35): CodeIgniter\Database\BaseConnection->query('INSERT INTO admin (username, email, password, full_name, address, phone) VALUES (:username:, :email:, :password:,  :full_name:, :address:, :phone:)', [...])
+ 2 SYSTEMPATH\CodeIgniter.php(933): App\Controllers\AdminController->register()
+ 3 SYSTEMPATH\CodeIgniter.php(509): CodeIgniter\CodeIgniter->runController(Object(App\Controllers\AdminController))
+ 4 SYSTEMPATH\CodeIgniter.php(355): CodeIgniter\CodeIgniter->handleRequest(null, Object(Config\Cache), false)
+ 5 SYSTEMPATH\Boot.php(325): CodeIgniter\CodeIgniter->run()
+ 6 SYSTEMPATH\Boot.php(67): CodeIgniter\Boot::runCodeIgniter(Object(CodeIgniter\CodeIgniter))
+ 7 FCPATH\index.php(56): CodeIgniter\Boot::bootWeb(Object(Config\Paths))
+ 8 SYSTEMPATH\rewrite.php(44): require_once('C:\\laragon\\www\\codeigniter\\public\\index.php')
+CRITICAL - 2024-07-16 02:32:24 --> [Caused by] CodeIgniter\Database\Exceptions\DatabaseException: Unknown column 'address' in 'field list'
+in SYSTEMPATH\Database\MySQLi\Connection.php on line 317.
+ 1 SYSTEMPATH\Database\BaseConnection.php(734): CodeIgniter\Database\MySQLi\Connection->execute('INSERT INTO admin (username, email, password, full_name, address, phone) VALUES (\'shyakinardaz\', \'shyakinard@gmail.coms\', \'$2y$10$HLJi2yUBBvmLrt4ZsmYOTeVTrWaIk5jYtPkLuQUsZAof87Mta81E2\',  \'raden ajeng shyakina rahmadyani ariniputri\', \'jln jaktim as\', \'0851576651291\')')
+ 2 SYSTEMPATH\Database\BaseConnection.php(648): CodeIgniter\Database\BaseConnection->simpleQuery('INSERT INTO admin (username, email, password, full_name, address, phone) VALUES (\'shyakinardaz\', \'shyakinard@gmail.coms\', \'$2y$10$HLJi2yUBBvmLrt4ZsmYOTeVTrWaIk5jYtPkLuQUsZAof87Mta81E2\',  \'raden ajeng shyakina rahmadyani ariniputri\', \'jln jaktim as\', \'0851576651291\')')
+ 3 APPPATH\Controllers\AdminController.php(35): CodeIgniter\Database\BaseConnection->query('INSERT INTO admin (username, email, password, full_name, address, phone) VALUES (:username:, :email:, :password:,  :full_name:, :address:, :phone:)', [...])
+ 4 SYSTEMPATH\CodeIgniter.php(933): App\Controllers\AdminController->register()
+ 5 SYSTEMPATH\CodeIgniter.php(509): CodeIgniter\CodeIgniter->runController(Object(App\Controllers\AdminController))
+ 6 SYSTEMPATH\CodeIgniter.php(355): CodeIgniter\CodeIgniter->handleRequest(null, Object(Config\Cache), false)
+ 7 SYSTEMPATH\Boot.php(325): CodeIgniter\CodeIgniter->run()
+ 8 SYSTEMPATH\Boot.php(67): CodeIgniter\Boot::runCodeIgniter(Object(CodeIgniter\CodeIgniter))
+ 9 FCPATH\index.php(56): CodeIgniter\Boot::bootWeb(Object(Config\Paths))
+10 SYSTEMPATH\rewrite.php(44): require_once('C:\\laragon\\www\\codeigniter\\public\\index.php')
+CRITICAL - 2024-07-16 02:32:24 --> [Caused by] mysqli_sql_exception: Unknown column 'address' in 'field list'
+in SYSTEMPATH\Database\MySQLi\Connection.php on line 312.
+ 1 SYSTEMPATH\Database\MySQLi\Connection.php(312): mysqli->query('INSERT INTO admin (username, email, password, full_name, address, phone) VALUES (\'shyakinardaz\', \'shyakinard@gmail.coms\', \'$2y$10$HLJi2yUBBvmLrt4ZsmYOTeVTrWaIk5jYtPkLuQUsZAof87Mta81E2\',  \'raden ajeng shyakina rahmadyani ariniputri\', \'jln jaktim as\', \'0851576651291\')', 0)
+ 2 SYSTEMPATH\Database\BaseConnection.php(734): CodeIgniter\Database\MySQLi\Connection->execute('INSERT INTO admin (username, email, password, full_name, address, phone) VALUES (\'shyakinardaz\', \'shyakinard@gmail.coms\', \'$2y$10$HLJi2yUBBvmLrt4ZsmYOTeVTrWaIk5jYtPkLuQUsZAof87Mta81E2\',  \'raden ajeng shyakina rahmadyani ariniputri\', \'jln jaktim as\', \'0851576651291\')')
+ 3 SYSTEMPATH\Database\BaseConnection.php(648): CodeIgniter\Database\BaseConnection->simpleQuery('INSERT INTO admin (username, email, password, full_name, address, phone) VALUES (\'shyakinardaz\', \'shyakinard@gmail.coms\', \'$2y$10$HLJi2yUBBvmLrt4ZsmYOTeVTrWaIk5jYtPkLuQUsZAof87Mta81E2\',  \'raden ajeng shyakina rahmadyani ariniputri\', \'jln jaktim as\', \'0851576651291\')')
+ 4 APPPATH\Controllers\AdminController.php(35): CodeIgniter\Database\BaseConnection->query('INSERT INTO admin (username, email, password, full_name, address, phone) VALUES (:username:, :email:, :password:,  :full_name:, :address:, :phone:)', [...])
+ 5 SYSTEMPATH\CodeIgniter.php(933): App\Controllers\AdminController->register()
+ 6 SYSTEMPATH\CodeIgniter.php(509): CodeIgniter\CodeIgniter->runController(Object(App\Controllers\AdminController))
+ 7 SYSTEMPATH\CodeIgniter.php(355): CodeIgniter\CodeIgniter->handleRequest(null, Object(Config\Cache), false)
+ 8 SYSTEMPATH\Boot.php(325): CodeIgniter\CodeIgniter->run()
+ 9 SYSTEMPATH\Boot.php(67): CodeIgniter\Boot::runCodeIgniter(Object(CodeIgniter\CodeIgniter))
+10 FCPATH\index.php(56): CodeIgniter\Boot::bootWeb(Object(Config\Paths))
+11 SYSTEMPATH\rewrite.php(44): require_once('C:\\laragon\\www\\codeigniter\\public\\index.php')
+CRITICAL - 2024-07-16 02:32:39 --> CodeIgniter\HTTP\Exceptions\HTTPException: Failed to parse JSON string. Error: Syntax error
+[Method: POST, Route: admin/register]
+in SYSTEMPATH\HTTP\IncomingRequest.php on line 537.
+ 1 SYSTEMPATH\HTTP\IncomingRequest.php(537): CodeIgniter\HTTP\Exceptions\HTTPException::forInvalidJSON('Syntax error')
+ 2 SYSTEMPATH\Validation\Validation.php(509): CodeIgniter\HTTP\IncomingRequest->getJSON(true)
+ 3 SYSTEMPATH\Controller.php(137): CodeIgniter\Validation\Validation->withRequest(Object(CodeIgniter\HTTP\IncomingRequest))
+ 4 APPPATH\Controllers\AdminController.php(20): CodeIgniter\Controller->validate([...])
+ 5 SYSTEMPATH\CodeIgniter.php(933): App\Controllers\AdminController->register()
+ 6 SYSTEMPATH\CodeIgniter.php(509): CodeIgniter\CodeIgniter->runController(Object(App\Controllers\AdminController))
+ 7 SYSTEMPATH\CodeIgniter.php(355): CodeIgniter\CodeIgniter->handleRequest(null, Object(Config\Cache), false)
+ 8 SYSTEMPATH\Boot.php(325): CodeIgniter\CodeIgniter->run()
+ 9 SYSTEMPATH\Boot.php(67): CodeIgniter\Boot::runCodeIgniter(Object(CodeIgniter\CodeIgniter))
+10 FCPATH\index.php(56): CodeIgniter\Boot::bootWeb(Object(Config\Paths))
+11 SYSTEMPATH\rewrite.php(44): require_once('C:\\laragon\\www\\codeigniter\\public\\index.php')
+ERROR - 2024-07-16 02:32:45 --> mysqli_sql_exception: Unknown column 'address' in 'field list' in C:\laragon\www\codeigniter\system\Database\MySQLi\Connection.php:312
+Stack trace:
+#0 C:\laragon\www\codeigniter\system\Database\MySQLi\Connection.php(312): mysqli->query('INSERT INTO adm...', 0)
+#1 C:\laragon\www\codeigniter\system\Database\BaseConnection.php(734): CodeIgniter\Database\MySQLi\Connection->execute('INSERT INTO adm...')
+#2 C:\laragon\www\codeigniter\system\Database\BaseConnection.php(648): CodeIgniter\Database\BaseConnection->simpleQuery('INSERT INTO adm...')
+#3 C:\laragon\www\codeigniter\app\Controllers\AdminController.php(35): CodeIgniter\Database\BaseConnection->query('INSERT INTO adm...', Array)
+#4 C:\laragon\www\codeigniter\system\CodeIgniter.php(933): App\Controllers\AdminController->register()
+#5 C:\laragon\www\codeigniter\system\CodeIgniter.php(509): CodeIgniter\CodeIgniter->runController(Object(App\Controllers\AdminController))
+#6 C:\laragon\www\codeigniter\system\CodeIgniter.php(355): CodeIgniter\CodeIgniter->handleRequest(NULL, Object(Config\Cache), false)
+#7 C:\laragon\www\codeigniter\system\Boot.php(325): CodeIgniter\CodeIgniter->run()
+#8 C:\laragon\www\codeigniter\system\Boot.php(67): CodeIgniter\Boot::runCodeIgniter(Object(CodeIgniter\CodeIgniter))
+#9 C:\laragon\www\codeigniter\public\index.php(56): CodeIgniter\Boot::bootWeb(Object(Config\Paths))
+#10 C:\laragon\www\codeigniter\system\rewrite.php(44): require_once('C:\\laragon\\www\\...')
+#11 {main}
+CRITICAL - 2024-07-16 02:32:45 --> CodeIgniter\Database\Exceptions\DatabaseException: Unknown column 'address' in 'field list'
+[Method: POST, Route: admin/register]
+in SYSTEMPATH\Database\BaseConnection.php on line 688.
+ 1 APPPATH\Controllers\AdminController.php(35): CodeIgniter\Database\BaseConnection->query('INSERT INTO admin (username, email, password, full_name, address, phone) VALUES (:username:, :email:, :password:,  :full_name:, :address:, :phone:)', [...])
+ 2 SYSTEMPATH\CodeIgniter.php(933): App\Controllers\AdminController->register()
+ 3 SYSTEMPATH\CodeIgniter.php(509): CodeIgniter\CodeIgniter->runController(Object(App\Controllers\AdminController))
+ 4 SYSTEMPATH\CodeIgniter.php(355): CodeIgniter\CodeIgniter->handleRequest(null, Object(Config\Cache), false)
+ 5 SYSTEMPATH\Boot.php(325): CodeIgniter\CodeIgniter->run()
+ 6 SYSTEMPATH\Boot.php(67): CodeIgniter\Boot::runCodeIgniter(Object(CodeIgniter\CodeIgniter))
+ 7 FCPATH\index.php(56): CodeIgniter\Boot::bootWeb(Object(Config\Paths))
+ 8 SYSTEMPATH\rewrite.php(44): require_once('C:\\laragon\\www\\codeigniter\\public\\index.php')
+CRITICAL - 2024-07-16 02:32:45 --> [Caused by] CodeIgniter\Database\Exceptions\DatabaseException: Unknown column 'address' in 'field list'
+in SYSTEMPATH\Database\MySQLi\Connection.php on line 317.
+ 1 SYSTEMPATH\Database\BaseConnection.php(734): CodeIgniter\Database\MySQLi\Connection->execute('INSERT INTO admin (username, email, password, full_name, address, phone) VALUES (\'shyakinardaz\', \'shyakinard@gmail.coms\', \'$2y$10$IvY9iaH5JVF56ty97nQgy.j8RI2nh03RVrWHHpZzutEim9GHaJ2nO\',  \'raden ajeng shyakina rahmadyani ariniputri\', NULL, NULL)')
+ 2 SYSTEMPATH\Database\BaseConnection.php(648): CodeIgniter\Database\BaseConnection->simpleQuery('INSERT INTO admin (username, email, password, full_name, address, phone) VALUES (\'shyakinardaz\', \'shyakinard@gmail.coms\', \'$2y$10$IvY9iaH5JVF56ty97nQgy.j8RI2nh03RVrWHHpZzutEim9GHaJ2nO\',  \'raden ajeng shyakina rahmadyani ariniputri\', NULL, NULL)')
+ 3 APPPATH\Controllers\AdminController.php(35): CodeIgniter\Database\BaseConnection->query('INSERT INTO admin (username, email, password, full_name, address, phone) VALUES (:username:, :email:, :password:,  :full_name:, :address:, :phone:)', [...])
+ 4 SYSTEMPATH\CodeIgniter.php(933): App\Controllers\AdminController->register()
+ 5 SYSTEMPATH\CodeIgniter.php(509): CodeIgniter\CodeIgniter->runController(Object(App\Controllers\AdminController))
+ 6 SYSTEMPATH\CodeIgniter.php(355): CodeIgniter\CodeIgniter->handleRequest(null, Object(Config\Cache), false)
+ 7 SYSTEMPATH\Boot.php(325): CodeIgniter\CodeIgniter->run()
+ 8 SYSTEMPATH\Boot.php(67): CodeIgniter\Boot::runCodeIgniter(Object(CodeIgniter\CodeIgniter))
+ 9 FCPATH\index.php(56): CodeIgniter\Boot::bootWeb(Object(Config\Paths))
+10 SYSTEMPATH\rewrite.php(44): require_once('C:\\laragon\\www\\codeigniter\\public\\index.php')
+CRITICAL - 2024-07-16 02:32:45 --> [Caused by] mysqli_sql_exception: Unknown column 'address' in 'field list'
+in SYSTEMPATH\Database\MySQLi\Connection.php on line 312.
+ 1 SYSTEMPATH\Database\MySQLi\Connection.php(312): mysqli->query('INSERT INTO admin (username, email, password, full_name, address, phone) VALUES (\'shyakinardaz\', \'shyakinard@gmail.coms\', \'$2y$10$IvY9iaH5JVF56ty97nQgy.j8RI2nh03RVrWHHpZzutEim9GHaJ2nO\',  \'raden ajeng shyakina rahmadyani ariniputri\', NULL, NULL)', 0)
+ 2 SYSTEMPATH\Database\BaseConnection.php(734): CodeIgniter\Database\MySQLi\Connection->execute('INSERT INTO admin (username, email, password, full_name, address, phone) VALUES (\'shyakinardaz\', \'shyakinard@gmail.coms\', \'$2y$10$IvY9iaH5JVF56ty97nQgy.j8RI2nh03RVrWHHpZzutEim9GHaJ2nO\',  \'raden ajeng shyakina rahmadyani ariniputri\', NULL, NULL)')
+ 3 SYSTEMPATH\Database\BaseConnection.php(648): CodeIgniter\Database\BaseConnection->simpleQuery('INSERT INTO admin (username, email, password, full_name, address, phone) VALUES (\'shyakinardaz\', \'shyakinard@gmail.coms\', \'$2y$10$IvY9iaH5JVF56ty97nQgy.j8RI2nh03RVrWHHpZzutEim9GHaJ2nO\',  \'raden ajeng shyakina rahmadyani ariniputri\', NULL, NULL)')
+ 4 APPPATH\Controllers\AdminController.php(35): CodeIgniter\Database\BaseConnection->query('INSERT INTO admin (username, email, password, full_name, address, phone) VALUES (:username:, :email:, :password:,  :full_name:, :address:, :phone:)', [...])
+ 5 SYSTEMPATH\CodeIgniter.php(933): App\Controllers\AdminController->register()
+ 6 SYSTEMPATH\CodeIgniter.php(509): CodeIgniter\CodeIgniter->runController(Object(App\Controllers\AdminController))
+ 7 SYSTEMPATH\CodeIgniter.php(355): CodeIgniter\CodeIgniter->handleRequest(null, Object(Config\Cache), false)
+ 8 SYSTEMPATH\Boot.php(325): CodeIgniter\CodeIgniter->run()
+ 9 SYSTEMPATH\Boot.php(67): CodeIgniter\Boot::runCodeIgniter(Object(CodeIgniter\CodeIgniter))
+10 FCPATH\index.php(56): CodeIgniter\Boot::bootWeb(Object(Config\Paths))
+11 SYSTEMPATH\rewrite.php(44): require_once('C:\\laragon\\www\\codeigniter\\public\\index.php')
+ERROR - 2024-07-16 02:35:49 --> mysqli_sql_exception: Unknown column 'address' in 'field list' in C:\laragon\www\codeigniter\system\Database\MySQLi\Connection.php:312
+Stack trace:
+#0 C:\laragon\www\codeigniter\system\Database\MySQLi\Connection.php(312): mysqli->query('INSERT INTO adm...', 0)
+#1 C:\laragon\www\codeigniter\system\Database\BaseConnection.php(734): CodeIgniter\Database\MySQLi\Connection->execute('INSERT INTO adm...')
+#2 C:\laragon\www\codeigniter\system\Database\BaseConnection.php(648): CodeIgniter\Database\BaseConnection->simpleQuery('INSERT INTO adm...')
+#3 C:\laragon\www\codeigniter\app\Controllers\AdminController.php(36): CodeIgniter\Database\BaseConnection->query('INSERT INTO adm...', Array)
+#4 C:\laragon\www\codeigniter\system\CodeIgniter.php(933): App\Controllers\AdminController->register()
+#5 C:\laragon\www\codeigniter\system\CodeIgniter.php(509): CodeIgniter\CodeIgniter->runController(Object(App\Controllers\AdminController))
+#6 C:\laragon\www\codeigniter\system\CodeIgniter.php(355): CodeIgniter\CodeIgniter->handleRequest(NULL, Object(Config\Cache), false)
+#7 C:\laragon\www\codeigniter\system\Boot.php(325): CodeIgniter\CodeIgniter->run()
+#8 C:\laragon\www\codeigniter\system\Boot.php(67): CodeIgniter\Boot::runCodeIgniter(Object(CodeIgniter\CodeIgniter))
+#9 C:\laragon\www\codeigniter\public\index.php(56): CodeIgniter\Boot::bootWeb(Object(Config\Paths))
+#10 C:\laragon\www\codeigniter\system\rewrite.php(44): require_once('C:\\laragon\\www\\...')
+#11 {main}
+CRITICAL - 2024-07-16 02:35:49 --> CodeIgniter\Database\Exceptions\DatabaseException: Unknown column 'address' in 'field list'
+[Method: POST, Route: admin/register]
+in SYSTEMPATH\Database\BaseConnection.php on line 688.
+ 1 APPPATH\Controllers\AdminController.php(36): CodeIgniter\Database\BaseConnection->query('INSERT INTO admin (username, email, password, full_name, address, phone) VALUES (:username:, :email:, :password:,  :full_name:, :address:, :phone:)', [...])
+ 2 SYSTEMPATH\CodeIgniter.php(933): App\Controllers\AdminController->register()
+ 3 SYSTEMPATH\CodeIgniter.php(509): CodeIgniter\CodeIgniter->runController(Object(App\Controllers\AdminController))
+ 4 SYSTEMPATH\CodeIgniter.php(355): CodeIgniter\CodeIgniter->handleRequest(null, Object(Config\Cache), false)
+ 5 SYSTEMPATH\Boot.php(325): CodeIgniter\CodeIgniter->run()
+ 6 SYSTEMPATH\Boot.php(67): CodeIgniter\Boot::runCodeIgniter(Object(CodeIgniter\CodeIgniter))
+ 7 FCPATH\index.php(56): CodeIgniter\Boot::bootWeb(Object(Config\Paths))
+ 8 SYSTEMPATH\rewrite.php(44): require_once('C:\\laragon\\www\\codeigniter\\public\\index.php')
+CRITICAL - 2024-07-16 02:35:49 --> [Caused by] CodeIgniter\Database\Exceptions\DatabaseException: Unknown column 'address' in 'field list'
+in SYSTEMPATH\Database\MySQLi\Connection.php on line 317.
+ 1 SYSTEMPATH\Database\BaseConnection.php(734): CodeIgniter\Database\MySQLi\Connection->execute('INSERT INTO admin (username, email, password, full_name, address, phone) VALUES (\'shyakinardaz\', \'shyakinard@gmail.coms\', \'$2y$10$9gZxGgkzgWYdoWeBGwLC8uPmrjBmzn8jzAvTtkdqTpOdNoOcAW4cK\',  \'raden ajeng shyakina rahmadyani ariniputri\', NULL, NULL)')
+ 2 SYSTEMPATH\Database\BaseConnection.php(648): CodeIgniter\Database\BaseConnection->simpleQuery('INSERT INTO admin (username, email, password, full_name, address, phone) VALUES (\'shyakinardaz\', \'shyakinard@gmail.coms\', \'$2y$10$9gZxGgkzgWYdoWeBGwLC8uPmrjBmzn8jzAvTtkdqTpOdNoOcAW4cK\',  \'raden ajeng shyakina rahmadyani ariniputri\', NULL, NULL)')
+ 3 APPPATH\Controllers\AdminController.php(36): CodeIgniter\Database\BaseConnection->query('INSERT INTO admin (username, email, password, full_name, address, phone) VALUES (:username:, :email:, :password:,  :full_name:, :address:, :phone:)', [...])
+ 4 SYSTEMPATH\CodeIgniter.php(933): App\Controllers\AdminController->register()
+ 5 SYSTEMPATH\CodeIgniter.php(509): CodeIgniter\CodeIgniter->runController(Object(App\Controllers\AdminController))
+ 6 SYSTEMPATH\CodeIgniter.php(355): CodeIgniter\CodeIgniter->handleRequest(null, Object(Config\Cache), false)
+ 7 SYSTEMPATH\Boot.php(325): CodeIgniter\CodeIgniter->run()
+ 8 SYSTEMPATH\Boot.php(67): CodeIgniter\Boot::runCodeIgniter(Object(CodeIgniter\CodeIgniter))
+ 9 FCPATH\index.php(56): CodeIgniter\Boot::bootWeb(Object(Config\Paths))
+10 SYSTEMPATH\rewrite.php(44): require_once('C:\\laragon\\www\\codeigniter\\public\\index.php')
+CRITICAL - 2024-07-16 02:35:49 --> [Caused by] mysqli_sql_exception: Unknown column 'address' in 'field list'
+in SYSTEMPATH\Database\MySQLi\Connection.php on line 312.
+ 1 SYSTEMPATH\Database\MySQLi\Connection.php(312): mysqli->query('INSERT INTO admin (username, email, password, full_name, address, phone) VALUES (\'shyakinardaz\', \'shyakinard@gmail.coms\', \'$2y$10$9gZxGgkzgWYdoWeBGwLC8uPmrjBmzn8jzAvTtkdqTpOdNoOcAW4cK\',  \'raden ajeng shyakina rahmadyani ariniputri\', NULL, NULL)', 0)
+ 2 SYSTEMPATH\Database\BaseConnection.php(734): CodeIgniter\Database\MySQLi\Connection->execute('INSERT INTO admin (username, email, password, full_name, address, phone) VALUES (\'shyakinardaz\', \'shyakinard@gmail.coms\', \'$2y$10$9gZxGgkzgWYdoWeBGwLC8uPmrjBmzn8jzAvTtkdqTpOdNoOcAW4cK\',  \'raden ajeng shyakina rahmadyani ariniputri\', NULL, NULL)')
+ 3 SYSTEMPATH\Database\BaseConnection.php(648): CodeIgniter\Database\BaseConnection->simpleQuery('INSERT INTO admin (username, email, password, full_name, address, phone) VALUES (\'shyakinardaz\', \'shyakinard@gmail.coms\', \'$2y$10$9gZxGgkzgWYdoWeBGwLC8uPmrjBmzn8jzAvTtkdqTpOdNoOcAW4cK\',  \'raden ajeng shyakina rahmadyani ariniputri\', NULL, NULL)')
+ 4 APPPATH\Controllers\AdminController.php(36): CodeIgniter\Database\BaseConnection->query('INSERT INTO admin (username, email, password, full_name, address, phone) VALUES (:username:, :email:, :password:,  :full_name:, :address:, :phone:)', [...])
+ 5 SYSTEMPATH\CodeIgniter.php(933): App\Controllers\AdminController->register()
+ 6 SYSTEMPATH\CodeIgniter.php(509): CodeIgniter\CodeIgniter->runController(Object(App\Controllers\AdminController))
+ 7 SYSTEMPATH\CodeIgniter.php(355): CodeIgniter\CodeIgniter->handleRequest(null, Object(Config\Cache), false)
+ 8 SYSTEMPATH\Boot.php(325): CodeIgniter\CodeIgniter->run()
+ 9 SYSTEMPATH\Boot.php(67): CodeIgniter\Boot::runCodeIgniter(Object(CodeIgniter\CodeIgniter))
+10 FCPATH\index.php(56): CodeIgniter\Boot::bootWeb(Object(Config\Paths))
+11 SYSTEMPATH\rewrite.php(44): require_once('C:\\laragon\\www\\codeigniter\\public\\index.php')
+ERROR - 2024-07-16 02:39:17 --> mysqli_sql_exception: Column count doesn't match value count at row 1 in C:\laragon\www\codeigniter\system\Database\MySQLi\Connection.php:312
+Stack trace:
+#0 C:\laragon\www\codeigniter\system\Database\MySQLi\Connection.php(312): mysqli->query('INSERT INTO adm...', 0)
+#1 C:\laragon\www\codeigniter\system\Database\BaseConnection.php(734): CodeIgniter\Database\MySQLi\Connection->execute('INSERT INTO adm...')
+#2 C:\laragon\www\codeigniter\system\Database\BaseConnection.php(648): CodeIgniter\Database\BaseConnection->simpleQuery('INSERT INTO adm...')
+#3 C:\laragon\www\codeigniter\app\Controllers\AdminController.php(35): CodeIgniter\Database\BaseConnection->query('INSERT INTO adm...', Array)
+#4 C:\laragon\www\codeigniter\system\CodeIgniter.php(933): App\Controllers\AdminController->register()
+#5 C:\laragon\www\codeigniter\system\CodeIgniter.php(509): CodeIgniter\CodeIgniter->runController(Object(App\Controllers\AdminController))
+#6 C:\laragon\www\codeigniter\system\CodeIgniter.php(355): CodeIgniter\CodeIgniter->handleRequest(NULL, Object(Config\Cache), false)
+#7 C:\laragon\www\codeigniter\system\Boot.php(325): CodeIgniter\CodeIgniter->run()
+#8 C:\laragon\www\codeigniter\system\Boot.php(67): CodeIgniter\Boot::runCodeIgniter(Object(CodeIgniter\CodeIgniter))
+#9 C:\laragon\www\codeigniter\public\index.php(56): CodeIgniter\Boot::bootWeb(Object(Config\Paths))
+#10 C:\laragon\www\codeigniter\system\rewrite.php(44): require_once('C:\\laragon\\www\\...')
+#11 {main}
+CRITICAL - 2024-07-16 02:39:17 --> CodeIgniter\Database\Exceptions\DatabaseException: Column count doesn't match value count at row 1
+[Method: POST, Route: admin/register]
+in SYSTEMPATH\Database\BaseConnection.php on line 688.
+ 1 APPPATH\Controllers\AdminController.php(35): CodeIgniter\Database\BaseConnection->query('INSERT INTO admin (username, password, email, full_name, nik) VALUES (:username:, :password:, :email:,  :full_name:, :full_name:, :nik:)', [...])
+ 2 SYSTEMPATH\CodeIgniter.php(933): App\Controllers\AdminController->register()
+ 3 SYSTEMPATH\CodeIgniter.php(509): CodeIgniter\CodeIgniter->runController(Object(App\Controllers\AdminController))
+ 4 SYSTEMPATH\CodeIgniter.php(355): CodeIgniter\CodeIgniter->handleRequest(null, Object(Config\Cache), false)
+ 5 SYSTEMPATH\Boot.php(325): CodeIgniter\CodeIgniter->run()
+ 6 SYSTEMPATH\Boot.php(67): CodeIgniter\Boot::runCodeIgniter(Object(CodeIgniter\CodeIgniter))
+ 7 FCPATH\index.php(56): CodeIgniter\Boot::bootWeb(Object(Config\Paths))
+ 8 SYSTEMPATH\rewrite.php(44): require_once('C:\\laragon\\www\\codeigniter\\public\\index.php')
+CRITICAL - 2024-07-16 02:39:17 --> [Caused by] CodeIgniter\Database\Exceptions\DatabaseException: Column count doesn't match value count at row 1
+in SYSTEMPATH\Database\MySQLi\Connection.php on line 317.
+ 1 SYSTEMPATH\Database\BaseConnection.php(734): CodeIgniter\Database\MySQLi\Connection->execute('INSERT INTO admin (username, password, email, full_name, nik) VALUES (\'shyakinardaz\', \'$2y$10$squmihHCxf68G6Dd09A8M.VG07RdEkYeUvCEwpqzrvfGMjwnTv0ia\', \'shyakinard@gmail.coms\',  \'raden ajeng shyakina rahmadyani ariniputri\', \'raden ajeng shyakina rahmadyani ariniputri\', \'8989011133\')')
+ 2 SYSTEMPATH\Database\BaseConnection.php(648): CodeIgniter\Database\BaseConnection->simpleQuery('INSERT INTO admin (username, password, email, full_name, nik) VALUES (\'shyakinardaz\', \'$2y$10$squmihHCxf68G6Dd09A8M.VG07RdEkYeUvCEwpqzrvfGMjwnTv0ia\', \'shyakinard@gmail.coms\',  \'raden ajeng shyakina rahmadyani ariniputri\', \'raden ajeng shyakina rahmadyani ariniputri\', \'8989011133\')')
+ 3 APPPATH\Controllers\AdminController.php(35): CodeIgniter\Database\BaseConnection->query('INSERT INTO admin (username, password, email, full_name, nik) VALUES (:username:, :password:, :email:,  :full_name:, :full_name:, :nik:)', [...])
+ 4 SYSTEMPATH\CodeIgniter.php(933): App\Controllers\AdminController->register()
+ 5 SYSTEMPATH\CodeIgniter.php(509): CodeIgniter\CodeIgniter->runController(Object(App\Controllers\AdminController))
+ 6 SYSTEMPATH\CodeIgniter.php(355): CodeIgniter\CodeIgniter->handleRequest(null, Object(Config\Cache), false)
+ 7 SYSTEMPATH\Boot.php(325): CodeIgniter\CodeIgniter->run()
+ 8 SYSTEMPATH\Boot.php(67): CodeIgniter\Boot::runCodeIgniter(Object(CodeIgniter\CodeIgniter))
+ 9 FCPATH\index.php(56): CodeIgniter\Boot::bootWeb(Object(Config\Paths))
+10 SYSTEMPATH\rewrite.php(44): require_once('C:\\laragon\\www\\codeigniter\\public\\index.php')
+CRITICAL - 2024-07-16 02:39:17 --> [Caused by] mysqli_sql_exception: Column count doesn't match value count at row 1
+in SYSTEMPATH\Database\MySQLi\Connection.php on line 312.
+ 1 SYSTEMPATH\Database\MySQLi\Connection.php(312): mysqli->query('INSERT INTO admin (username, password, email, full_name, nik) VALUES (\'shyakinardaz\', \'$2y$10$squmihHCxf68G6Dd09A8M.VG07RdEkYeUvCEwpqzrvfGMjwnTv0ia\', \'shyakinard@gmail.coms\',  \'raden ajeng shyakina rahmadyani ariniputri\', \'raden ajeng shyakina rahmadyani ariniputri\', \'8989011133\')', 0)
+ 2 SYSTEMPATH\Database\BaseConnection.php(734): CodeIgniter\Database\MySQLi\Connection->execute('INSERT INTO admin (username, password, email, full_name, nik) VALUES (\'shyakinardaz\', \'$2y$10$squmihHCxf68G6Dd09A8M.VG07RdEkYeUvCEwpqzrvfGMjwnTv0ia\', \'shyakinard@gmail.coms\',  \'raden ajeng shyakina rahmadyani ariniputri\', \'raden ajeng shyakina rahmadyani ariniputri\', \'8989011133\')')
+ 3 SYSTEMPATH\Database\BaseConnection.php(648): CodeIgniter\Database\BaseConnection->simpleQuery('INSERT INTO admin (username, password, email, full_name, nik) VALUES (\'shyakinardaz\', \'$2y$10$squmihHCxf68G6Dd09A8M.VG07RdEkYeUvCEwpqzrvfGMjwnTv0ia\', \'shyakinard@gmail.coms\',  \'raden ajeng shyakina rahmadyani ariniputri\', \'raden ajeng shyakina rahmadyani ariniputri\', \'8989011133\')')
+ 4 APPPATH\Controllers\AdminController.php(35): CodeIgniter\Database\BaseConnection->query('INSERT INTO admin (username, password, email, full_name, nik) VALUES (:username:, :password:, :email:,  :full_name:, :full_name:, :nik:)', [...])
+ 5 SYSTEMPATH\CodeIgniter.php(933): App\Controllers\AdminController->register()
+ 6 SYSTEMPATH\CodeIgniter.php(509): CodeIgniter\CodeIgniter->runController(Object(App\Controllers\AdminController))
+ 7 SYSTEMPATH\CodeIgniter.php(355): CodeIgniter\CodeIgniter->handleRequest(null, Object(Config\Cache), false)
+ 8 SYSTEMPATH\Boot.php(325): CodeIgniter\CodeIgniter->run()
+ 9 SYSTEMPATH\Boot.php(67): CodeIgniter\Boot::runCodeIgniter(Object(CodeIgniter\CodeIgniter))
+10 FCPATH\index.php(56): CodeIgniter\Boot::bootWeb(Object(Config\Paths))
+11 SYSTEMPATH\rewrite.php(44): require_once('C:\\laragon\\www\\codeigniter\\public\\index.php')
+CRITICAL - 2024-07-16 02:44:44 --> CodeIgniter\HTTP\Exceptions\HTTPException: Failed to parse JSON string. Error: Syntax error
+[Method: POST, Route: admin/login]
+in SYSTEMPATH\HTTP\IncomingRequest.php on line 537.
+ 1 SYSTEMPATH\HTTP\IncomingRequest.php(537): CodeIgniter\HTTP\Exceptions\HTTPException::forInvalidJSON('Syntax error')
+ 2 SYSTEMPATH\Validation\Validation.php(509): CodeIgniter\HTTP\IncomingRequest->getJSON(true)
+ 3 SYSTEMPATH\Controller.php(137): CodeIgniter\Validation\Validation->withRequest(Object(CodeIgniter\HTTP\IncomingRequest))
+ 4 APPPATH\Controllers\AdminController.php(52): CodeIgniter\Controller->validate([...])
+ 5 SYSTEMPATH\CodeIgniter.php(933): App\Controllers\AdminController->login()
+ 6 SYSTEMPATH\CodeIgniter.php(509): CodeIgniter\CodeIgniter->runController(Object(App\Controllers\AdminController))
+ 7 SYSTEMPATH\CodeIgniter.php(355): CodeIgniter\CodeIgniter->handleRequest(null, Object(Config\Cache), false)
+ 8 SYSTEMPATH\Boot.php(325): CodeIgniter\CodeIgniter->run()
+ 9 SYSTEMPATH\Boot.php(67): CodeIgniter\Boot::runCodeIgniter(Object(CodeIgniter\CodeIgniter))
+10 FCPATH\index.php(56): CodeIgniter\Boot::bootWeb(Object(Config\Paths))
+11 SYSTEMPATH\rewrite.php(44): require_once('C:\\laragon\\www\\codeigniter\\public\\index.php')

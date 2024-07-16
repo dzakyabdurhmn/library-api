@@ -1,0 +1,256 @@
+ERROR - 2024-07-13 15:38:13 --> mysqli_sql_exception: Duplicate entry '1' for key 'catalog_buku.author_id' in C:\laragon\www\codeigniter\system\Database\MySQLi\Connection.php:312
+Stack trace:
+#0 C:\laragon\www\codeigniter\system\Database\MySQLi\Connection.php(312): mysqli->query('INSERT INTO cat...', 0)
+#1 C:\laragon\www\codeigniter\system\Database\BaseConnection.php(734): CodeIgniter\Database\MySQLi\Connection->execute('INSERT INTO cat...')
+#2 C:\laragon\www\codeigniter\system\Database\BaseConnection.php(648): CodeIgniter\Database\BaseConnection->simpleQuery('INSERT INTO cat...')
+#3 C:\laragon\www\codeigniter\app\Controllers\BookController.php(61): CodeIgniter\Database\BaseConnection->query('INSERT INTO cat...', Array)
+#4 C:\laragon\www\codeigniter\system\CodeIgniter.php(933): App\Controllers\BookController->create()
+#5 C:\laragon\www\codeigniter\system\CodeIgniter.php(509): CodeIgniter\CodeIgniter->runController(Object(App\Controllers\BookController))
+#6 C:\laragon\www\codeigniter\system\CodeIgniter.php(355): CodeIgniter\CodeIgniter->handleRequest(NULL, Object(Config\Cache), false)
+#7 C:\laragon\www\codeigniter\system\Boot.php(325): CodeIgniter\CodeIgniter->run()
+#8 C:\laragon\www\codeigniter\system\Boot.php(67): CodeIgniter\Boot::runCodeIgniter(Object(CodeIgniter\CodeIgniter))
+#9 C:\laragon\www\codeigniter\public\index.php(56): CodeIgniter\Boot::bootWeb(Object(Config\Paths))
+#10 C:\laragon\www\codeigniter\system\rewrite.php(44): require_once('C:\\laragon\\www\\...')
+#11 {main}
+CRITICAL - 2024-07-13 15:38:13 --> CodeIgniter\Database\Exceptions\DatabaseException: Duplicate entry '1' for key 'catalog_buku.author_id'
+[Method: POST, Route: books]
+in SYSTEMPATH\Database\BaseConnection.php on line 688.
+ 1 APPPATH\Controllers\BookController.php(61): CodeIgniter\Database\BaseConnection->query('INSERT INTO catalog_buku (title, publisher_id, publication_year, isbn, author_id) VALUES (:title:, :publisher_id:, :publication_year:, :isbn:, :author_id:)', [...])
+ 2 SYSTEMPATH\CodeIgniter.php(933): App\Controllers\BookController->create()
+ 3 SYSTEMPATH\CodeIgniter.php(509): CodeIgniter\CodeIgniter->runController(Object(App\Controllers\BookController))
+ 4 SYSTEMPATH\CodeIgniter.php(355): CodeIgniter\CodeIgniter->handleRequest(null, Object(Config\Cache), false)
+ 5 SYSTEMPATH\Boot.php(325): CodeIgniter\CodeIgniter->run()
+ 6 SYSTEMPATH\Boot.php(67): CodeIgniter\Boot::runCodeIgniter(Object(CodeIgniter\CodeIgniter))
+ 7 FCPATH\index.php(56): CodeIgniter\Boot::bootWeb(Object(Config\Paths))
+ 8 SYSTEMPATH\rewrite.php(44): require_once('C:\\laragon\\www\\codeigniter\\public\\index.php')
+CRITICAL - 2024-07-13 15:38:13 --> [Caused by] CodeIgniter\Database\Exceptions\DatabaseException: Duplicate entry '1' for key 'catalog_buku.author_id'
+in SYSTEMPATH\Database\MySQLi\Connection.php on line 317.
+ 1 SYSTEMPATH\Database\BaseConnection.php(734): CodeIgniter\Database\MySQLi\Connection->execute('INSERT INTO catalog_buku (title, publisher_id, publication_year, isbn, author_id) VALUES (\'Negara para bedebah\', \'200000\', \'2023\', \'9786238829620\', \'1\')')
+ 2 SYSTEMPATH\Database\BaseConnection.php(648): CodeIgniter\Database\BaseConnection->simpleQuery('INSERT INTO catalog_buku (title, publisher_id, publication_year, isbn, author_id) VALUES (\'Negara para bedebah\', \'200000\', \'2023\', \'9786238829620\', \'1\')')
+ 3 APPPATH\Controllers\BookController.php(61): CodeIgniter\Database\BaseConnection->query('INSERT INTO catalog_buku (title, publisher_id, publication_year, isbn, author_id) VALUES (:title:, :publisher_id:, :publication_year:, :isbn:, :author_id:)', [...])
+ 4 SYSTEMPATH\CodeIgniter.php(933): App\Controllers\BookController->create()
+ 5 SYSTEMPATH\CodeIgniter.php(509): CodeIgniter\CodeIgniter->runController(Object(App\Controllers\BookController))
+ 6 SYSTEMPATH\CodeIgniter.php(355): CodeIgniter\CodeIgniter->handleRequest(null, Object(Config\Cache), false)
+ 7 SYSTEMPATH\Boot.php(325): CodeIgniter\CodeIgniter->run()
+ 8 SYSTEMPATH\Boot.php(67): CodeIgniter\Boot::runCodeIgniter(Object(CodeIgniter\CodeIgniter))
+ 9 FCPATH\index.php(56): CodeIgniter\Boot::bootWeb(Object(Config\Paths))
+10 SYSTEMPATH\rewrite.php(44): require_once('C:\\laragon\\www\\codeigniter\\public\\index.php')
+CRITICAL - 2024-07-13 15:38:13 --> [Caused by] mysqli_sql_exception: Duplicate entry '1' for key 'catalog_buku.author_id'
+in SYSTEMPATH\Database\MySQLi\Connection.php on line 312.
+ 1 SYSTEMPATH\Database\MySQLi\Connection.php(312): mysqli->query('INSERT INTO catalog_buku (title, publisher_id, publication_year, isbn, author_id) VALUES (\'Negara para bedebah\', \'200000\', \'2023\', \'9786238829620\', \'1\')', 0)
+ 2 SYSTEMPATH\Database\BaseConnection.php(734): CodeIgniter\Database\MySQLi\Connection->execute('INSERT INTO catalog_buku (title, publisher_id, publication_year, isbn, author_id) VALUES (\'Negara para bedebah\', \'200000\', \'2023\', \'9786238829620\', \'1\')')
+ 3 SYSTEMPATH\Database\BaseConnection.php(648): CodeIgniter\Database\BaseConnection->simpleQuery('INSERT INTO catalog_buku (title, publisher_id, publication_year, isbn, author_id) VALUES (\'Negara para bedebah\', \'200000\', \'2023\', \'9786238829620\', \'1\')')
+ 4 APPPATH\Controllers\BookController.php(61): CodeIgniter\Database\BaseConnection->query('INSERT INTO catalog_buku (title, publisher_id, publication_year, isbn, author_id) VALUES (:title:, :publisher_id:, :publication_year:, :isbn:, :author_id:)', [...])
+ 5 SYSTEMPATH\CodeIgniter.php(933): App\Controllers\BookController->create()
+ 6 SYSTEMPATH\CodeIgniter.php(509): CodeIgniter\CodeIgniter->runController(Object(App\Controllers\BookController))
+ 7 SYSTEMPATH\CodeIgniter.php(355): CodeIgniter\CodeIgniter->handleRequest(null, Object(Config\Cache), false)
+ 8 SYSTEMPATH\Boot.php(325): CodeIgniter\CodeIgniter->run()
+ 9 SYSTEMPATH\Boot.php(67): CodeIgniter\Boot::runCodeIgniter(Object(CodeIgniter\CodeIgniter))
+10 FCPATH\index.php(56): CodeIgniter\Boot::bootWeb(Object(Config\Paths))
+11 SYSTEMPATH\rewrite.php(44): require_once('C:\\laragon\\www\\codeigniter\\public\\index.php')
+CRITICAL - 2024-07-13 15:38:48 --> CodeIgniter\HTTP\Exceptions\HTTPException: Failed to parse JSON string. Error: Control character error, possibly incorrectly encoded
+[Method: POST, Route: books]
+in SYSTEMPATH\HTTP\IncomingRequest.php on line 537.
+ 1 SYSTEMPATH\HTTP\IncomingRequest.php(537): CodeIgniter\HTTP\Exceptions\HTTPException::forInvalidJSON('Control character error, possibly incorrectly encoded')
+ 2 SYSTEMPATH\Validation\Validation.php(509): CodeIgniter\HTTP\IncomingRequest->getJSON(true)
+ 3 SYSTEMPATH\Controller.php(137): CodeIgniter\Validation\Validation->withRequest(Object(CodeIgniter\HTTP\IncomingRequest))
+ 4 APPPATH\Controllers\BookController.php(48): CodeIgniter\Controller->validate([...])
+ 5 SYSTEMPATH\CodeIgniter.php(933): App\Controllers\BookController->create()
+ 6 SYSTEMPATH\CodeIgniter.php(509): CodeIgniter\CodeIgniter->runController(Object(App\Controllers\BookController))
+ 7 SYSTEMPATH\CodeIgniter.php(355): CodeIgniter\CodeIgniter->handleRequest(null, Object(Config\Cache), false)
+ 8 SYSTEMPATH\Boot.php(325): CodeIgniter\CodeIgniter->run()
+ 9 SYSTEMPATH\Boot.php(67): CodeIgniter\Boot::runCodeIgniter(Object(CodeIgniter\CodeIgniter))
+10 FCPATH\index.php(56): CodeIgniter\Boot::bootWeb(Object(Config\Paths))
+11 SYSTEMPATH\rewrite.php(44): require_once('C:\\laragon\\www\\codeigniter\\public\\index.php')
+CRITICAL - 2024-07-13 15:41:16 --> CodeIgniter\HTTP\Exceptions\HTTPException: Failed to parse JSON string. Error: Control character error, possibly incorrectly encoded
+[Method: POST, Route: books]
+in SYSTEMPATH\HTTP\IncomingRequest.php on line 537.
+ 1 SYSTEMPATH\HTTP\IncomingRequest.php(537): CodeIgniter\HTTP\Exceptions\HTTPException::forInvalidJSON('Control character error, possibly incorrectly encoded')
+ 2 SYSTEMPATH\Validation\Validation.php(509): CodeIgniter\HTTP\IncomingRequest->getJSON(true)
+ 3 SYSTEMPATH\Controller.php(137): CodeIgniter\Validation\Validation->withRequest(Object(CodeIgniter\HTTP\IncomingRequest))
+ 4 APPPATH\Controllers\BookController.php(48): CodeIgniter\Controller->validate([...])
+ 5 SYSTEMPATH\CodeIgniter.php(933): App\Controllers\BookController->create()
+ 6 SYSTEMPATH\CodeIgniter.php(509): CodeIgniter\CodeIgniter->runController(Object(App\Controllers\BookController))
+ 7 SYSTEMPATH\CodeIgniter.php(355): CodeIgniter\CodeIgniter->handleRequest(null, Object(Config\Cache), false)
+ 8 SYSTEMPATH\Boot.php(325): CodeIgniter\CodeIgniter->run()
+ 9 SYSTEMPATH\Boot.php(67): CodeIgniter\Boot::runCodeIgniter(Object(CodeIgniter\CodeIgniter))
+10 FCPATH\index.php(56): CodeIgniter\Boot::bootWeb(Object(Config\Paths))
+11 SYSTEMPATH\rewrite.php(44): require_once('C:\\laragon\\www\\codeigniter\\public\\index.php')
+CRITICAL - 2024-07-13 15:42:42 --> CodeIgniter\HTTP\Exceptions\HTTPException: Failed to parse JSON string. Error: Control character error, possibly incorrectly encoded
+[Method: POST, Route: books]
+in SYSTEMPATH\HTTP\IncomingRequest.php on line 537.
+ 1 SYSTEMPATH\HTTP\IncomingRequest.php(537): CodeIgniter\HTTP\Exceptions\HTTPException::forInvalidJSON('Control character error, possibly incorrectly encoded')
+ 2 SYSTEMPATH\Validation\Validation.php(509): CodeIgniter\HTTP\IncomingRequest->getJSON(true)
+ 3 SYSTEMPATH\Controller.php(137): CodeIgniter\Validation\Validation->withRequest(Object(CodeIgniter\HTTP\IncomingRequest))
+ 4 APPPATH\Controllers\BookController.php(48): CodeIgniter\Controller->validate([...])
+ 5 SYSTEMPATH\CodeIgniter.php(933): App\Controllers\BookController->create()
+ 6 SYSTEMPATH\CodeIgniter.php(509): CodeIgniter\CodeIgniter->runController(Object(App\Controllers\BookController))
+ 7 SYSTEMPATH\CodeIgniter.php(355): CodeIgniter\CodeIgniter->handleRequest(null, Object(Config\Cache), false)
+ 8 SYSTEMPATH\Boot.php(325): CodeIgniter\CodeIgniter->run()
+ 9 SYSTEMPATH\Boot.php(67): CodeIgniter\Boot::runCodeIgniter(Object(CodeIgniter\CodeIgniter))
+10 FCPATH\index.php(56): CodeIgniter\Boot::bootWeb(Object(Config\Paths))
+11 SYSTEMPATH\rewrite.php(44): require_once('C:\\laragon\\www\\codeigniter\\public\\index.php')
+CRITICAL - 2024-07-13 15:43:15 --> CodeIgniter\HTTP\Exceptions\HTTPException: Failed to parse JSON string. Error: Control character error, possibly incorrectly encoded
+[Method: POST, Route: books]
+in SYSTEMPATH\HTTP\IncomingRequest.php on line 537.
+ 1 SYSTEMPATH\HTTP\IncomingRequest.php(537): CodeIgniter\HTTP\Exceptions\HTTPException::forInvalidJSON('Control character error, possibly incorrectly encoded')
+ 2 SYSTEMPATH\Validation\Validation.php(509): CodeIgniter\HTTP\IncomingRequest->getJSON(true)
+ 3 SYSTEMPATH\Controller.php(137): CodeIgniter\Validation\Validation->withRequest(Object(CodeIgniter\HTTP\IncomingRequest))
+ 4 APPPATH\Controllers\BookController.php(48): CodeIgniter\Controller->validate([...])
+ 5 SYSTEMPATH\CodeIgniter.php(933): App\Controllers\BookController->create()
+ 6 SYSTEMPATH\CodeIgniter.php(509): CodeIgniter\CodeIgniter->runController(Object(App\Controllers\BookController))
+ 7 SYSTEMPATH\CodeIgniter.php(355): CodeIgniter\CodeIgniter->handleRequest(null, Object(Config\Cache), false)
+ 8 SYSTEMPATH\Boot.php(325): CodeIgniter\CodeIgniter->run()
+ 9 SYSTEMPATH\Boot.php(67): CodeIgniter\Boot::runCodeIgniter(Object(CodeIgniter\CodeIgniter))
+10 FCPATH\index.php(56): CodeIgniter\Boot::bootWeb(Object(Config\Paths))
+11 SYSTEMPATH\rewrite.php(44): require_once('C:\\laragon\\www\\codeigniter\\public\\index.php')
+ERROR - 2024-07-13 15:44:23 --> mysqli_sql_exception: Unknown column 'book_id' in 'where clause' in C:\laragon\www\codeigniter\system\Database\MySQLi\Connection.php:312
+Stack trace:
+#0 C:\laragon\www\codeigniter\system\Database\MySQLi\Connection.php(312): mysqli->query('DELETE FROM aut...', 0)
+#1 C:\laragon\www\codeigniter\system\Database\BaseConnection.php(734): CodeIgniter\Database\MySQLi\Connection->execute('DELETE FROM aut...')
+#2 C:\laragon\www\codeigniter\system\Database\BaseConnection.php(648): CodeIgniter\Database\BaseConnection->simpleQuery('DELETE FROM aut...')
+#3 C:\laragon\www\codeigniter\app\Controllers\BookController.php(116): CodeIgniter\Database\BaseConnection->query('DELETE FROM aut...', Array)
+#4 C:\laragon\www\codeigniter\system\CodeIgniter.php(933): App\Controllers\BookController->delete('1')
+#5 C:\laragon\www\codeigniter\system\CodeIgniter.php(509): CodeIgniter\CodeIgniter->runController(Object(App\Controllers\BookController))
+#6 C:\laragon\www\codeigniter\system\CodeIgniter.php(355): CodeIgniter\CodeIgniter->handleRequest(NULL, Object(Config\Cache), false)
+#7 C:\laragon\www\codeigniter\system\Boot.php(325): CodeIgniter\CodeIgniter->run()
+#8 C:\laragon\www\codeigniter\system\Boot.php(67): CodeIgniter\Boot::runCodeIgniter(Object(CodeIgniter\CodeIgniter))
+#9 C:\laragon\www\codeigniter\public\index.php(56): CodeIgniter\Boot::bootWeb(Object(Config\Paths))
+#10 C:\laragon\www\codeigniter\system\rewrite.php(44): require_once('C:\\laragon\\www\\...')
+#11 {main}
+CRITICAL - 2024-07-13 15:44:23 --> CodeIgniter\Database\Exceptions\DatabaseException: Unknown column 'book_id' in 'where clause'
+[Method: DELETE, Route: books/1]
+in SYSTEMPATH\Database\BaseConnection.php on line 688.
+ 1 APPPATH\Controllers\BookController.php(116): CodeIgniter\Database\BaseConnection->query('DELETE FROM author WHERE book_id = :book_id:', [...])
+ 2 SYSTEMPATH\CodeIgniter.php(933): App\Controllers\BookController->delete('1')
+ 3 SYSTEMPATH\CodeIgniter.php(509): CodeIgniter\CodeIgniter->runController(Object(App\Controllers\BookController))
+ 4 SYSTEMPATH\CodeIgniter.php(355): CodeIgniter\CodeIgniter->handleRequest(null, Object(Config\Cache), false)
+ 5 SYSTEMPATH\Boot.php(325): CodeIgniter\CodeIgniter->run()
+ 6 SYSTEMPATH\Boot.php(67): CodeIgniter\Boot::runCodeIgniter(Object(CodeIgniter\CodeIgniter))
+ 7 FCPATH\index.php(56): CodeIgniter\Boot::bootWeb(Object(Config\Paths))
+ 8 SYSTEMPATH\rewrite.php(44): require_once('C:\\laragon\\www\\codeigniter\\public\\index.php')
+CRITICAL - 2024-07-13 15:44:23 --> [Caused by] CodeIgniter\Database\Exceptions\DatabaseException: Unknown column 'book_id' in 'where clause'
+in SYSTEMPATH\Database\MySQLi\Connection.php on line 317.
+ 1 SYSTEMPATH\Database\BaseConnection.php(734): CodeIgniter\Database\MySQLi\Connection->execute('DELETE FROM author WHERE book_id = \'1\'')
+ 2 SYSTEMPATH\Database\BaseConnection.php(648): CodeIgniter\Database\BaseConnection->simpleQuery('DELETE FROM author WHERE book_id = \'1\'')
+ 3 APPPATH\Controllers\BookController.php(116): CodeIgniter\Database\BaseConnection->query('DELETE FROM author WHERE book_id = :book_id:', [...])
+ 4 SYSTEMPATH\CodeIgniter.php(933): App\Controllers\BookController->delete('1')
+ 5 SYSTEMPATH\CodeIgniter.php(509): CodeIgniter\CodeIgniter->runController(Object(App\Controllers\BookController))
+ 6 SYSTEMPATH\CodeIgniter.php(355): CodeIgniter\CodeIgniter->handleRequest(null, Object(Config\Cache), false)
+ 7 SYSTEMPATH\Boot.php(325): CodeIgniter\CodeIgniter->run()
+ 8 SYSTEMPATH\Boot.php(67): CodeIgniter\Boot::runCodeIgniter(Object(CodeIgniter\CodeIgniter))
+ 9 FCPATH\index.php(56): CodeIgniter\Boot::bootWeb(Object(Config\Paths))
+10 SYSTEMPATH\rewrite.php(44): require_once('C:\\laragon\\www\\codeigniter\\public\\index.php')
+CRITICAL - 2024-07-13 15:44:23 --> [Caused by] mysqli_sql_exception: Unknown column 'book_id' in 'where clause'
+in SYSTEMPATH\Database\MySQLi\Connection.php on line 312.
+ 1 SYSTEMPATH\Database\MySQLi\Connection.php(312): mysqli->query('DELETE FROM author WHERE book_id = \'1\'', 0)
+ 2 SYSTEMPATH\Database\BaseConnection.php(734): CodeIgniter\Database\MySQLi\Connection->execute('DELETE FROM author WHERE book_id = \'1\'')
+ 3 SYSTEMPATH\Database\BaseConnection.php(648): CodeIgniter\Database\BaseConnection->simpleQuery('DELETE FROM author WHERE book_id = \'1\'')
+ 4 APPPATH\Controllers\BookController.php(116): CodeIgniter\Database\BaseConnection->query('DELETE FROM author WHERE book_id = :book_id:', [...])
+ 5 SYSTEMPATH\CodeIgniter.php(933): App\Controllers\BookController->delete('1')
+ 6 SYSTEMPATH\CodeIgniter.php(509): CodeIgniter\CodeIgniter->runController(Object(App\Controllers\BookController))
+ 7 SYSTEMPATH\CodeIgniter.php(355): CodeIgniter\CodeIgniter->handleRequest(null, Object(Config\Cache), false)
+ 8 SYSTEMPATH\Boot.php(325): CodeIgniter\CodeIgniter->run()
+ 9 SYSTEMPATH\Boot.php(67): CodeIgniter\Boot::runCodeIgniter(Object(CodeIgniter\CodeIgniter))
+10 FCPATH\index.php(56): CodeIgniter\Boot::bootWeb(Object(Config\Paths))
+11 SYSTEMPATH\rewrite.php(44): require_once('C:\\laragon\\www\\codeigniter\\public\\index.php')
+ERROR - 2024-07-13 15:44:24 --> mysqli_sql_exception: Unknown column 'book_id' in 'where clause' in C:\laragon\www\codeigniter\system\Database\MySQLi\Connection.php:312
+Stack trace:
+#0 C:\laragon\www\codeigniter\system\Database\MySQLi\Connection.php(312): mysqli->query('DELETE FROM aut...', 0)
+#1 C:\laragon\www\codeigniter\system\Database\BaseConnection.php(734): CodeIgniter\Database\MySQLi\Connection->execute('DELETE FROM aut...')
+#2 C:\laragon\www\codeigniter\system\Database\BaseConnection.php(648): CodeIgniter\Database\BaseConnection->simpleQuery('DELETE FROM aut...')
+#3 C:\laragon\www\codeigniter\app\Controllers\BookController.php(116): CodeIgniter\Database\BaseConnection->query('DELETE FROM aut...', Array)
+#4 C:\laragon\www\codeigniter\system\CodeIgniter.php(933): App\Controllers\BookController->delete('1')
+#5 C:\laragon\www\codeigniter\system\CodeIgniter.php(509): CodeIgniter\CodeIgniter->runController(Object(App\Controllers\BookController))
+#6 C:\laragon\www\codeigniter\system\CodeIgniter.php(355): CodeIgniter\CodeIgniter->handleRequest(NULL, Object(Config\Cache), false)
+#7 C:\laragon\www\codeigniter\system\Boot.php(325): CodeIgniter\CodeIgniter->run()
+#8 C:\laragon\www\codeigniter\system\Boot.php(67): CodeIgniter\Boot::runCodeIgniter(Object(CodeIgniter\CodeIgniter))
+#9 C:\laragon\www\codeigniter\public\index.php(56): CodeIgniter\Boot::bootWeb(Object(Config\Paths))
+#10 C:\laragon\www\codeigniter\system\rewrite.php(44): require_once('C:\\laragon\\www\\...')
+#11 {main}
+CRITICAL - 2024-07-13 15:44:24 --> CodeIgniter\Database\Exceptions\DatabaseException: Unknown column 'book_id' in 'where clause'
+[Method: DELETE, Route: books/1]
+in SYSTEMPATH\Database\BaseConnection.php on line 688.
+ 1 APPPATH\Controllers\BookController.php(116): CodeIgniter\Database\BaseConnection->query('DELETE FROM author WHERE book_id = :book_id:', [...])
+ 2 SYSTEMPATH\CodeIgniter.php(933): App\Controllers\BookController->delete('1')
+ 3 SYSTEMPATH\CodeIgniter.php(509): CodeIgniter\CodeIgniter->runController(Object(App\Controllers\BookController))
+ 4 SYSTEMPATH\CodeIgniter.php(355): CodeIgniter\CodeIgniter->handleRequest(null, Object(Config\Cache), false)
+ 5 SYSTEMPATH\Boot.php(325): CodeIgniter\CodeIgniter->run()
+ 6 SYSTEMPATH\Boot.php(67): CodeIgniter\Boot::runCodeIgniter(Object(CodeIgniter\CodeIgniter))
+ 7 FCPATH\index.php(56): CodeIgniter\Boot::bootWeb(Object(Config\Paths))
+ 8 SYSTEMPATH\rewrite.php(44): require_once('C:\\laragon\\www\\codeigniter\\public\\index.php')
+CRITICAL - 2024-07-13 15:44:24 --> [Caused by] CodeIgniter\Database\Exceptions\DatabaseException: Unknown column 'book_id' in 'where clause'
+in SYSTEMPATH\Database\MySQLi\Connection.php on line 317.
+ 1 SYSTEMPATH\Database\BaseConnection.php(734): CodeIgniter\Database\MySQLi\Connection->execute('DELETE FROM author WHERE book_id = \'1\'')
+ 2 SYSTEMPATH\Database\BaseConnection.php(648): CodeIgniter\Database\BaseConnection->simpleQuery('DELETE FROM author WHERE book_id = \'1\'')
+ 3 APPPATH\Controllers\BookController.php(116): CodeIgniter\Database\BaseConnection->query('DELETE FROM author WHERE book_id = :book_id:', [...])
+ 4 SYSTEMPATH\CodeIgniter.php(933): App\Controllers\BookController->delete('1')
+ 5 SYSTEMPATH\CodeIgniter.php(509): CodeIgniter\CodeIgniter->runController(Object(App\Controllers\BookController))
+ 6 SYSTEMPATH\CodeIgniter.php(355): CodeIgniter\CodeIgniter->handleRequest(null, Object(Config\Cache), false)
+ 7 SYSTEMPATH\Boot.php(325): CodeIgniter\CodeIgniter->run()
+ 8 SYSTEMPATH\Boot.php(67): CodeIgniter\Boot::runCodeIgniter(Object(CodeIgniter\CodeIgniter))
+ 9 FCPATH\index.php(56): CodeIgniter\Boot::bootWeb(Object(Config\Paths))
+10 SYSTEMPATH\rewrite.php(44): require_once('C:\\laragon\\www\\codeigniter\\public\\index.php')
+CRITICAL - 2024-07-13 15:44:24 --> [Caused by] mysqli_sql_exception: Unknown column 'book_id' in 'where clause'
+in SYSTEMPATH\Database\MySQLi\Connection.php on line 312.
+ 1 SYSTEMPATH\Database\MySQLi\Connection.php(312): mysqli->query('DELETE FROM author WHERE book_id = \'1\'', 0)
+ 2 SYSTEMPATH\Database\BaseConnection.php(734): CodeIgniter\Database\MySQLi\Connection->execute('DELETE FROM author WHERE book_id = \'1\'')
+ 3 SYSTEMPATH\Database\BaseConnection.php(648): CodeIgniter\Database\BaseConnection->simpleQuery('DELETE FROM author WHERE book_id = \'1\'')
+ 4 APPPATH\Controllers\BookController.php(116): CodeIgniter\Database\BaseConnection->query('DELETE FROM author WHERE book_id = :book_id:', [...])
+ 5 SYSTEMPATH\CodeIgniter.php(933): App\Controllers\BookController->delete('1')
+ 6 SYSTEMPATH\CodeIgniter.php(509): CodeIgniter\CodeIgniter->runController(Object(App\Controllers\BookController))
+ 7 SYSTEMPATH\CodeIgniter.php(355): CodeIgniter\CodeIgniter->handleRequest(null, Object(Config\Cache), false)
+ 8 SYSTEMPATH\Boot.php(325): CodeIgniter\CodeIgniter->run()
+ 9 SYSTEMPATH\Boot.php(67): CodeIgniter\Boot::runCodeIgniter(Object(CodeIgniter\CodeIgniter))
+10 FCPATH\index.php(56): CodeIgniter\Boot::bootWeb(Object(Config\Paths))
+11 SYSTEMPATH\rewrite.php(44): require_once('C:\\laragon\\www\\codeigniter\\public\\index.php')
+ERROR - 2024-07-13 15:44:51 --> mysqli_sql_exception: Table 'esoda_api_login.book_id' doesn't exist in C:\laragon\www\codeigniter\system\Database\MySQLi\Connection.php:312
+Stack trace:
+#0 C:\laragon\www\codeigniter\system\Database\MySQLi\Connection.php(312): mysqli->query('DELETE FROM boo...', 0)
+#1 C:\laragon\www\codeigniter\system\Database\BaseConnection.php(734): CodeIgniter\Database\MySQLi\Connection->execute('DELETE FROM boo...')
+#2 C:\laragon\www\codeigniter\system\Database\BaseConnection.php(648): CodeIgniter\Database\BaseConnection->simpleQuery('DELETE FROM boo...')
+#3 C:\laragon\www\codeigniter\app\Controllers\BookController.php(116): CodeIgniter\Database\BaseConnection->query('DELETE FROM boo...', Array)
+#4 C:\laragon\www\codeigniter\system\CodeIgniter.php(933): App\Controllers\BookController->delete('1')
+#5 C:\laragon\www\codeigniter\system\CodeIgniter.php(509): CodeIgniter\CodeIgniter->runController(Object(App\Controllers\BookController))
+#6 C:\laragon\www\codeigniter\system\CodeIgniter.php(355): CodeIgniter\CodeIgniter->handleRequest(NULL, Object(Config\Cache), false)
+#7 C:\laragon\www\codeigniter\system\Boot.php(325): CodeIgniter\CodeIgniter->run()
+#8 C:\laragon\www\codeigniter\system\Boot.php(67): CodeIgniter\Boot::runCodeIgniter(Object(CodeIgniter\CodeIgniter))
+#9 C:\laragon\www\codeigniter\public\index.php(56): CodeIgniter\Boot::bootWeb(Object(Config\Paths))
+#10 C:\laragon\www\codeigniter\system\rewrite.php(44): require_once('C:\\laragon\\www\\...')
+#11 {main}
+CRITICAL - 2024-07-13 15:44:51 --> CodeIgniter\Database\Exceptions\DatabaseException: Table 'esoda_api_login.book_id' doesn't exist
+[Method: DELETE, Route: books/1]
+in SYSTEMPATH\Database\BaseConnection.php on line 688.
+ 1 APPPATH\Controllers\BookController.php(116): CodeIgniter\Database\BaseConnection->query('DELETE FROM book_id WHERE book_id = :book_id:', [...])
+ 2 SYSTEMPATH\CodeIgniter.php(933): App\Controllers\BookController->delete('1')
+ 3 SYSTEMPATH\CodeIgniter.php(509): CodeIgniter\CodeIgniter->runController(Object(App\Controllers\BookController))
+ 4 SYSTEMPATH\CodeIgniter.php(355): CodeIgniter\CodeIgniter->handleRequest(null, Object(Config\Cache), false)
+ 5 SYSTEMPATH\Boot.php(325): CodeIgniter\CodeIgniter->run()
+ 6 SYSTEMPATH\Boot.php(67): CodeIgniter\Boot::runCodeIgniter(Object(CodeIgniter\CodeIgniter))
+ 7 FCPATH\index.php(56): CodeIgniter\Boot::bootWeb(Object(Config\Paths))
+ 8 SYSTEMPATH\rewrite.php(44): require_once('C:\\laragon\\www\\codeigniter\\public\\index.php')
+CRITICAL - 2024-07-13 15:44:51 --> [Caused by] CodeIgniter\Database\Exceptions\DatabaseException: Table 'esoda_api_login.book_id' doesn't exist
+in SYSTEMPATH\Database\MySQLi\Connection.php on line 317.
+ 1 SYSTEMPATH\Database\BaseConnection.php(734): CodeIgniter\Database\MySQLi\Connection->execute('DELETE FROM book_id WHERE book_id = \'1\'')
+ 2 SYSTEMPATH\Database\BaseConnection.php(648): CodeIgniter\Database\BaseConnection->simpleQuery('DELETE FROM book_id WHERE book_id = \'1\'')
+ 3 APPPATH\Controllers\BookController.php(116): CodeIgniter\Database\BaseConnection->query('DELETE FROM book_id WHERE book_id = :book_id:', [...])
+ 4 SYSTEMPATH\CodeIgniter.php(933): App\Controllers\BookController->delete('1')
+ 5 SYSTEMPATH\CodeIgniter.php(509): CodeIgniter\CodeIgniter->runController(Object(App\Controllers\BookController))
+ 6 SYSTEMPATH\CodeIgniter.php(355): CodeIgniter\CodeIgniter->handleRequest(null, Object(Config\Cache), false)
+ 7 SYSTEMPATH\Boot.php(325): CodeIgniter\CodeIgniter->run()
+ 8 SYSTEMPATH\Boot.php(67): CodeIgniter\Boot::runCodeIgniter(Object(CodeIgniter\CodeIgniter))
+ 9 FCPATH\index.php(56): CodeIgniter\Boot::bootWeb(Object(Config\Paths))
+10 SYSTEMPATH\rewrite.php(44): require_once('C:\\laragon\\www\\codeigniter\\public\\index.php')
+CRITICAL - 2024-07-13 15:44:51 --> [Caused by] mysqli_sql_exception: Table 'esoda_api_login.book_id' doesn't exist
+in SYSTEMPATH\Database\MySQLi\Connection.php on line 312.
+ 1 SYSTEMPATH\Database\MySQLi\Connection.php(312): mysqli->query('DELETE FROM book_id WHERE book_id = \'1\'', 0)
+ 2 SYSTEMPATH\Database\BaseConnection.php(734): CodeIgniter\Database\MySQLi\Connection->execute('DELETE FROM book_id WHERE book_id = \'1\'')
+ 3 SYSTEMPATH\Database\BaseConnection.php(648): CodeIgniter\Database\BaseConnection->simpleQuery('DELETE FROM book_id WHERE book_id = \'1\'')
+ 4 APPPATH\Controllers\BookController.php(116): CodeIgniter\Database\BaseConnection->query('DELETE FROM book_id WHERE book_id = :book_id:', [...])
+ 5 SYSTEMPATH\CodeIgniter.php(933): App\Controllers\BookController->delete('1')
+ 6 SYSTEMPATH\CodeIgniter.php(509): CodeIgniter\CodeIgniter->runController(Object(App\Controllers\BookController))
+ 7 SYSTEMPATH\CodeIgniter.php(355): CodeIgniter\CodeIgniter->handleRequest(null, Object(Config\Cache), false)
+ 8 SYSTEMPATH\Boot.php(325): CodeIgniter\CodeIgniter->run()
+ 9 SYSTEMPATH\Boot.php(67): CodeIgniter\Boot::runCodeIgniter(Object(CodeIgniter\CodeIgniter))
+10 FCPATH\index.php(56): CodeIgniter\Boot::bootWeb(Object(Config\Paths))
+11 SYSTEMPATH\rewrite.php(44): require_once('C:\\laragon\\www\\codeigniter\\public\\index.php')
