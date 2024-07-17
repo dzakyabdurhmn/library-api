@@ -17,6 +17,15 @@ class BookController extends ResourceController
         return $this->respond($catalog_books);
     }
 
+    public function avalible_book()
+    {
+        $db = \Config\Database::connect();
+        $query = $db->query("SELECT * FROM catalog_books WHERE stock_quantity > 0");
+        $catalog_books = $query->getResult();
+
+        return $this->respond($catalog_books);
+    }
+
     public function show($book_id = null)
     {
         if ($book_id === null) {

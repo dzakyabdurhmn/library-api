@@ -1231,3 +1231,553 @@ in SYSTEMPATH\Database\MySQLi\Connection.php on line 312.
  9 SYSTEMPATH\Boot.php(67): CodeIgniter\Boot::runCodeIgniter(Object(CodeIgniter\CodeIgniter))
 10 FCPATH\index.php(56): CodeIgniter\Boot::bootWeb(Object(Config\Paths))
 11 SYSTEMPATH\rewrite.php(44): require_once('C:\\laragon\\www\\library-api\\public\\index.php')
+ERROR - 2024-07-16 08:04:12 --> mysqli_sql_exception: Duplicate entry '4' for key 'catalog_books.author_id' in C:\laragon\www\library-api\system\Database\MySQLi\Connection.php:312
+Stack trace:
+#0 C:\laragon\www\library-api\system\Database\MySQLi\Connection.php(312): mysqli->query('INSERT INTO cat...', 0)
+#1 C:\laragon\www\library-api\system\Database\BaseConnection.php(734): CodeIgniter\Database\MySQLi\Connection->execute('INSERT INTO cat...')
+#2 C:\laragon\www\library-api\system\Database\BaseConnection.php(648): CodeIgniter\Database\BaseConnection->simpleQuery('INSERT INTO cat...')
+#3 C:\laragon\www\library-api\app\Controllers\BookController.php(60): CodeIgniter\Database\BaseConnection->query('INSERT INTO cat...', Array)
+#4 C:\laragon\www\library-api\system\CodeIgniter.php(933): App\Controllers\BookController->create()
+#5 C:\laragon\www\library-api\system\CodeIgniter.php(509): CodeIgniter\CodeIgniter->runController(Object(App\Controllers\BookController))
+#6 C:\laragon\www\library-api\system\CodeIgniter.php(355): CodeIgniter\CodeIgniter->handleRequest(NULL, Object(Config\Cache), false)
+#7 C:\laragon\www\library-api\system\Boot.php(325): CodeIgniter\CodeIgniter->run()
+#8 C:\laragon\www\library-api\system\Boot.php(67): CodeIgniter\Boot::runCodeIgniter(Object(CodeIgniter\CodeIgniter))
+#9 C:\laragon\www\library-api\public\index.php(56): CodeIgniter\Boot::bootWeb(Object(Config\Paths))
+#10 C:\laragon\www\library-api\system\rewrite.php(44): require_once('C:\\laragon\\www\\...')
+#11 {main}
+CRITICAL - 2024-07-16 08:04:12 --> CodeIgniter\Database\Exceptions\DatabaseException: Duplicate entry '4' for key 'catalog_books.author_id'
+[Method: POST, Route: books]
+in SYSTEMPATH\Database\BaseConnection.php on line 688.
+ 1 APPPATH\Controllers\BookController.php(60): CodeIgniter\Database\BaseConnection->query('INSERT INTO catalog_books (title, publisher_id, publication_year, isbn, author_id) VALUES (:title:, :publisher_id:, :publication_year:, :isbn:, :author_id:)', [...])
+ 2 SYSTEMPATH\CodeIgniter.php(933): App\Controllers\BookController->create()
+ 3 SYSTEMPATH\CodeIgniter.php(509): CodeIgniter\CodeIgniter->runController(Object(App\Controllers\BookController))
+ 4 SYSTEMPATH\CodeIgniter.php(355): CodeIgniter\CodeIgniter->handleRequest(null, Object(Config\Cache), false)
+ 5 SYSTEMPATH\Boot.php(325): CodeIgniter\CodeIgniter->run()
+ 6 SYSTEMPATH\Boot.php(67): CodeIgniter\Boot::runCodeIgniter(Object(CodeIgniter\CodeIgniter))
+ 7 FCPATH\index.php(56): CodeIgniter\Boot::bootWeb(Object(Config\Paths))
+ 8 SYSTEMPATH\rewrite.php(44): require_once('C:\\laragon\\www\\library-api\\public\\index.php')
+CRITICAL - 2024-07-16 08:04:12 --> [Caused by] CodeIgniter\Database\Exceptions\DatabaseException: Duplicate entry '4' for key 'catalog_books.author_id'
+in SYSTEMPATH\Database\MySQLi\Connection.php on line 317.
+ 1 SYSTEMPATH\Database\BaseConnection.php(734): CodeIgniter\Database\MySQLi\Connection->execute('INSERT INTO catalog_books (title, publisher_id, publication_year, isbn, author_id) VALUES (\'ruang hampa fps\', \'1\', \'2030\', \'782793283\', \'4\')')
+ 2 SYSTEMPATH\Database\BaseConnection.php(648): CodeIgniter\Database\BaseConnection->simpleQuery('INSERT INTO catalog_books (title, publisher_id, publication_year, isbn, author_id) VALUES (\'ruang hampa fps\', \'1\', \'2030\', \'782793283\', \'4\')')
+ 3 APPPATH\Controllers\BookController.php(60): CodeIgniter\Database\BaseConnection->query('INSERT INTO catalog_books (title, publisher_id, publication_year, isbn, author_id) VALUES (:title:, :publisher_id:, :publication_year:, :isbn:, :author_id:)', [...])
+ 4 SYSTEMPATH\CodeIgniter.php(933): App\Controllers\BookController->create()
+ 5 SYSTEMPATH\CodeIgniter.php(509): CodeIgniter\CodeIgniter->runController(Object(App\Controllers\BookController))
+ 6 SYSTEMPATH\CodeIgniter.php(355): CodeIgniter\CodeIgniter->handleRequest(null, Object(Config\Cache), false)
+ 7 SYSTEMPATH\Boot.php(325): CodeIgniter\CodeIgniter->run()
+ 8 SYSTEMPATH\Boot.php(67): CodeIgniter\Boot::runCodeIgniter(Object(CodeIgniter\CodeIgniter))
+ 9 FCPATH\index.php(56): CodeIgniter\Boot::bootWeb(Object(Config\Paths))
+10 SYSTEMPATH\rewrite.php(44): require_once('C:\\laragon\\www\\library-api\\public\\index.php')
+CRITICAL - 2024-07-16 08:04:12 --> [Caused by] mysqli_sql_exception: Duplicate entry '4' for key 'catalog_books.author_id'
+in SYSTEMPATH\Database\MySQLi\Connection.php on line 312.
+ 1 SYSTEMPATH\Database\MySQLi\Connection.php(312): mysqli->query('INSERT INTO catalog_books (title, publisher_id, publication_year, isbn, author_id) VALUES (\'ruang hampa fps\', \'1\', \'2030\', \'782793283\', \'4\')', 0)
+ 2 SYSTEMPATH\Database\BaseConnection.php(734): CodeIgniter\Database\MySQLi\Connection->execute('INSERT INTO catalog_books (title, publisher_id, publication_year, isbn, author_id) VALUES (\'ruang hampa fps\', \'1\', \'2030\', \'782793283\', \'4\')')
+ 3 SYSTEMPATH\Database\BaseConnection.php(648): CodeIgniter\Database\BaseConnection->simpleQuery('INSERT INTO catalog_books (title, publisher_id, publication_year, isbn, author_id) VALUES (\'ruang hampa fps\', \'1\', \'2030\', \'782793283\', \'4\')')
+ 4 APPPATH\Controllers\BookController.php(60): CodeIgniter\Database\BaseConnection->query('INSERT INTO catalog_books (title, publisher_id, publication_year, isbn, author_id) VALUES (:title:, :publisher_id:, :publication_year:, :isbn:, :author_id:)', [...])
+ 5 SYSTEMPATH\CodeIgniter.php(933): App\Controllers\BookController->create()
+ 6 SYSTEMPATH\CodeIgniter.php(509): CodeIgniter\CodeIgniter->runController(Object(App\Controllers\BookController))
+ 7 SYSTEMPATH\CodeIgniter.php(355): CodeIgniter\CodeIgniter->handleRequest(null, Object(Config\Cache), false)
+ 8 SYSTEMPATH\Boot.php(325): CodeIgniter\CodeIgniter->run()
+ 9 SYSTEMPATH\Boot.php(67): CodeIgniter\Boot::runCodeIgniter(Object(CodeIgniter\CodeIgniter))
+10 FCPATH\index.php(56): CodeIgniter\Boot::bootWeb(Object(Config\Paths))
+11 SYSTEMPATH\rewrite.php(44): require_once('C:\\laragon\\www\\library-api\\public\\index.php')
+ERROR - 2024-07-16 08:05:12 --> mysqli_sql_exception: Duplicate entry '4' for key 'catalog_books.author_id' in C:\laragon\www\library-api\system\Database\MySQLi\Connection.php:312
+Stack trace:
+#0 C:\laragon\www\library-api\system\Database\MySQLi\Connection.php(312): mysqli->query('INSERT INTO cat...', 0)
+#1 C:\laragon\www\library-api\system\Database\BaseConnection.php(734): CodeIgniter\Database\MySQLi\Connection->execute('INSERT INTO cat...')
+#2 C:\laragon\www\library-api\system\Database\BaseConnection.php(648): CodeIgniter\Database\BaseConnection->simpleQuery('INSERT INTO cat...')
+#3 C:\laragon\www\library-api\app\Controllers\BookController.php(60): CodeIgniter\Database\BaseConnection->query('INSERT INTO cat...', Array)
+#4 C:\laragon\www\library-api\system\CodeIgniter.php(933): App\Controllers\BookController->create()
+#5 C:\laragon\www\library-api\system\CodeIgniter.php(509): CodeIgniter\CodeIgniter->runController(Object(App\Controllers\BookController))
+#6 C:\laragon\www\library-api\system\CodeIgniter.php(355): CodeIgniter\CodeIgniter->handleRequest(NULL, Object(Config\Cache), false)
+#7 C:\laragon\www\library-api\system\Boot.php(325): CodeIgniter\CodeIgniter->run()
+#8 C:\laragon\www\library-api\system\Boot.php(67): CodeIgniter\Boot::runCodeIgniter(Object(CodeIgniter\CodeIgniter))
+#9 C:\laragon\www\library-api\public\index.php(56): CodeIgniter\Boot::bootWeb(Object(Config\Paths))
+#10 C:\laragon\www\library-api\system\rewrite.php(44): require_once('C:\\laragon\\www\\...')
+#11 {main}
+CRITICAL - 2024-07-16 08:05:12 --> CodeIgniter\Database\Exceptions\DatabaseException: Duplicate entry '4' for key 'catalog_books.author_id'
+[Method: POST, Route: books]
+in SYSTEMPATH\Database\BaseConnection.php on line 688.
+ 1 APPPATH\Controllers\BookController.php(60): CodeIgniter\Database\BaseConnection->query('INSERT INTO catalog_books (title, publisher_id, publication_year, isbn, author_id) VALUES (:title:, :publisher_id:, :publication_year:, :isbn:, :author_id:)', [...])
+ 2 SYSTEMPATH\CodeIgniter.php(933): App\Controllers\BookController->create()
+ 3 SYSTEMPATH\CodeIgniter.php(509): CodeIgniter\CodeIgniter->runController(Object(App\Controllers\BookController))
+ 4 SYSTEMPATH\CodeIgniter.php(355): CodeIgniter\CodeIgniter->handleRequest(null, Object(Config\Cache), false)
+ 5 SYSTEMPATH\Boot.php(325): CodeIgniter\CodeIgniter->run()
+ 6 SYSTEMPATH\Boot.php(67): CodeIgniter\Boot::runCodeIgniter(Object(CodeIgniter\CodeIgniter))
+ 7 FCPATH\index.php(56): CodeIgniter\Boot::bootWeb(Object(Config\Paths))
+ 8 SYSTEMPATH\rewrite.php(44): require_once('C:\\laragon\\www\\library-api\\public\\index.php')
+CRITICAL - 2024-07-16 08:05:12 --> [Caused by] CodeIgniter\Database\Exceptions\DatabaseException: Duplicate entry '4' for key 'catalog_books.author_id'
+in SYSTEMPATH\Database\MySQLi\Connection.php on line 317.
+ 1 SYSTEMPATH\Database\BaseConnection.php(734): CodeIgniter\Database\MySQLi\Connection->execute('INSERT INTO catalog_books (title, publisher_id, publication_year, isbn, author_id) VALUES (\'ruang hampa fps\', \'1\', \'2030\', \'782793283\', \'4\')')
+ 2 SYSTEMPATH\Database\BaseConnection.php(648): CodeIgniter\Database\BaseConnection->simpleQuery('INSERT INTO catalog_books (title, publisher_id, publication_year, isbn, author_id) VALUES (\'ruang hampa fps\', \'1\', \'2030\', \'782793283\', \'4\')')
+ 3 APPPATH\Controllers\BookController.php(60): CodeIgniter\Database\BaseConnection->query('INSERT INTO catalog_books (title, publisher_id, publication_year, isbn, author_id) VALUES (:title:, :publisher_id:, :publication_year:, :isbn:, :author_id:)', [...])
+ 4 SYSTEMPATH\CodeIgniter.php(933): App\Controllers\BookController->create()
+ 5 SYSTEMPATH\CodeIgniter.php(509): CodeIgniter\CodeIgniter->runController(Object(App\Controllers\BookController))
+ 6 SYSTEMPATH\CodeIgniter.php(355): CodeIgniter\CodeIgniter->handleRequest(null, Object(Config\Cache), false)
+ 7 SYSTEMPATH\Boot.php(325): CodeIgniter\CodeIgniter->run()
+ 8 SYSTEMPATH\Boot.php(67): CodeIgniter\Boot::runCodeIgniter(Object(CodeIgniter\CodeIgniter))
+ 9 FCPATH\index.php(56): CodeIgniter\Boot::bootWeb(Object(Config\Paths))
+10 SYSTEMPATH\rewrite.php(44): require_once('C:\\laragon\\www\\library-api\\public\\index.php')
+CRITICAL - 2024-07-16 08:05:12 --> [Caused by] mysqli_sql_exception: Duplicate entry '4' for key 'catalog_books.author_id'
+in SYSTEMPATH\Database\MySQLi\Connection.php on line 312.
+ 1 SYSTEMPATH\Database\MySQLi\Connection.php(312): mysqli->query('INSERT INTO catalog_books (title, publisher_id, publication_year, isbn, author_id) VALUES (\'ruang hampa fps\', \'1\', \'2030\', \'782793283\', \'4\')', 0)
+ 2 SYSTEMPATH\Database\BaseConnection.php(734): CodeIgniter\Database\MySQLi\Connection->execute('INSERT INTO catalog_books (title, publisher_id, publication_year, isbn, author_id) VALUES (\'ruang hampa fps\', \'1\', \'2030\', \'782793283\', \'4\')')
+ 3 SYSTEMPATH\Database\BaseConnection.php(648): CodeIgniter\Database\BaseConnection->simpleQuery('INSERT INTO catalog_books (title, publisher_id, publication_year, isbn, author_id) VALUES (\'ruang hampa fps\', \'1\', \'2030\', \'782793283\', \'4\')')
+ 4 APPPATH\Controllers\BookController.php(60): CodeIgniter\Database\BaseConnection->query('INSERT INTO catalog_books (title, publisher_id, publication_year, isbn, author_id) VALUES (:title:, :publisher_id:, :publication_year:, :isbn:, :author_id:)', [...])
+ 5 SYSTEMPATH\CodeIgniter.php(933): App\Controllers\BookController->create()
+ 6 SYSTEMPATH\CodeIgniter.php(509): CodeIgniter\CodeIgniter->runController(Object(App\Controllers\BookController))
+ 7 SYSTEMPATH\CodeIgniter.php(355): CodeIgniter\CodeIgniter->handleRequest(null, Object(Config\Cache), false)
+ 8 SYSTEMPATH\Boot.php(325): CodeIgniter\CodeIgniter->run()
+ 9 SYSTEMPATH\Boot.php(67): CodeIgniter\Boot::runCodeIgniter(Object(CodeIgniter\CodeIgniter))
+10 FCPATH\index.php(56): CodeIgniter\Boot::bootWeb(Object(Config\Paths))
+11 SYSTEMPATH\rewrite.php(44): require_once('C:\\laragon\\www\\library-api\\public\\index.php')
+ERROR - 2024-07-16 08:05:20 --> mysqli_sql_exception: Duplicate entry '4' for key 'catalog_books.author_id' in C:\laragon\www\library-api\system\Database\MySQLi\Connection.php:312
+Stack trace:
+#0 C:\laragon\www\library-api\system\Database\MySQLi\Connection.php(312): mysqli->query('INSERT INTO cat...', 0)
+#1 C:\laragon\www\library-api\system\Database\BaseConnection.php(734): CodeIgniter\Database\MySQLi\Connection->execute('INSERT INTO cat...')
+#2 C:\laragon\www\library-api\system\Database\BaseConnection.php(648): CodeIgniter\Database\BaseConnection->simpleQuery('INSERT INTO cat...')
+#3 C:\laragon\www\library-api\app\Controllers\BookController.php(60): CodeIgniter\Database\BaseConnection->query('INSERT INTO cat...', Array)
+#4 C:\laragon\www\library-api\system\CodeIgniter.php(933): App\Controllers\BookController->create()
+#5 C:\laragon\www\library-api\system\CodeIgniter.php(509): CodeIgniter\CodeIgniter->runController(Object(App\Controllers\BookController))
+#6 C:\laragon\www\library-api\system\CodeIgniter.php(355): CodeIgniter\CodeIgniter->handleRequest(NULL, Object(Config\Cache), false)
+#7 C:\laragon\www\library-api\system\Boot.php(325): CodeIgniter\CodeIgniter->run()
+#8 C:\laragon\www\library-api\system\Boot.php(67): CodeIgniter\Boot::runCodeIgniter(Object(CodeIgniter\CodeIgniter))
+#9 C:\laragon\www\library-api\public\index.php(56): CodeIgniter\Boot::bootWeb(Object(Config\Paths))
+#10 C:\laragon\www\library-api\system\rewrite.php(44): require_once('C:\\laragon\\www\\...')
+#11 {main}
+CRITICAL - 2024-07-16 08:05:20 --> CodeIgniter\Database\Exceptions\DatabaseException: Duplicate entry '4' for key 'catalog_books.author_id'
+[Method: POST, Route: books]
+in SYSTEMPATH\Database\BaseConnection.php on line 688.
+ 1 APPPATH\Controllers\BookController.php(60): CodeIgniter\Database\BaseConnection->query('INSERT INTO catalog_books (title, publisher_id, publication_year, isbn, author_id) VALUES (:title:, :publisher_id:, :publication_year:, :isbn:, :author_id:)', [...])
+ 2 SYSTEMPATH\CodeIgniter.php(933): App\Controllers\BookController->create()
+ 3 SYSTEMPATH\CodeIgniter.php(509): CodeIgniter\CodeIgniter->runController(Object(App\Controllers\BookController))
+ 4 SYSTEMPATH\CodeIgniter.php(355): CodeIgniter\CodeIgniter->handleRequest(null, Object(Config\Cache), false)
+ 5 SYSTEMPATH\Boot.php(325): CodeIgniter\CodeIgniter->run()
+ 6 SYSTEMPATH\Boot.php(67): CodeIgniter\Boot::runCodeIgniter(Object(CodeIgniter\CodeIgniter))
+ 7 FCPATH\index.php(56): CodeIgniter\Boot::bootWeb(Object(Config\Paths))
+ 8 SYSTEMPATH\rewrite.php(44): require_once('C:\\laragon\\www\\library-api\\public\\index.php')
+CRITICAL - 2024-07-16 08:05:20 --> [Caused by] CodeIgniter\Database\Exceptions\DatabaseException: Duplicate entry '4' for key 'catalog_books.author_id'
+in SYSTEMPATH\Database\MySQLi\Connection.php on line 317.
+ 1 SYSTEMPATH\Database\BaseConnection.php(734): CodeIgniter\Database\MySQLi\Connection->execute('INSERT INTO catalog_books (title, publisher_id, publication_year, isbn, author_id) VALUES (\'ruang hampa fps\', \'1\', \'2030\', \'782793283\', \'4\')')
+ 2 SYSTEMPATH\Database\BaseConnection.php(648): CodeIgniter\Database\BaseConnection->simpleQuery('INSERT INTO catalog_books (title, publisher_id, publication_year, isbn, author_id) VALUES (\'ruang hampa fps\', \'1\', \'2030\', \'782793283\', \'4\')')
+ 3 APPPATH\Controllers\BookController.php(60): CodeIgniter\Database\BaseConnection->query('INSERT INTO catalog_books (title, publisher_id, publication_year, isbn, author_id) VALUES (:title:, :publisher_id:, :publication_year:, :isbn:, :author_id:)', [...])
+ 4 SYSTEMPATH\CodeIgniter.php(933): App\Controllers\BookController->create()
+ 5 SYSTEMPATH\CodeIgniter.php(509): CodeIgniter\CodeIgniter->runController(Object(App\Controllers\BookController))
+ 6 SYSTEMPATH\CodeIgniter.php(355): CodeIgniter\CodeIgniter->handleRequest(null, Object(Config\Cache), false)
+ 7 SYSTEMPATH\Boot.php(325): CodeIgniter\CodeIgniter->run()
+ 8 SYSTEMPATH\Boot.php(67): CodeIgniter\Boot::runCodeIgniter(Object(CodeIgniter\CodeIgniter))
+ 9 FCPATH\index.php(56): CodeIgniter\Boot::bootWeb(Object(Config\Paths))
+10 SYSTEMPATH\rewrite.php(44): require_once('C:\\laragon\\www\\library-api\\public\\index.php')
+CRITICAL - 2024-07-16 08:05:20 --> [Caused by] mysqli_sql_exception: Duplicate entry '4' for key 'catalog_books.author_id'
+in SYSTEMPATH\Database\MySQLi\Connection.php on line 312.
+ 1 SYSTEMPATH\Database\MySQLi\Connection.php(312): mysqli->query('INSERT INTO catalog_books (title, publisher_id, publication_year, isbn, author_id) VALUES (\'ruang hampa fps\', \'1\', \'2030\', \'782793283\', \'4\')', 0)
+ 2 SYSTEMPATH\Database\BaseConnection.php(734): CodeIgniter\Database\MySQLi\Connection->execute('INSERT INTO catalog_books (title, publisher_id, publication_year, isbn, author_id) VALUES (\'ruang hampa fps\', \'1\', \'2030\', \'782793283\', \'4\')')
+ 3 SYSTEMPATH\Database\BaseConnection.php(648): CodeIgniter\Database\BaseConnection->simpleQuery('INSERT INTO catalog_books (title, publisher_id, publication_year, isbn, author_id) VALUES (\'ruang hampa fps\', \'1\', \'2030\', \'782793283\', \'4\')')
+ 4 APPPATH\Controllers\BookController.php(60): CodeIgniter\Database\BaseConnection->query('INSERT INTO catalog_books (title, publisher_id, publication_year, isbn, author_id) VALUES (:title:, :publisher_id:, :publication_year:, :isbn:, :author_id:)', [...])
+ 5 SYSTEMPATH\CodeIgniter.php(933): App\Controllers\BookController->create()
+ 6 SYSTEMPATH\CodeIgniter.php(509): CodeIgniter\CodeIgniter->runController(Object(App\Controllers\BookController))
+ 7 SYSTEMPATH\CodeIgniter.php(355): CodeIgniter\CodeIgniter->handleRequest(null, Object(Config\Cache), false)
+ 8 SYSTEMPATH\Boot.php(325): CodeIgniter\CodeIgniter->run()
+ 9 SYSTEMPATH\Boot.php(67): CodeIgniter\Boot::runCodeIgniter(Object(CodeIgniter\CodeIgniter))
+10 FCPATH\index.php(56): CodeIgniter\Boot::bootWeb(Object(Config\Paths))
+11 SYSTEMPATH\rewrite.php(44): require_once('C:\\laragon\\www\\library-api\\public\\index.php')
+ERROR - 2024-07-16 08:05:33 --> mysqli_sql_exception: Duplicate entry '4' for key 'catalog_books.author_id' in C:\laragon\www\library-api\system\Database\MySQLi\Connection.php:312
+Stack trace:
+#0 C:\laragon\www\library-api\system\Database\MySQLi\Connection.php(312): mysqli->query('INSERT INTO cat...', 0)
+#1 C:\laragon\www\library-api\system\Database\BaseConnection.php(734): CodeIgniter\Database\MySQLi\Connection->execute('INSERT INTO cat...')
+#2 C:\laragon\www\library-api\system\Database\BaseConnection.php(648): CodeIgniter\Database\BaseConnection->simpleQuery('INSERT INTO cat...')
+#3 C:\laragon\www\library-api\app\Controllers\BookController.php(60): CodeIgniter\Database\BaseConnection->query('INSERT INTO cat...', Array)
+#4 C:\laragon\www\library-api\system\CodeIgniter.php(933): App\Controllers\BookController->create()
+#5 C:\laragon\www\library-api\system\CodeIgniter.php(509): CodeIgniter\CodeIgniter->runController(Object(App\Controllers\BookController))
+#6 C:\laragon\www\library-api\system\CodeIgniter.php(355): CodeIgniter\CodeIgniter->handleRequest(NULL, Object(Config\Cache), false)
+#7 C:\laragon\www\library-api\system\Boot.php(325): CodeIgniter\CodeIgniter->run()
+#8 C:\laragon\www\library-api\system\Boot.php(67): CodeIgniter\Boot::runCodeIgniter(Object(CodeIgniter\CodeIgniter))
+#9 C:\laragon\www\library-api\public\index.php(56): CodeIgniter\Boot::bootWeb(Object(Config\Paths))
+#10 C:\laragon\www\library-api\system\rewrite.php(44): require_once('C:\\laragon\\www\\...')
+#11 {main}
+CRITICAL - 2024-07-16 08:05:33 --> CodeIgniter\Database\Exceptions\DatabaseException: Duplicate entry '4' for key 'catalog_books.author_id'
+[Method: POST, Route: books]
+in SYSTEMPATH\Database\BaseConnection.php on line 688.
+ 1 APPPATH\Controllers\BookController.php(60): CodeIgniter\Database\BaseConnection->query('INSERT INTO catalog_books (title, publisher_id, publication_year, isbn, author_id) VALUES (:title:, :publisher_id:, :publication_year:, :isbn:, :author_id:)', [...])
+ 2 SYSTEMPATH\CodeIgniter.php(933): App\Controllers\BookController->create()
+ 3 SYSTEMPATH\CodeIgniter.php(509): CodeIgniter\CodeIgniter->runController(Object(App\Controllers\BookController))
+ 4 SYSTEMPATH\CodeIgniter.php(355): CodeIgniter\CodeIgniter->handleRequest(null, Object(Config\Cache), false)
+ 5 SYSTEMPATH\Boot.php(325): CodeIgniter\CodeIgniter->run()
+ 6 SYSTEMPATH\Boot.php(67): CodeIgniter\Boot::runCodeIgniter(Object(CodeIgniter\CodeIgniter))
+ 7 FCPATH\index.php(56): CodeIgniter\Boot::bootWeb(Object(Config\Paths))
+ 8 SYSTEMPATH\rewrite.php(44): require_once('C:\\laragon\\www\\library-api\\public\\index.php')
+CRITICAL - 2024-07-16 08:05:33 --> [Caused by] CodeIgniter\Database\Exceptions\DatabaseException: Duplicate entry '4' for key 'catalog_books.author_id'
+in SYSTEMPATH\Database\MySQLi\Connection.php on line 317.
+ 1 SYSTEMPATH\Database\BaseConnection.php(734): CodeIgniter\Database\MySQLi\Connection->execute('INSERT INTO catalog_books (title, publisher_id, publication_year, isbn, author_id) VALUES (\'ruang hampa fps\', \'1\', \'2030\', \'782793283\', \'4\')')
+ 2 SYSTEMPATH\Database\BaseConnection.php(648): CodeIgniter\Database\BaseConnection->simpleQuery('INSERT INTO catalog_books (title, publisher_id, publication_year, isbn, author_id) VALUES (\'ruang hampa fps\', \'1\', \'2030\', \'782793283\', \'4\')')
+ 3 APPPATH\Controllers\BookController.php(60): CodeIgniter\Database\BaseConnection->query('INSERT INTO catalog_books (title, publisher_id, publication_year, isbn, author_id) VALUES (:title:, :publisher_id:, :publication_year:, :isbn:, :author_id:)', [...])
+ 4 SYSTEMPATH\CodeIgniter.php(933): App\Controllers\BookController->create()
+ 5 SYSTEMPATH\CodeIgniter.php(509): CodeIgniter\CodeIgniter->runController(Object(App\Controllers\BookController))
+ 6 SYSTEMPATH\CodeIgniter.php(355): CodeIgniter\CodeIgniter->handleRequest(null, Object(Config\Cache), false)
+ 7 SYSTEMPATH\Boot.php(325): CodeIgniter\CodeIgniter->run()
+ 8 SYSTEMPATH\Boot.php(67): CodeIgniter\Boot::runCodeIgniter(Object(CodeIgniter\CodeIgniter))
+ 9 FCPATH\index.php(56): CodeIgniter\Boot::bootWeb(Object(Config\Paths))
+10 SYSTEMPATH\rewrite.php(44): require_once('C:\\laragon\\www\\library-api\\public\\index.php')
+CRITICAL - 2024-07-16 08:05:33 --> [Caused by] mysqli_sql_exception: Duplicate entry '4' for key 'catalog_books.author_id'
+in SYSTEMPATH\Database\MySQLi\Connection.php on line 312.
+ 1 SYSTEMPATH\Database\MySQLi\Connection.php(312): mysqli->query('INSERT INTO catalog_books (title, publisher_id, publication_year, isbn, author_id) VALUES (\'ruang hampa fps\', \'1\', \'2030\', \'782793283\', \'4\')', 0)
+ 2 SYSTEMPATH\Database\BaseConnection.php(734): CodeIgniter\Database\MySQLi\Connection->execute('INSERT INTO catalog_books (title, publisher_id, publication_year, isbn, author_id) VALUES (\'ruang hampa fps\', \'1\', \'2030\', \'782793283\', \'4\')')
+ 3 SYSTEMPATH\Database\BaseConnection.php(648): CodeIgniter\Database\BaseConnection->simpleQuery('INSERT INTO catalog_books (title, publisher_id, publication_year, isbn, author_id) VALUES (\'ruang hampa fps\', \'1\', \'2030\', \'782793283\', \'4\')')
+ 4 APPPATH\Controllers\BookController.php(60): CodeIgniter\Database\BaseConnection->query('INSERT INTO catalog_books (title, publisher_id, publication_year, isbn, author_id) VALUES (:title:, :publisher_id:, :publication_year:, :isbn:, :author_id:)', [...])
+ 5 SYSTEMPATH\CodeIgniter.php(933): App\Controllers\BookController->create()
+ 6 SYSTEMPATH\CodeIgniter.php(509): CodeIgniter\CodeIgniter->runController(Object(App\Controllers\BookController))
+ 7 SYSTEMPATH\CodeIgniter.php(355): CodeIgniter\CodeIgniter->handleRequest(null, Object(Config\Cache), false)
+ 8 SYSTEMPATH\Boot.php(325): CodeIgniter\CodeIgniter->run()
+ 9 SYSTEMPATH\Boot.php(67): CodeIgniter\Boot::runCodeIgniter(Object(CodeIgniter\CodeIgniter))
+10 FCPATH\index.php(56): CodeIgniter\Boot::bootWeb(Object(Config\Paths))
+11 SYSTEMPATH\rewrite.php(44): require_once('C:\\laragon\\www\\library-api\\public\\index.php')
+ERROR - 2024-07-16 08:06:58 --> mysqli_sql_exception: Duplicate entry '4' for key 'catalog_books.author_id' in C:\laragon\www\library-api\system\Database\MySQLi\Connection.php:312
+Stack trace:
+#0 C:\laragon\www\library-api\system\Database\MySQLi\Connection.php(312): mysqli->query('INSERT INTO cat...', 0)
+#1 C:\laragon\www\library-api\system\Database\BaseConnection.php(734): CodeIgniter\Database\MySQLi\Connection->execute('INSERT INTO cat...')
+#2 C:\laragon\www\library-api\system\Database\BaseConnection.php(648): CodeIgniter\Database\BaseConnection->simpleQuery('INSERT INTO cat...')
+#3 C:\laragon\www\library-api\app\Controllers\BookController.php(60): CodeIgniter\Database\BaseConnection->query('INSERT INTO cat...', Array)
+#4 C:\laragon\www\library-api\system\CodeIgniter.php(933): App\Controllers\BookController->create()
+#5 C:\laragon\www\library-api\system\CodeIgniter.php(509): CodeIgniter\CodeIgniter->runController(Object(App\Controllers\BookController))
+#6 C:\laragon\www\library-api\system\CodeIgniter.php(355): CodeIgniter\CodeIgniter->handleRequest(NULL, Object(Config\Cache), false)
+#7 C:\laragon\www\library-api\system\Boot.php(325): CodeIgniter\CodeIgniter->run()
+#8 C:\laragon\www\library-api\system\Boot.php(67): CodeIgniter\Boot::runCodeIgniter(Object(CodeIgniter\CodeIgniter))
+#9 C:\laragon\www\library-api\public\index.php(56): CodeIgniter\Boot::bootWeb(Object(Config\Paths))
+#10 C:\laragon\www\library-api\system\rewrite.php(44): require_once('C:\\laragon\\www\\...')
+#11 {main}
+CRITICAL - 2024-07-16 08:06:58 --> CodeIgniter\Database\Exceptions\DatabaseException: Duplicate entry '4' for key 'catalog_books.author_id'
+[Method: POST, Route: books]
+in SYSTEMPATH\Database\BaseConnection.php on line 688.
+ 1 APPPATH\Controllers\BookController.php(60): CodeIgniter\Database\BaseConnection->query('INSERT INTO catalog_books (title, publisher_id, publication_year, isbn, author_id) VALUES (:title:, :publisher_id:, :publication_year:, :isbn:, :author_id:)', [...])
+ 2 SYSTEMPATH\CodeIgniter.php(933): App\Controllers\BookController->create()
+ 3 SYSTEMPATH\CodeIgniter.php(509): CodeIgniter\CodeIgniter->runController(Object(App\Controllers\BookController))
+ 4 SYSTEMPATH\CodeIgniter.php(355): CodeIgniter\CodeIgniter->handleRequest(null, Object(Config\Cache), false)
+ 5 SYSTEMPATH\Boot.php(325): CodeIgniter\CodeIgniter->run()
+ 6 SYSTEMPATH\Boot.php(67): CodeIgniter\Boot::runCodeIgniter(Object(CodeIgniter\CodeIgniter))
+ 7 FCPATH\index.php(56): CodeIgniter\Boot::bootWeb(Object(Config\Paths))
+ 8 SYSTEMPATH\rewrite.php(44): require_once('C:\\laragon\\www\\library-api\\public\\index.php')
+CRITICAL - 2024-07-16 08:06:58 --> [Caused by] CodeIgniter\Database\Exceptions\DatabaseException: Duplicate entry '4' for key 'catalog_books.author_id'
+in SYSTEMPATH\Database\MySQLi\Connection.php on line 317.
+ 1 SYSTEMPATH\Database\BaseConnection.php(734): CodeIgniter\Database\MySQLi\Connection->execute('INSERT INTO catalog_books (title, publisher_id, publication_year, isbn, author_id) VALUES (\'ruang hampa fps\', \'1\', \'2030\', \'782793283\', \'4\')')
+ 2 SYSTEMPATH\Database\BaseConnection.php(648): CodeIgniter\Database\BaseConnection->simpleQuery('INSERT INTO catalog_books (title, publisher_id, publication_year, isbn, author_id) VALUES (\'ruang hampa fps\', \'1\', \'2030\', \'782793283\', \'4\')')
+ 3 APPPATH\Controllers\BookController.php(60): CodeIgniter\Database\BaseConnection->query('INSERT INTO catalog_books (title, publisher_id, publication_year, isbn, author_id) VALUES (:title:, :publisher_id:, :publication_year:, :isbn:, :author_id:)', [...])
+ 4 SYSTEMPATH\CodeIgniter.php(933): App\Controllers\BookController->create()
+ 5 SYSTEMPATH\CodeIgniter.php(509): CodeIgniter\CodeIgniter->runController(Object(App\Controllers\BookController))
+ 6 SYSTEMPATH\CodeIgniter.php(355): CodeIgniter\CodeIgniter->handleRequest(null, Object(Config\Cache), false)
+ 7 SYSTEMPATH\Boot.php(325): CodeIgniter\CodeIgniter->run()
+ 8 SYSTEMPATH\Boot.php(67): CodeIgniter\Boot::runCodeIgniter(Object(CodeIgniter\CodeIgniter))
+ 9 FCPATH\index.php(56): CodeIgniter\Boot::bootWeb(Object(Config\Paths))
+10 SYSTEMPATH\rewrite.php(44): require_once('C:\\laragon\\www\\library-api\\public\\index.php')
+CRITICAL - 2024-07-16 08:06:58 --> [Caused by] mysqli_sql_exception: Duplicate entry '4' for key 'catalog_books.author_id'
+in SYSTEMPATH\Database\MySQLi\Connection.php on line 312.
+ 1 SYSTEMPATH\Database\MySQLi\Connection.php(312): mysqli->query('INSERT INTO catalog_books (title, publisher_id, publication_year, isbn, author_id) VALUES (\'ruang hampa fps\', \'1\', \'2030\', \'782793283\', \'4\')', 0)
+ 2 SYSTEMPATH\Database\BaseConnection.php(734): CodeIgniter\Database\MySQLi\Connection->execute('INSERT INTO catalog_books (title, publisher_id, publication_year, isbn, author_id) VALUES (\'ruang hampa fps\', \'1\', \'2030\', \'782793283\', \'4\')')
+ 3 SYSTEMPATH\Database\BaseConnection.php(648): CodeIgniter\Database\BaseConnection->simpleQuery('INSERT INTO catalog_books (title, publisher_id, publication_year, isbn, author_id) VALUES (\'ruang hampa fps\', \'1\', \'2030\', \'782793283\', \'4\')')
+ 4 APPPATH\Controllers\BookController.php(60): CodeIgniter\Database\BaseConnection->query('INSERT INTO catalog_books (title, publisher_id, publication_year, isbn, author_id) VALUES (:title:, :publisher_id:, :publication_year:, :isbn:, :author_id:)', [...])
+ 5 SYSTEMPATH\CodeIgniter.php(933): App\Controllers\BookController->create()
+ 6 SYSTEMPATH\CodeIgniter.php(509): CodeIgniter\CodeIgniter->runController(Object(App\Controllers\BookController))
+ 7 SYSTEMPATH\CodeIgniter.php(355): CodeIgniter\CodeIgniter->handleRequest(null, Object(Config\Cache), false)
+ 8 SYSTEMPATH\Boot.php(325): CodeIgniter\CodeIgniter->run()
+ 9 SYSTEMPATH\Boot.php(67): CodeIgniter\Boot::runCodeIgniter(Object(CodeIgniter\CodeIgniter))
+10 FCPATH\index.php(56): CodeIgniter\Boot::bootWeb(Object(Config\Paths))
+11 SYSTEMPATH\rewrite.php(44): require_once('C:\\laragon\\www\\library-api\\public\\index.php')
+ERROR - 2024-07-16 08:07:09 --> mysqli_sql_exception: Duplicate entry '4' for key 'catalog_books.author_id' in C:\laragon\www\library-api\system\Database\MySQLi\Connection.php:312
+Stack trace:
+#0 C:\laragon\www\library-api\system\Database\MySQLi\Connection.php(312): mysqli->query('INSERT INTO cat...', 0)
+#1 C:\laragon\www\library-api\system\Database\BaseConnection.php(734): CodeIgniter\Database\MySQLi\Connection->execute('INSERT INTO cat...')
+#2 C:\laragon\www\library-api\system\Database\BaseConnection.php(648): CodeIgniter\Database\BaseConnection->simpleQuery('INSERT INTO cat...')
+#3 C:\laragon\www\library-api\app\Controllers\BookController.php(60): CodeIgniter\Database\BaseConnection->query('INSERT INTO cat...', Array)
+#4 C:\laragon\www\library-api\system\CodeIgniter.php(933): App\Controllers\BookController->create()
+#5 C:\laragon\www\library-api\system\CodeIgniter.php(509): CodeIgniter\CodeIgniter->runController(Object(App\Controllers\BookController))
+#6 C:\laragon\www\library-api\system\CodeIgniter.php(355): CodeIgniter\CodeIgniter->handleRequest(NULL, Object(Config\Cache), false)
+#7 C:\laragon\www\library-api\system\Boot.php(325): CodeIgniter\CodeIgniter->run()
+#8 C:\laragon\www\library-api\system\Boot.php(67): CodeIgniter\Boot::runCodeIgniter(Object(CodeIgniter\CodeIgniter))
+#9 C:\laragon\www\library-api\public\index.php(56): CodeIgniter\Boot::bootWeb(Object(Config\Paths))
+#10 C:\laragon\www\library-api\system\rewrite.php(44): require_once('C:\\laragon\\www\\...')
+#11 {main}
+CRITICAL - 2024-07-16 08:07:09 --> CodeIgniter\Database\Exceptions\DatabaseException: Duplicate entry '4' for key 'catalog_books.author_id'
+[Method: POST, Route: books]
+in SYSTEMPATH\Database\BaseConnection.php on line 688.
+ 1 APPPATH\Controllers\BookController.php(60): CodeIgniter\Database\BaseConnection->query('INSERT INTO catalog_books (title, publisher_id, publication_year, isbn, author_id) VALUES (:title:, :publisher_id:, :publication_year:, :isbn:, :author_id:)', [...])
+ 2 SYSTEMPATH\CodeIgniter.php(933): App\Controllers\BookController->create()
+ 3 SYSTEMPATH\CodeIgniter.php(509): CodeIgniter\CodeIgniter->runController(Object(App\Controllers\BookController))
+ 4 SYSTEMPATH\CodeIgniter.php(355): CodeIgniter\CodeIgniter->handleRequest(null, Object(Config\Cache), false)
+ 5 SYSTEMPATH\Boot.php(325): CodeIgniter\CodeIgniter->run()
+ 6 SYSTEMPATH\Boot.php(67): CodeIgniter\Boot::runCodeIgniter(Object(CodeIgniter\CodeIgniter))
+ 7 FCPATH\index.php(56): CodeIgniter\Boot::bootWeb(Object(Config\Paths))
+ 8 SYSTEMPATH\rewrite.php(44): require_once('C:\\laragon\\www\\library-api\\public\\index.php')
+CRITICAL - 2024-07-16 08:07:09 --> [Caused by] CodeIgniter\Database\Exceptions\DatabaseException: Duplicate entry '4' for key 'catalog_books.author_id'
+in SYSTEMPATH\Database\MySQLi\Connection.php on line 317.
+ 1 SYSTEMPATH\Database\BaseConnection.php(734): CodeIgniter\Database\MySQLi\Connection->execute('INSERT INTO catalog_books (title, publisher_id, publication_year, isbn, author_id) VALUES (\'ruang hampa fps\', \'1\', \'2030\', \'782793283\', \'4\')')
+ 2 SYSTEMPATH\Database\BaseConnection.php(648): CodeIgniter\Database\BaseConnection->simpleQuery('INSERT INTO catalog_books (title, publisher_id, publication_year, isbn, author_id) VALUES (\'ruang hampa fps\', \'1\', \'2030\', \'782793283\', \'4\')')
+ 3 APPPATH\Controllers\BookController.php(60): CodeIgniter\Database\BaseConnection->query('INSERT INTO catalog_books (title, publisher_id, publication_year, isbn, author_id) VALUES (:title:, :publisher_id:, :publication_year:, :isbn:, :author_id:)', [...])
+ 4 SYSTEMPATH\CodeIgniter.php(933): App\Controllers\BookController->create()
+ 5 SYSTEMPATH\CodeIgniter.php(509): CodeIgniter\CodeIgniter->runController(Object(App\Controllers\BookController))
+ 6 SYSTEMPATH\CodeIgniter.php(355): CodeIgniter\CodeIgniter->handleRequest(null, Object(Config\Cache), false)
+ 7 SYSTEMPATH\Boot.php(325): CodeIgniter\CodeIgniter->run()
+ 8 SYSTEMPATH\Boot.php(67): CodeIgniter\Boot::runCodeIgniter(Object(CodeIgniter\CodeIgniter))
+ 9 FCPATH\index.php(56): CodeIgniter\Boot::bootWeb(Object(Config\Paths))
+10 SYSTEMPATH\rewrite.php(44): require_once('C:\\laragon\\www\\library-api\\public\\index.php')
+CRITICAL - 2024-07-16 08:07:09 --> [Caused by] mysqli_sql_exception: Duplicate entry '4' for key 'catalog_books.author_id'
+in SYSTEMPATH\Database\MySQLi\Connection.php on line 312.
+ 1 SYSTEMPATH\Database\MySQLi\Connection.php(312): mysqli->query('INSERT INTO catalog_books (title, publisher_id, publication_year, isbn, author_id) VALUES (\'ruang hampa fps\', \'1\', \'2030\', \'782793283\', \'4\')', 0)
+ 2 SYSTEMPATH\Database\BaseConnection.php(734): CodeIgniter\Database\MySQLi\Connection->execute('INSERT INTO catalog_books (title, publisher_id, publication_year, isbn, author_id) VALUES (\'ruang hampa fps\', \'1\', \'2030\', \'782793283\', \'4\')')
+ 3 SYSTEMPATH\Database\BaseConnection.php(648): CodeIgniter\Database\BaseConnection->simpleQuery('INSERT INTO catalog_books (title, publisher_id, publication_year, isbn, author_id) VALUES (\'ruang hampa fps\', \'1\', \'2030\', \'782793283\', \'4\')')
+ 4 APPPATH\Controllers\BookController.php(60): CodeIgniter\Database\BaseConnection->query('INSERT INTO catalog_books (title, publisher_id, publication_year, isbn, author_id) VALUES (:title:, :publisher_id:, :publication_year:, :isbn:, :author_id:)', [...])
+ 5 SYSTEMPATH\CodeIgniter.php(933): App\Controllers\BookController->create()
+ 6 SYSTEMPATH\CodeIgniter.php(509): CodeIgniter\CodeIgniter->runController(Object(App\Controllers\BookController))
+ 7 SYSTEMPATH\CodeIgniter.php(355): CodeIgniter\CodeIgniter->handleRequest(null, Object(Config\Cache), false)
+ 8 SYSTEMPATH\Boot.php(325): CodeIgniter\CodeIgniter->run()
+ 9 SYSTEMPATH\Boot.php(67): CodeIgniter\Boot::runCodeIgniter(Object(CodeIgniter\CodeIgniter))
+10 FCPATH\index.php(56): CodeIgniter\Boot::bootWeb(Object(Config\Paths))
+11 SYSTEMPATH\rewrite.php(44): require_once('C:\\laragon\\www\\library-api\\public\\index.php')
+ERROR - 2024-07-16 08:07:25 --> mysqli_sql_exception: Duplicate entry '4' for key 'catalog_books.author_id' in C:\laragon\www\library-api\system\Database\MySQLi\Connection.php:312
+Stack trace:
+#0 C:\laragon\www\library-api\system\Database\MySQLi\Connection.php(312): mysqli->query('INSERT INTO cat...', 0)
+#1 C:\laragon\www\library-api\system\Database\BaseConnection.php(734): CodeIgniter\Database\MySQLi\Connection->execute('INSERT INTO cat...')
+#2 C:\laragon\www\library-api\system\Database\BaseConnection.php(648): CodeIgniter\Database\BaseConnection->simpleQuery('INSERT INTO cat...')
+#3 C:\laragon\www\library-api\app\Controllers\BookController.php(60): CodeIgniter\Database\BaseConnection->query('INSERT INTO cat...', Array)
+#4 C:\laragon\www\library-api\system\CodeIgniter.php(933): App\Controllers\BookController->create()
+#5 C:\laragon\www\library-api\system\CodeIgniter.php(509): CodeIgniter\CodeIgniter->runController(Object(App\Controllers\BookController))
+#6 C:\laragon\www\library-api\system\CodeIgniter.php(355): CodeIgniter\CodeIgniter->handleRequest(NULL, Object(Config\Cache), false)
+#7 C:\laragon\www\library-api\system\Boot.php(325): CodeIgniter\CodeIgniter->run()
+#8 C:\laragon\www\library-api\system\Boot.php(67): CodeIgniter\Boot::runCodeIgniter(Object(CodeIgniter\CodeIgniter))
+#9 C:\laragon\www\library-api\public\index.php(56): CodeIgniter\Boot::bootWeb(Object(Config\Paths))
+#10 C:\laragon\www\library-api\system\rewrite.php(44): require_once('C:\\laragon\\www\\...')
+#11 {main}
+CRITICAL - 2024-07-16 08:07:25 --> CodeIgniter\Database\Exceptions\DatabaseException: Duplicate entry '4' for key 'catalog_books.author_id'
+[Method: POST, Route: books]
+in SYSTEMPATH\Database\BaseConnection.php on line 688.
+ 1 APPPATH\Controllers\BookController.php(60): CodeIgniter\Database\BaseConnection->query('INSERT INTO catalog_books (title, publisher_id, publication_year, isbn, author_id) VALUES (:title:, :publisher_id:, :publication_year:, :isbn:, :author_id:)', [...])
+ 2 SYSTEMPATH\CodeIgniter.php(933): App\Controllers\BookController->create()
+ 3 SYSTEMPATH\CodeIgniter.php(509): CodeIgniter\CodeIgniter->runController(Object(App\Controllers\BookController))
+ 4 SYSTEMPATH\CodeIgniter.php(355): CodeIgniter\CodeIgniter->handleRequest(null, Object(Config\Cache), false)
+ 5 SYSTEMPATH\Boot.php(325): CodeIgniter\CodeIgniter->run()
+ 6 SYSTEMPATH\Boot.php(67): CodeIgniter\Boot::runCodeIgniter(Object(CodeIgniter\CodeIgniter))
+ 7 FCPATH\index.php(56): CodeIgniter\Boot::bootWeb(Object(Config\Paths))
+ 8 SYSTEMPATH\rewrite.php(44): require_once('C:\\laragon\\www\\library-api\\public\\index.php')
+CRITICAL - 2024-07-16 08:07:25 --> [Caused by] CodeIgniter\Database\Exceptions\DatabaseException: Duplicate entry '4' for key 'catalog_books.author_id'
+in SYSTEMPATH\Database\MySQLi\Connection.php on line 317.
+ 1 SYSTEMPATH\Database\BaseConnection.php(734): CodeIgniter\Database\MySQLi\Connection->execute('INSERT INTO catalog_books (title, publisher_id, publication_year, isbn, author_id) VALUES (\'ruang hampa fps\', \'1\', \'2030\', \'782793283\', \'4\')')
+ 2 SYSTEMPATH\Database\BaseConnection.php(648): CodeIgniter\Database\BaseConnection->simpleQuery('INSERT INTO catalog_books (title, publisher_id, publication_year, isbn, author_id) VALUES (\'ruang hampa fps\', \'1\', \'2030\', \'782793283\', \'4\')')
+ 3 APPPATH\Controllers\BookController.php(60): CodeIgniter\Database\BaseConnection->query('INSERT INTO catalog_books (title, publisher_id, publication_year, isbn, author_id) VALUES (:title:, :publisher_id:, :publication_year:, :isbn:, :author_id:)', [...])
+ 4 SYSTEMPATH\CodeIgniter.php(933): App\Controllers\BookController->create()
+ 5 SYSTEMPATH\CodeIgniter.php(509): CodeIgniter\CodeIgniter->runController(Object(App\Controllers\BookController))
+ 6 SYSTEMPATH\CodeIgniter.php(355): CodeIgniter\CodeIgniter->handleRequest(null, Object(Config\Cache), false)
+ 7 SYSTEMPATH\Boot.php(325): CodeIgniter\CodeIgniter->run()
+ 8 SYSTEMPATH\Boot.php(67): CodeIgniter\Boot::runCodeIgniter(Object(CodeIgniter\CodeIgniter))
+ 9 FCPATH\index.php(56): CodeIgniter\Boot::bootWeb(Object(Config\Paths))
+10 SYSTEMPATH\rewrite.php(44): require_once('C:\\laragon\\www\\library-api\\public\\index.php')
+CRITICAL - 2024-07-16 08:07:25 --> [Caused by] mysqli_sql_exception: Duplicate entry '4' for key 'catalog_books.author_id'
+in SYSTEMPATH\Database\MySQLi\Connection.php on line 312.
+ 1 SYSTEMPATH\Database\MySQLi\Connection.php(312): mysqli->query('INSERT INTO catalog_books (title, publisher_id, publication_year, isbn, author_id) VALUES (\'ruang hampa fps\', \'1\', \'2030\', \'782793283\', \'4\')', 0)
+ 2 SYSTEMPATH\Database\BaseConnection.php(734): CodeIgniter\Database\MySQLi\Connection->execute('INSERT INTO catalog_books (title, publisher_id, publication_year, isbn, author_id) VALUES (\'ruang hampa fps\', \'1\', \'2030\', \'782793283\', \'4\')')
+ 3 SYSTEMPATH\Database\BaseConnection.php(648): CodeIgniter\Database\BaseConnection->simpleQuery('INSERT INTO catalog_books (title, publisher_id, publication_year, isbn, author_id) VALUES (\'ruang hampa fps\', \'1\', \'2030\', \'782793283\', \'4\')')
+ 4 APPPATH\Controllers\BookController.php(60): CodeIgniter\Database\BaseConnection->query('INSERT INTO catalog_books (title, publisher_id, publication_year, isbn, author_id) VALUES (:title:, :publisher_id:, :publication_year:, :isbn:, :author_id:)', [...])
+ 5 SYSTEMPATH\CodeIgniter.php(933): App\Controllers\BookController->create()
+ 6 SYSTEMPATH\CodeIgniter.php(509): CodeIgniter\CodeIgniter->runController(Object(App\Controllers\BookController))
+ 7 SYSTEMPATH\CodeIgniter.php(355): CodeIgniter\CodeIgniter->handleRequest(null, Object(Config\Cache), false)
+ 8 SYSTEMPATH\Boot.php(325): CodeIgniter\CodeIgniter->run()
+ 9 SYSTEMPATH\Boot.php(67): CodeIgniter\Boot::runCodeIgniter(Object(CodeIgniter\CodeIgniter))
+10 FCPATH\index.php(56): CodeIgniter\Boot::bootWeb(Object(Config\Paths))
+11 SYSTEMPATH\rewrite.php(44): require_once('C:\\laragon\\www\\library-api\\public\\index.php')
+ERROR - 2024-07-16 08:09:04 --> mysqli_sql_exception: Duplicate entry '4' for key 'catalog_books.author_id' in C:\laragon\www\library-api\system\Database\MySQLi\Connection.php:312
+Stack trace:
+#0 C:\laragon\www\library-api\system\Database\MySQLi\Connection.php(312): mysqli->query('INSERT INTO cat...', 0)
+#1 C:\laragon\www\library-api\system\Database\BaseConnection.php(734): CodeIgniter\Database\MySQLi\Connection->execute('INSERT INTO cat...')
+#2 C:\laragon\www\library-api\system\Database\BaseConnection.php(648): CodeIgniter\Database\BaseConnection->simpleQuery('INSERT INTO cat...')
+#3 C:\laragon\www\library-api\app\Controllers\BookController.php(60): CodeIgniter\Database\BaseConnection->query('INSERT INTO cat...', Array)
+#4 C:\laragon\www\library-api\system\CodeIgniter.php(933): App\Controllers\BookController->create()
+#5 C:\laragon\www\library-api\system\CodeIgniter.php(509): CodeIgniter\CodeIgniter->runController(Object(App\Controllers\BookController))
+#6 C:\laragon\www\library-api\system\CodeIgniter.php(355): CodeIgniter\CodeIgniter->handleRequest(NULL, Object(Config\Cache), false)
+#7 C:\laragon\www\library-api\system\Boot.php(325): CodeIgniter\CodeIgniter->run()
+#8 C:\laragon\www\library-api\system\Boot.php(67): CodeIgniter\Boot::runCodeIgniter(Object(CodeIgniter\CodeIgniter))
+#9 C:\laragon\www\library-api\public\index.php(56): CodeIgniter\Boot::bootWeb(Object(Config\Paths))
+#10 C:\laragon\www\library-api\system\rewrite.php(44): require_once('C:\\laragon\\www\\...')
+#11 {main}
+CRITICAL - 2024-07-16 08:09:04 --> CodeIgniter\Database\Exceptions\DatabaseException: Duplicate entry '4' for key 'catalog_books.author_id'
+[Method: POST, Route: books]
+in SYSTEMPATH\Database\BaseConnection.php on line 688.
+ 1 APPPATH\Controllers\BookController.php(60): CodeIgniter\Database\BaseConnection->query('INSERT INTO catalog_books (title, publisher_id, publication_year, isbn, author_id) VALUES (:title:, :publisher_id:, :publication_year:, :isbn:, :author_id:)', [...])
+ 2 SYSTEMPATH\CodeIgniter.php(933): App\Controllers\BookController->create()
+ 3 SYSTEMPATH\CodeIgniter.php(509): CodeIgniter\CodeIgniter->runController(Object(App\Controllers\BookController))
+ 4 SYSTEMPATH\CodeIgniter.php(355): CodeIgniter\CodeIgniter->handleRequest(null, Object(Config\Cache), false)
+ 5 SYSTEMPATH\Boot.php(325): CodeIgniter\CodeIgniter->run()
+ 6 SYSTEMPATH\Boot.php(67): CodeIgniter\Boot::runCodeIgniter(Object(CodeIgniter\CodeIgniter))
+ 7 FCPATH\index.php(56): CodeIgniter\Boot::bootWeb(Object(Config\Paths))
+ 8 SYSTEMPATH\rewrite.php(44): require_once('C:\\laragon\\www\\library-api\\public\\index.php')
+CRITICAL - 2024-07-16 08:09:04 --> [Caused by] CodeIgniter\Database\Exceptions\DatabaseException: Duplicate entry '4' for key 'catalog_books.author_id'
+in SYSTEMPATH\Database\MySQLi\Connection.php on line 317.
+ 1 SYSTEMPATH\Database\BaseConnection.php(734): CodeIgniter\Database\MySQLi\Connection->execute('INSERT INTO catalog_books (title, publisher_id, publication_year, isbn, author_id) VALUES (\'ruang hampa fps\', \'1\', \'2030\', \'782793283\', \'4\')')
+ 2 SYSTEMPATH\Database\BaseConnection.php(648): CodeIgniter\Database\BaseConnection->simpleQuery('INSERT INTO catalog_books (title, publisher_id, publication_year, isbn, author_id) VALUES (\'ruang hampa fps\', \'1\', \'2030\', \'782793283\', \'4\')')
+ 3 APPPATH\Controllers\BookController.php(60): CodeIgniter\Database\BaseConnection->query('INSERT INTO catalog_books (title, publisher_id, publication_year, isbn, author_id) VALUES (:title:, :publisher_id:, :publication_year:, :isbn:, :author_id:)', [...])
+ 4 SYSTEMPATH\CodeIgniter.php(933): App\Controllers\BookController->create()
+ 5 SYSTEMPATH\CodeIgniter.php(509): CodeIgniter\CodeIgniter->runController(Object(App\Controllers\BookController))
+ 6 SYSTEMPATH\CodeIgniter.php(355): CodeIgniter\CodeIgniter->handleRequest(null, Object(Config\Cache), false)
+ 7 SYSTEMPATH\Boot.php(325): CodeIgniter\CodeIgniter->run()
+ 8 SYSTEMPATH\Boot.php(67): CodeIgniter\Boot::runCodeIgniter(Object(CodeIgniter\CodeIgniter))
+ 9 FCPATH\index.php(56): CodeIgniter\Boot::bootWeb(Object(Config\Paths))
+10 SYSTEMPATH\rewrite.php(44): require_once('C:\\laragon\\www\\library-api\\public\\index.php')
+CRITICAL - 2024-07-16 08:09:04 --> [Caused by] mysqli_sql_exception: Duplicate entry '4' for key 'catalog_books.author_id'
+in SYSTEMPATH\Database\MySQLi\Connection.php on line 312.
+ 1 SYSTEMPATH\Database\MySQLi\Connection.php(312): mysqli->query('INSERT INTO catalog_books (title, publisher_id, publication_year, isbn, author_id) VALUES (\'ruang hampa fps\', \'1\', \'2030\', \'782793283\', \'4\')', 0)
+ 2 SYSTEMPATH\Database\BaseConnection.php(734): CodeIgniter\Database\MySQLi\Connection->execute('INSERT INTO catalog_books (title, publisher_id, publication_year, isbn, author_id) VALUES (\'ruang hampa fps\', \'1\', \'2030\', \'782793283\', \'4\')')
+ 3 SYSTEMPATH\Database\BaseConnection.php(648): CodeIgniter\Database\BaseConnection->simpleQuery('INSERT INTO catalog_books (title, publisher_id, publication_year, isbn, author_id) VALUES (\'ruang hampa fps\', \'1\', \'2030\', \'782793283\', \'4\')')
+ 4 APPPATH\Controllers\BookController.php(60): CodeIgniter\Database\BaseConnection->query('INSERT INTO catalog_books (title, publisher_id, publication_year, isbn, author_id) VALUES (:title:, :publisher_id:, :publication_year:, :isbn:, :author_id:)', [...])
+ 5 SYSTEMPATH\CodeIgniter.php(933): App\Controllers\BookController->create()
+ 6 SYSTEMPATH\CodeIgniter.php(509): CodeIgniter\CodeIgniter->runController(Object(App\Controllers\BookController))
+ 7 SYSTEMPATH\CodeIgniter.php(355): CodeIgniter\CodeIgniter->handleRequest(null, Object(Config\Cache), false)
+ 8 SYSTEMPATH\Boot.php(325): CodeIgniter\CodeIgniter->run()
+ 9 SYSTEMPATH\Boot.php(67): CodeIgniter\Boot::runCodeIgniter(Object(CodeIgniter\CodeIgniter))
+10 FCPATH\index.php(56): CodeIgniter\Boot::bootWeb(Object(Config\Paths))
+11 SYSTEMPATH\rewrite.php(44): require_once('C:\\laragon\\www\\library-api\\public\\index.php')
+ERROR - 2024-07-16 08:09:05 --> mysqli_sql_exception: Duplicate entry '4' for key 'catalog_books.author_id' in C:\laragon\www\library-api\system\Database\MySQLi\Connection.php:312
+Stack trace:
+#0 C:\laragon\www\library-api\system\Database\MySQLi\Connection.php(312): mysqli->query('INSERT INTO cat...', 0)
+#1 C:\laragon\www\library-api\system\Database\BaseConnection.php(734): CodeIgniter\Database\MySQLi\Connection->execute('INSERT INTO cat...')
+#2 C:\laragon\www\library-api\system\Database\BaseConnection.php(648): CodeIgniter\Database\BaseConnection->simpleQuery('INSERT INTO cat...')
+#3 C:\laragon\www\library-api\app\Controllers\BookController.php(60): CodeIgniter\Database\BaseConnection->query('INSERT INTO cat...', Array)
+#4 C:\laragon\www\library-api\system\CodeIgniter.php(933): App\Controllers\BookController->create()
+#5 C:\laragon\www\library-api\system\CodeIgniter.php(509): CodeIgniter\CodeIgniter->runController(Object(App\Controllers\BookController))
+#6 C:\laragon\www\library-api\system\CodeIgniter.php(355): CodeIgniter\CodeIgniter->handleRequest(NULL, Object(Config\Cache), false)
+#7 C:\laragon\www\library-api\system\Boot.php(325): CodeIgniter\CodeIgniter->run()
+#8 C:\laragon\www\library-api\system\Boot.php(67): CodeIgniter\Boot::runCodeIgniter(Object(CodeIgniter\CodeIgniter))
+#9 C:\laragon\www\library-api\public\index.php(56): CodeIgniter\Boot::bootWeb(Object(Config\Paths))
+#10 C:\laragon\www\library-api\system\rewrite.php(44): require_once('C:\\laragon\\www\\...')
+#11 {main}
+CRITICAL - 2024-07-16 08:09:05 --> CodeIgniter\Database\Exceptions\DatabaseException: Duplicate entry '4' for key 'catalog_books.author_id'
+[Method: POST, Route: books]
+in SYSTEMPATH\Database\BaseConnection.php on line 688.
+ 1 APPPATH\Controllers\BookController.php(60): CodeIgniter\Database\BaseConnection->query('INSERT INTO catalog_books (title, publisher_id, publication_year, isbn, author_id) VALUES (:title:, :publisher_id:, :publication_year:, :isbn:, :author_id:)', [...])
+ 2 SYSTEMPATH\CodeIgniter.php(933): App\Controllers\BookController->create()
+ 3 SYSTEMPATH\CodeIgniter.php(509): CodeIgniter\CodeIgniter->runController(Object(App\Controllers\BookController))
+ 4 SYSTEMPATH\CodeIgniter.php(355): CodeIgniter\CodeIgniter->handleRequest(null, Object(Config\Cache), false)
+ 5 SYSTEMPATH\Boot.php(325): CodeIgniter\CodeIgniter->run()
+ 6 SYSTEMPATH\Boot.php(67): CodeIgniter\Boot::runCodeIgniter(Object(CodeIgniter\CodeIgniter))
+ 7 FCPATH\index.php(56): CodeIgniter\Boot::bootWeb(Object(Config\Paths))
+ 8 SYSTEMPATH\rewrite.php(44): require_once('C:\\laragon\\www\\library-api\\public\\index.php')
+CRITICAL - 2024-07-16 08:09:05 --> [Caused by] CodeIgniter\Database\Exceptions\DatabaseException: Duplicate entry '4' for key 'catalog_books.author_id'
+in SYSTEMPATH\Database\MySQLi\Connection.php on line 317.
+ 1 SYSTEMPATH\Database\BaseConnection.php(734): CodeIgniter\Database\MySQLi\Connection->execute('INSERT INTO catalog_books (title, publisher_id, publication_year, isbn, author_id) VALUES (\'ruang hampa fps\', \'1\', \'2030\', \'782793283\', \'4\')')
+ 2 SYSTEMPATH\Database\BaseConnection.php(648): CodeIgniter\Database\BaseConnection->simpleQuery('INSERT INTO catalog_books (title, publisher_id, publication_year, isbn, author_id) VALUES (\'ruang hampa fps\', \'1\', \'2030\', \'782793283\', \'4\')')
+ 3 APPPATH\Controllers\BookController.php(60): CodeIgniter\Database\BaseConnection->query('INSERT INTO catalog_books (title, publisher_id, publication_year, isbn, author_id) VALUES (:title:, :publisher_id:, :publication_year:, :isbn:, :author_id:)', [...])
+ 4 SYSTEMPATH\CodeIgniter.php(933): App\Controllers\BookController->create()
+ 5 SYSTEMPATH\CodeIgniter.php(509): CodeIgniter\CodeIgniter->runController(Object(App\Controllers\BookController))
+ 6 SYSTEMPATH\CodeIgniter.php(355): CodeIgniter\CodeIgniter->handleRequest(null, Object(Config\Cache), false)
+ 7 SYSTEMPATH\Boot.php(325): CodeIgniter\CodeIgniter->run()
+ 8 SYSTEMPATH\Boot.php(67): CodeIgniter\Boot::runCodeIgniter(Object(CodeIgniter\CodeIgniter))
+ 9 FCPATH\index.php(56): CodeIgniter\Boot::bootWeb(Object(Config\Paths))
+10 SYSTEMPATH\rewrite.php(44): require_once('C:\\laragon\\www\\library-api\\public\\index.php')
+CRITICAL - 2024-07-16 08:09:05 --> [Caused by] mysqli_sql_exception: Duplicate entry '4' for key 'catalog_books.author_id'
+in SYSTEMPATH\Database\MySQLi\Connection.php on line 312.
+ 1 SYSTEMPATH\Database\MySQLi\Connection.php(312): mysqli->query('INSERT INTO catalog_books (title, publisher_id, publication_year, isbn, author_id) VALUES (\'ruang hampa fps\', \'1\', \'2030\', \'782793283\', \'4\')', 0)
+ 2 SYSTEMPATH\Database\BaseConnection.php(734): CodeIgniter\Database\MySQLi\Connection->execute('INSERT INTO catalog_books (title, publisher_id, publication_year, isbn, author_id) VALUES (\'ruang hampa fps\', \'1\', \'2030\', \'782793283\', \'4\')')
+ 3 SYSTEMPATH\Database\BaseConnection.php(648): CodeIgniter\Database\BaseConnection->simpleQuery('INSERT INTO catalog_books (title, publisher_id, publication_year, isbn, author_id) VALUES (\'ruang hampa fps\', \'1\', \'2030\', \'782793283\', \'4\')')
+ 4 APPPATH\Controllers\BookController.php(60): CodeIgniter\Database\BaseConnection->query('INSERT INTO catalog_books (title, publisher_id, publication_year, isbn, author_id) VALUES (:title:, :publisher_id:, :publication_year:, :isbn:, :author_id:)', [...])
+ 5 SYSTEMPATH\CodeIgniter.php(933): App\Controllers\BookController->create()
+ 6 SYSTEMPATH\CodeIgniter.php(509): CodeIgniter\CodeIgniter->runController(Object(App\Controllers\BookController))
+ 7 SYSTEMPATH\CodeIgniter.php(355): CodeIgniter\CodeIgniter->handleRequest(null, Object(Config\Cache), false)
+ 8 SYSTEMPATH\Boot.php(325): CodeIgniter\CodeIgniter->run()
+ 9 SYSTEMPATH\Boot.php(67): CodeIgniter\Boot::runCodeIgniter(Object(CodeIgniter\CodeIgniter))
+10 FCPATH\index.php(56): CodeIgniter\Boot::bootWeb(Object(Config\Paths))
+11 SYSTEMPATH\rewrite.php(44): require_once('C:\\laragon\\www\\library-api\\public\\index.php')
+ERROR - 2024-07-16 08:14:48 --> mysqli_sql_exception: Duplicate entry '4' for key 'catalog_books.author_id' in C:\laragon\www\library-api\system\Database\MySQLi\Connection.php:312
+Stack trace:
+#0 C:\laragon\www\library-api\system\Database\MySQLi\Connection.php(312): mysqli->query('INSERT INTO cat...', 0)
+#1 C:\laragon\www\library-api\system\Database\BaseConnection.php(734): CodeIgniter\Database\MySQLi\Connection->execute('INSERT INTO cat...')
+#2 C:\laragon\www\library-api\system\Database\BaseConnection.php(648): CodeIgniter\Database\BaseConnection->simpleQuery('INSERT INTO cat...')
+#3 C:\laragon\www\library-api\app\Controllers\BookController.php(60): CodeIgniter\Database\BaseConnection->query('INSERT INTO cat...', Array)
+#4 C:\laragon\www\library-api\system\CodeIgniter.php(933): App\Controllers\BookController->create()
+#5 C:\laragon\www\library-api\system\CodeIgniter.php(509): CodeIgniter\CodeIgniter->runController(Object(App\Controllers\BookController))
+#6 C:\laragon\www\library-api\system\CodeIgniter.php(355): CodeIgniter\CodeIgniter->handleRequest(NULL, Object(Config\Cache), false)
+#7 C:\laragon\www\library-api\system\Boot.php(325): CodeIgniter\CodeIgniter->run()
+#8 C:\laragon\www\library-api\system\Boot.php(67): CodeIgniter\Boot::runCodeIgniter(Object(CodeIgniter\CodeIgniter))
+#9 C:\laragon\www\library-api\public\index.php(56): CodeIgniter\Boot::bootWeb(Object(Config\Paths))
+#10 C:\laragon\www\library-api\system\rewrite.php(44): require_once('C:\\laragon\\www\\...')
+#11 {main}
+CRITICAL - 2024-07-16 08:14:48 --> CodeIgniter\Database\Exceptions\DatabaseException: Duplicate entry '4' for key 'catalog_books.author_id'
+[Method: POST, Route: books]
+in SYSTEMPATH\Database\BaseConnection.php on line 688.
+ 1 APPPATH\Controllers\BookController.php(60): CodeIgniter\Database\BaseConnection->query('INSERT INTO catalog_books (title, publisher_id, publication_year, isbn, author_id) VALUES (:title:, :publisher_id:, :publication_year:, :isbn:, :author_id:)', [...])
+ 2 SYSTEMPATH\CodeIgniter.php(933): App\Controllers\BookController->create()
+ 3 SYSTEMPATH\CodeIgniter.php(509): CodeIgniter\CodeIgniter->runController(Object(App\Controllers\BookController))
+ 4 SYSTEMPATH\CodeIgniter.php(355): CodeIgniter\CodeIgniter->handleRequest(null, Object(Config\Cache), false)
+ 5 SYSTEMPATH\Boot.php(325): CodeIgniter\CodeIgniter->run()
+ 6 SYSTEMPATH\Boot.php(67): CodeIgniter\Boot::runCodeIgniter(Object(CodeIgniter\CodeIgniter))
+ 7 FCPATH\index.php(56): CodeIgniter\Boot::bootWeb(Object(Config\Paths))
+ 8 SYSTEMPATH\rewrite.php(44): require_once('C:\\laragon\\www\\library-api\\public\\index.php')
+CRITICAL - 2024-07-16 08:14:48 --> [Caused by] CodeIgniter\Database\Exceptions\DatabaseException: Duplicate entry '4' for key 'catalog_books.author_id'
+in SYSTEMPATH\Database\MySQLi\Connection.php on line 317.
+ 1 SYSTEMPATH\Database\BaseConnection.php(734): CodeIgniter\Database\MySQLi\Connection->execute('INSERT INTO catalog_books (title, publisher_id, publication_year, isbn, author_id) VALUES (\'ruang hampa fps\', \'1\', \'2030\', \'782793283\', \'4\')')
+ 2 SYSTEMPATH\Database\BaseConnection.php(648): CodeIgniter\Database\BaseConnection->simpleQuery('INSERT INTO catalog_books (title, publisher_id, publication_year, isbn, author_id) VALUES (\'ruang hampa fps\', \'1\', \'2030\', \'782793283\', \'4\')')
+ 3 APPPATH\Controllers\BookController.php(60): CodeIgniter\Database\BaseConnection->query('INSERT INTO catalog_books (title, publisher_id, publication_year, isbn, author_id) VALUES (:title:, :publisher_id:, :publication_year:, :isbn:, :author_id:)', [...])
+ 4 SYSTEMPATH\CodeIgniter.php(933): App\Controllers\BookController->create()
+ 5 SYSTEMPATH\CodeIgniter.php(509): CodeIgniter\CodeIgniter->runController(Object(App\Controllers\BookController))
+ 6 SYSTEMPATH\CodeIgniter.php(355): CodeIgniter\CodeIgniter->handleRequest(null, Object(Config\Cache), false)
+ 7 SYSTEMPATH\Boot.php(325): CodeIgniter\CodeIgniter->run()
+ 8 SYSTEMPATH\Boot.php(67): CodeIgniter\Boot::runCodeIgniter(Object(CodeIgniter\CodeIgniter))
+ 9 FCPATH\index.php(56): CodeIgniter\Boot::bootWeb(Object(Config\Paths))
+10 SYSTEMPATH\rewrite.php(44): require_once('C:\\laragon\\www\\library-api\\public\\index.php')
+CRITICAL - 2024-07-16 08:14:48 --> [Caused by] mysqli_sql_exception: Duplicate entry '4' for key 'catalog_books.author_id'
+in SYSTEMPATH\Database\MySQLi\Connection.php on line 312.
+ 1 SYSTEMPATH\Database\MySQLi\Connection.php(312): mysqli->query('INSERT INTO catalog_books (title, publisher_id, publication_year, isbn, author_id) VALUES (\'ruang hampa fps\', \'1\', \'2030\', \'782793283\', \'4\')', 0)
+ 2 SYSTEMPATH\Database\BaseConnection.php(734): CodeIgniter\Database\MySQLi\Connection->execute('INSERT INTO catalog_books (title, publisher_id, publication_year, isbn, author_id) VALUES (\'ruang hampa fps\', \'1\', \'2030\', \'782793283\', \'4\')')
+ 3 SYSTEMPATH\Database\BaseConnection.php(648): CodeIgniter\Database\BaseConnection->simpleQuery('INSERT INTO catalog_books (title, publisher_id, publication_year, isbn, author_id) VALUES (\'ruang hampa fps\', \'1\', \'2030\', \'782793283\', \'4\')')
+ 4 APPPATH\Controllers\BookController.php(60): CodeIgniter\Database\BaseConnection->query('INSERT INTO catalog_books (title, publisher_id, publication_year, isbn, author_id) VALUES (:title:, :publisher_id:, :publication_year:, :isbn:, :author_id:)', [...])
+ 5 SYSTEMPATH\CodeIgniter.php(933): App\Controllers\BookController->create()
+ 6 SYSTEMPATH\CodeIgniter.php(509): CodeIgniter\CodeIgniter->runController(Object(App\Controllers\BookController))
+ 7 SYSTEMPATH\CodeIgniter.php(355): CodeIgniter\CodeIgniter->handleRequest(null, Object(Config\Cache), false)
+ 8 SYSTEMPATH\Boot.php(325): CodeIgniter\CodeIgniter->run()
+ 9 SYSTEMPATH\Boot.php(67): CodeIgniter\Boot::runCodeIgniter(Object(CodeIgniter\CodeIgniter))
+10 FCPATH\index.php(56): CodeIgniter\Boot::bootWeb(Object(Config\Paths))
+11 SYSTEMPATH\rewrite.php(44): require_once('C:\\laragon\\www\\library-api\\public\\index.php')
+ERROR - 2024-07-16 08:46:04 --> mysqli_sql_exception: You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'stock_quantity > 0' at line 1 in C:\laragon\www\library-api\system\Database\MySQLi\Connection.php:312
+Stack trace:
+#0 C:\laragon\www\library-api\system\Database\MySQLi\Connection.php(312): mysqli->query('SELECT * FROM c...', 0)
+#1 C:\laragon\www\library-api\system\Database\BaseConnection.php(734): CodeIgniter\Database\MySQLi\Connection->execute('SELECT * FROM c...')
+#2 C:\laragon\www\library-api\system\Database\BaseConnection.php(648): CodeIgniter\Database\BaseConnection->simpleQuery('SELECT * FROM c...')
+#3 C:\laragon\www\library-api\app\Controllers\BookController.php(23): CodeIgniter\Database\BaseConnection->query('SELECT * FROM c...')
+#4 C:\laragon\www\library-api\system\CodeIgniter.php(933): App\Controllers\BookController->avalible_book()
+#5 C:\laragon\www\library-api\system\CodeIgniter.php(509): CodeIgniter\CodeIgniter->runController(Object(App\Controllers\BookController))
+#6 C:\laragon\www\library-api\system\CodeIgniter.php(355): CodeIgniter\CodeIgniter->handleRequest(NULL, Object(Config\Cache), false)
+#7 C:\laragon\www\library-api\system\Boot.php(325): CodeIgniter\CodeIgniter->run()
+#8 C:\laragon\www\library-api\system\Boot.php(67): CodeIgniter\Boot::runCodeIgniter(Object(CodeIgniter\CodeIgniter))
+#9 C:\laragon\www\library-api\public\index.php(56): CodeIgniter\Boot::bootWeb(Object(Config\Paths))
+#10 C:\laragon\www\library-api\system\rewrite.php(44): require_once('C:\\laragon\\www\\...')
+#11 {main}
+CRITICAL - 2024-07-16 08:46:04 --> CodeIgniter\Database\Exceptions\DatabaseException: You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'stock_quantity > 0' at line 1
+[Method: GET, Route: books/avalible]
+in SYSTEMPATH\Database\BaseConnection.php on line 688.
+ 1 APPPATH\Controllers\BookController.php(23): CodeIgniter\Database\BaseConnection->query('SELECT * FROM catalog_books WHARE stock_quantity > 0')
+ 2 SYSTEMPATH\CodeIgniter.php(933): App\Controllers\BookController->avalible_book()
+ 3 SYSTEMPATH\CodeIgniter.php(509): CodeIgniter\CodeIgniter->runController(Object(App\Controllers\BookController))
+ 4 SYSTEMPATH\CodeIgniter.php(355): CodeIgniter\CodeIgniter->handleRequest(null, Object(Config\Cache), false)
+ 5 SYSTEMPATH\Boot.php(325): CodeIgniter\CodeIgniter->run()
+ 6 SYSTEMPATH\Boot.php(67): CodeIgniter\Boot::runCodeIgniter(Object(CodeIgniter\CodeIgniter))
+ 7 FCPATH\index.php(56): CodeIgniter\Boot::bootWeb(Object(Config\Paths))
+ 8 SYSTEMPATH\rewrite.php(44): require_once('C:\\laragon\\www\\library-api\\public\\index.php')
+CRITICAL - 2024-07-16 08:46:04 --> [Caused by] CodeIgniter\Database\Exceptions\DatabaseException: You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'stock_quantity > 0' at line 1
+in SYSTEMPATH\Database\MySQLi\Connection.php on line 317.
+ 1 SYSTEMPATH\Database\BaseConnection.php(734): CodeIgniter\Database\MySQLi\Connection->execute('SELECT * FROM catalog_books WHARE stock_quantity > 0')
+ 2 SYSTEMPATH\Database\BaseConnection.php(648): CodeIgniter\Database\BaseConnection->simpleQuery('SELECT * FROM catalog_books WHARE stock_quantity > 0')
+ 3 APPPATH\Controllers\BookController.php(23): CodeIgniter\Database\BaseConnection->query('SELECT * FROM catalog_books WHARE stock_quantity > 0')
+ 4 SYSTEMPATH\CodeIgniter.php(933): App\Controllers\BookController->avalible_book()
+ 5 SYSTEMPATH\CodeIgniter.php(509): CodeIgniter\CodeIgniter->runController(Object(App\Controllers\BookController))
+ 6 SYSTEMPATH\CodeIgniter.php(355): CodeIgniter\CodeIgniter->handleRequest(null, Object(Config\Cache), false)
+ 7 SYSTEMPATH\Boot.php(325): CodeIgniter\CodeIgniter->run()
+ 8 SYSTEMPATH\Boot.php(67): CodeIgniter\Boot::runCodeIgniter(Object(CodeIgniter\CodeIgniter))
+ 9 FCPATH\index.php(56): CodeIgniter\Boot::bootWeb(Object(Config\Paths))
+10 SYSTEMPATH\rewrite.php(44): require_once('C:\\laragon\\www\\library-api\\public\\index.php')
+CRITICAL - 2024-07-16 08:46:04 --> [Caused by] mysqli_sql_exception: You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'stock_quantity > 0' at line 1
+in SYSTEMPATH\Database\MySQLi\Connection.php on line 312.
+ 1 SYSTEMPATH\Database\MySQLi\Connection.php(312): mysqli->query('SELECT * FROM catalog_books WHARE stock_quantity > 0', 0)
+ 2 SYSTEMPATH\Database\BaseConnection.php(734): CodeIgniter\Database\MySQLi\Connection->execute('SELECT * FROM catalog_books WHARE stock_quantity > 0')
+ 3 SYSTEMPATH\Database\BaseConnection.php(648): CodeIgniter\Database\BaseConnection->simpleQuery('SELECT * FROM catalog_books WHARE stock_quantity > 0')
+ 4 APPPATH\Controllers\BookController.php(23): CodeIgniter\Database\BaseConnection->query('SELECT * FROM catalog_books WHARE stock_quantity > 0')
+ 5 SYSTEMPATH\CodeIgniter.php(933): App\Controllers\BookController->avalible_book()
+ 6 SYSTEMPATH\CodeIgniter.php(509): CodeIgniter\CodeIgniter->runController(Object(App\Controllers\BookController))
+ 7 SYSTEMPATH\CodeIgniter.php(355): CodeIgniter\CodeIgniter->handleRequest(null, Object(Config\Cache), false)
+ 8 SYSTEMPATH\Boot.php(325): CodeIgniter\CodeIgniter->run()
+ 9 SYSTEMPATH\Boot.php(67): CodeIgniter\Boot::runCodeIgniter(Object(CodeIgniter\CodeIgniter))
+10 FCPATH\index.php(56): CodeIgniter\Boot::bootWeb(Object(Config\Paths))
+11 SYSTEMPATH\rewrite.php(44): require_once('C:\\laragon\\www\\library-api\\public\\index.php')

@@ -8,8 +8,13 @@ use CodeIgniter\Router\RouteCollection;
 $routes->get('/', 'Home::index');
 
 // AUTH
-$routes->post('register', 'AuthController::register');
-$routes->post('login', 'AuthController::login');
+// $routes->post('register', 'AuthController::register');
+// $routes->post('login', 'AuthController::login');
+
+$routes->group('member', ['namespace' => 'App\Controllers'], function($routes) {
+    $routes->get('', 'MemberController::index');  
+    $routes->post('create', 'MemberController::create');            
+});
 
 $routes->group('admin', ['namespace' => 'App\Controllers'], function($routes) {
     $routes->post('register', 'AdminController::register');            
@@ -26,7 +31,8 @@ $routes->group('authors', ['namespace' => 'App\Controllers'], function($routes) 
 
 $routes->group('books', ['namespace' => 'App\Controllers'], function($routes) {
     $routes->get('', 'BookController::index');            
-    $routes->get('(:num)', 'BookController::show/$1');  
+    $routes->get('(:num)', 'BookController::show/$1');
+    $routes->get('avalible', 'BookController::avalible_book');  
     $routes->post('', 'BookController::create');         
     $routes->put('(:num)', 'BookController::update/$1');   
     $routes->delete('(:num)', 'BookController::delete/$1');
@@ -40,5 +46,11 @@ $routes->group('author', ['namespace' => 'App\Controllers'], function($routes) {
     $routes->put('(:num)', 'AuthorController::update/$1');   
     $routes->delete('(:num)', 'AuthorController::delete/$1');
 });
+
+$routes->group('loan', ['namespace' => 'App\Controllers'], function($routes) {
+    $routes->post('borrow', 'LoanController::borrow_book');            
+    $routes->post('deport', 'LoanController::return_book');  
+});
+
 
 
