@@ -47,6 +47,14 @@ $routes->group('author', ['namespace' => 'App\Controllers'], function($routes) {
     $routes->delete('(:num)', 'AuthorController::delete/$1');
 });
 
+$routes->group('publisher', ['namespace' => 'App\Controllers'], function($routes) {
+    $routes->get('', 'PublisherController::index');            
+    $routes->get('(:num)', 'PublisherController::show/$1');  
+    $routes->post('', 'PublisherController::create');         
+    $routes->put('(:num)', 'PublisherController::update/$1');   
+    $routes->delete('(:num)', 'PublisherController::delete/$1');
+});
+
 $routes->group('loan', ['namespace' => 'App\Controllers'], function($routes) {
     $routes->post('borrow', 'LoanController::borrow_book');            
     $routes->post('deport', 'LoanController::return_book');  
