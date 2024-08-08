@@ -311,4 +311,4 @@ public function get_report()
 }
 
 
-// buku yang paling banyak di pinjem, buku yang rusak berapa , user yang paling banyak minjem
+// saya mau membuat fiur report yang berisi tentang data yang berupa buku yang paling banyak di pinjam, buku yang telah r

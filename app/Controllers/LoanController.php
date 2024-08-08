@@ -141,7 +141,7 @@ class LoanController extends CoreController
        
     }
 
-    public function return_book()
+public function return_book()
 {
     $request = $this->request->getJSON();
     $db = db_connect();
@@ -169,12 +169,13 @@ class LoanController extends CoreController
     }
 
     foreach ($books as $book) {
-        if (!isset($book->book_id)) {
-            $error[] = "Book ID is missing in the request";
+        if (!isset($book->book_id) || !isset($book->status)) {
+            $error[] = "Book ID or status is missing in the request";
             continue;
         }
 
         $book_id = $book->book_id;
+        $status = $book->status;
 
         // Validasi peminjaman
         $loanQuery = "SELECT * FROM loan WHERE user_id = ? AND book_id = ? AND status = 'borrowed'";
@@ -192,18 +193,16 @@ class LoanController extends CoreController
             continue;
         }
 
-        // Tambah stock_quantity
-        $updateStockQuery = "UPDATE catalog_books SET stock_quantity = stock_quantity + 1 WHERE book_id = ?";
-        $db->query($updateStockQuery, [$loanData->book_id]);
+        // Tambah stock_quantity hanya jika status buku adalah 'Good'
+        if ($status === 'Good') {
+            $updateStockQuery = "UPDATE catalog_books SET stock_quantity = stock_quantity + 1 WHERE book_id = ?";
+            $db->query($updateStockQuery, [$loanData->book_id]);
+        }
 
-        // Perbarui loan_date di tabel loan
+        // Perbarui status dan tanggal pengembalian di tabel loan
         $returnDate = date('Y-m-d H:i:s');
-        $updateLoanQuery = "UPDATE loan SET loan_date = ?, status = 'returned' WHERE loan_id = ?";
-        $db->query($updateLoanQuery, [$returnDate, $loanData->loan_id]);
-
-        // Hapus data dari tabel loan setelah dikembalikan
-        $deleteLoanQuery = "DELETE FROM loan WHERE loan_id = ?";
-        $db->query($deleteLoanQuery, [$loanData->loan_id]);
+        $updateLoanQuery = "UPDATE loan SET loan_date = ?, status = ? WHERE loan_id = ?";
+        $db->query($updateLoanQuery, [$returnDate, $status, $loanData->loan_id]);
 
         // Ambil data lengkap untuk respons
         $loanDetail = [
@@ -211,7 +210,7 @@ class LoanController extends CoreController
             'user' => $user->full_name,
             'book' => $bookData->title,
             'loan_date' => $loanData->loan_date,
-            'loan_date' => $returnDate
+            'status' => $status
         ];
 
         $response[] = $loanDetail;
@@ -231,6 +230,7 @@ class LoanController extends CoreController
         'data' => $response
     ])->setStatusCode(200);
 }
+
 
 
 
