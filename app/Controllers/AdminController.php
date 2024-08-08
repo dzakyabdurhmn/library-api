@@ -1,25 +1,24 @@
 <?php
+
 namespace App\Controllers;
 
-use CodeIgniter\RESTful\ResourceController;
-
-class AdminController extends ResourceController
+class AdminController extends CoreController
 {
     protected $modelName = 'App\Models\UserModel';
-    protected $format    = 'json';
+    protected $format = 'json';
 
     public function register()
     {
         $rules = [
             'username' => 'required|min_length[3]|max_length[100]|is_unique[admin.username]',
             'password' => 'required|min_length[8]',
-            'email'=>'required|min_length[8]',
-            'full_name'=>'required|min_length[8]',
-            'nik'=>'required|min_length[8]',
+            'email' => 'required|min_length[8]|is_unique[admin.email]',
+            'full_name' => 'required|min_length[8]',
+            'nik' => 'required|min_length[8]|is_unique[admin.nik]',
         ];
 
         if (!$this->validate($rules)) {
-            return $this->failValidationErrors($this->validator->getErrors());
+            return $this->respondWithValidationError('Validation errors', $this->validator->getErrors());
         }
 
         $db = \Config\Database::connect();
@@ -27,19 +26,14 @@ class AdminController extends ResourceController
         $params = [
             'username' => $this->request->getVar('username'),
             'password' => password_hash($this->request->getVar('password'), PASSWORD_DEFAULT),
-            'email'    => $this->request->getVar('email'),
-            'full_name'    => $this->request->getVar('full_name'),
-            'nik'    => $this->request->getVar('nik'),
+            'email' => $this->request->getVar('email'),
+            'full_name' => $this->request->getVar('full_name'),
+            'nik' => $this->request->getVar('nik'),
         ];
 
         $db->query($query, $params);
 
-        $response = [
-            'status' =>  201,
-            'message' => 'User registered successfully',
-        ];
-
-        return $this->respondCreated($response);
+        return $this->respondWithSuccess('User registered successfully', null, 201);
     }
 
     public function login()
@@ -50,7 +44,7 @@ class AdminController extends ResourceController
         ];
 
         if (!$this->validate($rules)) {
-            return $this->failValidationErrors($this->validator->getErrors());
+            return $this->respondWithValidationError('Validation errors', $this->validator->getErrors());
         }
 
         $db = \Config\Database::connect();
@@ -61,20 +55,19 @@ class AdminController extends ResourceController
 
         $user = $db->query($query, $params)->getRowArray();
 
-        $response = [
-            'status' =>  401,
-            'message' => 'Invalid login credentials',
-        ];
-
         if (!$user || !password_verify($this->request->getVar('password'), $user['password'])) {
-            return $this->respond($response);
+            return $this->respondWithUnauthorized('Invalid login credentials');
         }
 
-        $response = [
-            'status' =>  200,
-            'message' => 'Login successful',
-        ];
-
-        return $this->respond($response);
+        return $this->respondWithSuccess('Login successful', null, 200);
     }
 }
+
+
+
+/**
+ * pagination
+ * search
+ * filter
+ * report nya
+ */

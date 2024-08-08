@@ -5,7 +5,7 @@ use CodeIgniter\Router\RouteCollection;
 /**
  * @var RouteCollection $routes
  */
-$routes->get('/', 'Home::index');
+$routes->get('/', 'HomeController::index');
 
 // AUTH
 // $routes->post('register', 'AuthController::register');
@@ -32,7 +32,6 @@ $routes->group('authors', ['namespace' => 'App\Controllers'], function($routes) 
 $routes->group('books', ['namespace' => 'App\Controllers'], function($routes) {
     $routes->get('', 'BookController::index');            
     $routes->get('(:num)', 'BookController::show/$1');
-    $routes->get('avalible', 'BookController::avalible_book');  
     $routes->post('', 'BookController::create');         
     $routes->put('(:num)', 'BookController::update/$1');   
     $routes->delete('(:num)', 'BookController::delete/$1');
@@ -59,6 +58,13 @@ $routes->group('loan', ['namespace' => 'App\Controllers'], function($routes) {
     $routes->post('borrow', 'LoanController::borrow_book');            
     $routes->post('deport', 'LoanController::return_book');  
 });
+
+$routes->group('reports', function($routes) {
+    $routes->get('', 'ReportController::get_report');
+    $routes->get('user/(:num)', 'ReportController::getReportByUser/$1');
+    $routes->get('book/(:num)', 'ReportController::getReportByBook/$1');
+});
+
 
 
 

@@ -2,25 +2,39 @@
 
 namespace App\Controllers;
 
-use CodeIgniter\RESTful\ResourceController;
-
-class AuthorController extends ResourceController
+class AuthorController extends CoreController
 {
     protected $format = 'json';
 
     public function index()
     {
         $db = \Config\Database::connect();
-        $query = $db->query("SELECT * FROM author");
-        $authors = $query->getResult();
+        $builder = $db->table('author');
 
-        return $this->respond($authors);
+        // Filter
+        if ($this->request->getGet('name')) {
+            $builder->like('author_name', $this->request->getGet('name'));
+        }
+
+        // Search
+        if ($this->request->getGet('search')) {
+            $builder->like('author_name', $this->request->getGet('search'));
+        }
+
+        // Pagination
+        $limit = $this->request->getGet('limit') ?? 10;
+        $page = $this->request->getGet('page') ?? 1;
+        $offset = ($page - 1) * $limit;
+        $builder->limit($limit, $offset);
+
+        $authors = $builder->get()->getResult();
+
+        return $this->respondWithSuccess('Authors retrieved successfully', $authors, 200);
     }
-
     public function show($author_id = null)
     {
         if ($author_id === null) {
-            return $this->fail('Author ID is required', 400);
+            return $this->respondWithValidationError('Author ID is required', [], 400);
         }
 
         $db = \Config\Database::connect();
@@ -28,10 +42,10 @@ class AuthorController extends ResourceController
         $author = $query->getRow();
 
         if (!$author) {
-            return $this->failNotFound('Author not found');
+            return $this->respondWithNotFound('Author not found');
         }
 
-        return $this->respond($author);
+        return $this->respondWithSuccess('Author retrieved successfully', $author, 200);
     }
 
     public function create()
@@ -42,7 +56,7 @@ class AuthorController extends ResourceController
         ];
 
         if (!$this->validate($rules)) {
-            return $this->failValidationErrors($this->validator->getErrors());
+            return $this->respondWithValidationError('Validation errors', $this->validator->getErrors());
         }
 
         $db = \Config\Database::connect();
@@ -53,18 +67,13 @@ class AuthorController extends ResourceController
         ];
         $db->query($query, $params);
 
-        $response = [
-            'status' => 201,
-            'message' => 'Author added',
-        ];
-
-        return $this->respondCreated($response);
+        return $this->respondWithSuccess('Author added', null, 201);
     }
 
     public function update($author_id = null)
     {
         if ($author_id === null) {
-            return $this->fail('Author ID is required', 400);
+            return $this->respondWithValidationError('Author ID is required', [], 400);
         }
 
         $rules = [
@@ -73,7 +82,7 @@ class AuthorController extends ResourceController
         ];
 
         if (!$this->validate($rules)) {
-            return $this->failValidationErrors($this->validator->getErrors());
+            return $this->respondWithValidationError('Validation errors', $this->validator->getErrors());
         }
 
         $db = \Config\Database::connect();
@@ -86,21 +95,16 @@ class AuthorController extends ResourceController
         $db->query($query, $params);
 
         if ($db->affectedRows() == 0) {
-            return $this->failNotFound('Author not found or no changes made');
+            return $this->respondWithNotFound('Author not found or no changes made');
         }
 
-        $response = [
-            'status' => 200,
-            'message' => 'Author updated',
-        ];
-
-        return $this->respond($response);
+        return $this->respondWithSuccess('Author updated', null, 200);
     }
 
     public function delete($author_id = null)
     {
         if ($author_id === null) {
-            return $this->fail('Author ID is required', 400);
+            return $this->respondWithValidationError('Author ID is required', [], 400);
         }
 
         $db = \Config\Database::connect();
@@ -109,14 +113,9 @@ class AuthorController extends ResourceController
         $db->query($query, $params);
 
         if ($db->affectedRows() == 0) {
-            return $this->failNotFound('Author not found');
+            return $this->respondWithNotFound('Author not found');
         }
 
-        $response = [
-            'status' => 200,
-            'message' => 'Author deleted',
-        ];
-
-        return $this->respondDeleted($response);
+        return $this->respondWithDeleted('Author deleted', 200);
     }
 }

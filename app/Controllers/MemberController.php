@@ -1,193 +1,36 @@
 <?php
 
-
-// #########################
-// # Model - mirip mirip ORM
-// #########################
-
-// namespace App\Controllers;
-
-// use App\Models\UserModel;
-// use CodeIgniter\RESTful\ResourceController;
-
-// class AuthController extends ResourceController
-// {
-//     protected $modelName = 'App\Models\UserModel';
-//     protected $format    = 'json';
-
-//     public function register()
-//     {
-//         $rules = [
-//             'username' => 'required|min_length[3]|max_length[100]|is_unique[users.username]',
-//             'email'    => 'required|valid_email|is_unique[users.email]',
-//             'password' => 'required|min_length[8]'
-//         ];
-
-//         $response = [
-//             'status' =>  200,
-//             'message' => 'user alredy register',
-//         ];
-
-
-//         if (!$this->validate($rules)) {
-//             return $this->failValidationErrors($this->validator->getErrors());
-//         }
-
-     
- 
-
-//         $data = [
-//             'username' => $this->request->getVar('username'),
-//             'email'    => $this->request->getVar('email'),
-//             'password' => password_hash($this->request->getVar('password'), PASSWORD_DEFAULT)
-//         ];
-
-//         $this->model->save($data);
-
-//         $response = [
-//             'status' =>  200,
-//             'message' => 'User registered successfully',
-//         ];
-
-//         // Kembalikan respons dengan status code 201
-//         return $this->respondCreated($response);    }
-
-//     public function login()
-//     {
-//         $rules = [
-//             'username' => 'required',
-//             'password' => 'required'
-//         ];
-
-//         if (!$this->validate($rules)) {
-//             return $this->failValidationErrors($this->validator->getErrors());
-//         }
-
-//         $user = $this->model->where('username', $this->request->getVar('username'))->first();
-
-
-
-//         $response = [
-//             'status' =>  401,
-//             'message' => 'Invalid login credentials',
-//         ];
-
-//         if (!$user || !password_verify($this->request->getVar('password'), $user['password'])) {
-//             return $this->respond($response);
-//         }
-
-//         $response = [
-//             'status' =>  200,
-//             'message' => 'Login successful',
-//         ];
-
-//         return $this->respond($response);
-//     }
-// }
-
-
-// #######################
-// # Query builder
-// ######################
-
-// namespace App\Controllers;
-
-// use App\Models\UserModel;
-// use CodeIgniter\RESTful\ResourceController;
-// use CodeIgniter\Database\Query;
-
-// class AuthController extends ResourceController
-// {
-//     protected $modelName = 'App\Models\UserModel';
-//     protected $format    = 'json';
-
-//     public function register()
-//     {
-//         $rules = [
-//             'username' => 'required|min_length[3]|max_length[100]|is_unique[users.username]',
-//             'email'    => 'required|valid_email|is_unique[users.email]',
-//             'password' => 'required|min_length[8]'
-//         ];
-
-//         if (!$this->validate($rules)) {
-//                 $this->failValidationErrors($this->validator->getErrors());
-//         }
-
-//         $db = \Config\Database::connect();
-//         $builder = $db->table('users');
-
-//         $data = [
-//             'username' => $this->request->getVar('username'),
-//             'email'    => $this->request->getVar('email'),
-//             'password' => password_hash($this->request->getVar('password'), PASSWORD_DEFAULT)
-//         ];
-
-//         $builder->insert($data);
-
-//         $response = [
-//             'status' =>  201,
-//             'message' => 'User registered successfully',
-//         ];
-
-//         return $this->respondCreated($response);
-//     }
-
-//     public function login()
-//     {
-//         $rules = [
-//             'username' => 'required',
-//             'password' => 'required'
-//         ];
-
-//         if (!$this->validate($rules)) {
-//             return $this->failValidationErrors($this->validator->getErrors());
-//         }
-
-//         $db = \Config\Database::connect();
-//         $builder = $db->table('users');
-//         $user = $builder->where('username', $this->request->getVar('username'))->get()->getRowArray();
-
-//         $response = [
-//             'status' =>  401,
-//             'message' => 'Invalid login credentials',
-//         ];
-
-//         if (!$user || !password_verify($this->request->getVar('password'), $user['password'])) {
-//             return $this->respond($response);
-//         }
-
-//         $response = [
-//             'status' =>  200,
-//             'message' => 'Login successful',
-//         ];
-
-//         return $this->respond($response);
-//     }
-// }
-
-
-// #########################
-// # Raw query 😎
-// #########################
-
-
 namespace App\Controllers;
 
-use CodeIgniter\RESTful\ResourceController;
-
-class MemberController extends ResourceController
+class MemberController extends CoreController
 {
     protected $modelName = 'App\Models\UserModel';
-    protected $format    = 'json';
+    protected $format = 'json';
 
-
-    public function index()
+     public function index()
     {
         $db = \Config\Database::connect();
-        $query = $db->query("SELECT * FROM member");
-        $authors = $query->getResult();
+        $builder = $db->table('member');
 
-        return $this->respond($authors);
+        // Filter
+        if ($this->request->getGet('name')) {
+            $builder->like('full_name', $this->request->getGet('name'));
+        }
+
+        // Search
+        if ($this->request->getGet('search')) {
+            $builder->like('full_name', $this->request->getGet('search'));
+        }
+
+        // Pagination
+        $limit = $this->request->getGet('limit') ?? 10;
+        $page = $this->request->getGet('page') ?? 1;
+        $offset = ($page - 1) * $limit;
+        $builder->limit($limit, $offset);
+
+        $members = $builder->get()->getResult();
+
+        return $this->respondWithSuccess('Members retrieved successfully', $members, 200);
     }
 
     public function create()
@@ -195,34 +38,25 @@ class MemberController extends ResourceController
         $rules = [
             'username' => 'required|min_length[3]|max_length[100]|is_unique[member.username],"The %s is already taken"',
             'email'    => 'required|valid_email|is_unique[member.email]',
-            'full_name'=>'required|min_length[8]',
-            'address'=>'required|min_length[8]',
-            'phone'=>'required|min_length[10]|numeric'
+            'full_name' => 'required|min_length[8]',
+            'address' => 'required|min_length[8]',
         ];
 
         if (!$this->validate($rules)) {
-            return $this->failValidationErrors($this->validator->getErrors());
+            return $this->respondWithValidationError('Validation errors', $this->validator->getErrors());
         }
 
         $db = \Config\Database::connect();
-        $query = "INSERT INTO member (username, email, full_name, address, phone) VALUES (:username:, :email:,  :full_name:, :address:, :phone:)";
+        $query = "INSERT INTO member (username, email, full_name, address) VALUES (:username:, :email:, :full_name:, :address:)";
         $params = [
             'username' => $this->request->getVar('username'),
-            'email'    => $this->request->getVar('email'),
-            'full_name'    => $this->request->getVar('full_name'),
-            'address'    => $this->request->getVar('address'),
-            'phone'    => $this->request->getVar('phone'),
+            'email' => $this->request->getVar('email'),
+            'full_name' => $this->request->getVar('full_name'),
+            'address' => $this->request->getVar('address'),
         ];
 
         $db->query($query, $params);
 
-        $response = [
-            'status' =>  201,
-            'message' => 'Member registered successfully',
-        ];
-
-        return $this->respondCreated($response);
+        return $this->respondWithSuccess('Member registered successfully', null, 201);
     }
-
-
 }
