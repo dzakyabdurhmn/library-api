@@ -59,12 +59,8 @@ $routes->group('loan', ['namespace' => 'App\Controllers'], function($routes) {
     $routes->post('deport', 'LoanController::return_book');  
 });
 
-$routes->group('reports', function($routes) {
-    $routes->get('', 'ReportController::get_report');
-    $routes->get('user/(:num)', 'ReportController::getReportByUser/$1');
-    $routes->get('book/(:num)', 'ReportController::getReportByBook/$1');
-});
 
 
+$routes->get('report', 'LiblaryReport::generate_report');
 
 
