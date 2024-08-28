@@ -85,33 +85,87 @@ class BookController extends CoreController
         return $this->respondWithSuccess('Book retrieved successfully', $book, 200);
     }
 
-    public function create()
-    {
-        $rules = [
-            'title' => 'required|min_length[5]|max_length[100]',
-            'publisher_id' => 'required|min_length[1]|max_length[1000]',
-            'publication_year' => 'required|min_length[4]|max_length[1000]',
-            'isbn' => 'required|min_length[5]|max_length[1000]',
-            'author_id' => 'required|min_length[1]|max_length[1000]',
-        ];
+// public function create()
+// {
+//     $rules = [
+//         'title' => 'required|min_length[5]|max_length[100]',
+//         'publisher_id' => 'required|min_length[1]|max_length[1000]',
+//         'publication_year' => 'required|min_length[4]|max_length[1000]',
+//         'isbn' => 'required|min_length[5]|max_length[1000]',
+//         'author_id' => 'required|min_length[1]|max_length[1000]',
+//         'book_price' => 'required|numeric|min_length[1]|max_length[1000]',
+//     ];
 
-        if (!$this->validate($rules)) {
-            return $this->respondWithValidationError('Validation errors', $this->validator->getErrors());
-        }
+//     if (!$this->validate($rules)) {
+//         return $this->respondWithValidationError('Validation errors', $this->validator->getErrors());
+//     }
 
-        $db = \Config\Database::connect();
-        $query = "INSERT INTO catalog_books (title, publisher_id, publication_year, isbn, author_id) VALUES (:title:, :publisher_id:, :publication_year:, :isbn:, :author_id:)";
-        $params = [
-            'title' => $this->request->getVar('title'),
-            'publisher_id' => $this->request->getVar('publisher_id'),
-            'publication_year' => $this->request->getVar('publication_year'),
-            'isbn' => $this->request->getVar('isbn'),
-            'author_id' => $this->request->getVar('author_id'),
-        ];
-        $db->query($query, $params);
+//     $book_price = $this->request->getVar('book_price');
+//     $loan_price = $book_price * 0.01;
 
-        return $this->respondWithSuccess('Book added successfully', null, 201);
+//     $db = \Config\Database::connect();
+//     $query = "INSERT INTO catalog_books (title, publisher_id, publication_year, isbn, author_id, book_price, loan_price) VALUES (:title:, :publisher_id:, :publication_year:, :isbn:, :author_id:, :book_price:, :loan_price:)";
+//     $params = [
+//         'title' => $this->request->getVar('title'),
+//         'publisher_id' => $this->request->getVar('publisher_id'),
+//         'publication_year' => $this->request->getVar('publication_year'),
+//         'isbn' => $this->request->getVar('isbn'),
+//         'author_id' => $this->request->getVar('author_id'),
+//         'book_price' => $book_price,
+//         'loan_price' => $loan_price,
+//     ];
+//     $db->query($query, $params);
+
+//     return $this->respondWithSuccess('Book added successfully', null, 201);
+// }
+
+
+public function create()
+{
+    $rules = [
+        'title' => 'required|min_length[5]|max_length[100]',
+        'publisher_id' => 'required|min_length[1]|max_length[1000]',
+        'publication_year' => 'required|min_length[4]|max_length[1000]',
+        'isbn' => 'required|min_length[5]|max_length[1000]',
+        'author_id' => 'required|min_length[1]|max_length[1000]',
+        'book_price' => 'required|numeric|min_length[1]|max_length[1000]',
+    ];
+
+    if (!$this->validate($rules)) {
+        return $this->respondWithValidationError('Validation errors', $this->validator->getErrors());
     }
+
+    // Mengambil nilai persentase yang berlaku dari tabel 'percentage'
+    $db = \Config\Database::connect();
+    $percentageQuery = $db->query("SELECT percentage FROM percentage WHERE effective_date <= CURRENT_DATE ORDER BY effective_date DESC LIMIT 1");
+    $percentageResult = $percentageQuery->getRow();
+
+    if (!$percentageResult) {
+        return $this->respondWithError('No valid percentage found in the database');
+    }
+
+    $percentage = $percentageResult->percentage;
+    
+    $book_price = $this->request->getVar('book_price');
+    $loan_price = $book_price * ($percentage / 100);  // Menggunakan persentase dari database
+
+    // Memasukkan data buku ke dalam tabel 'catalog_books'
+    $query = "INSERT INTO catalog_books (title, publisher_id, publication_year, isbn, author_id, book_price, loan_price) VALUES (:title:, :publisher_id:, :publication_year:, :isbn:, :author_id:, :book_price:, :loan_price:)";
+    $params = [
+        'title' => $this->request->getVar('title'),
+        'publisher_id' => $this->request->getVar('publisher_id'),
+        'publication_year' => $this->request->getVar('publication_year'),
+        'isbn' => $this->request->getVar('isbn'),
+        'author_id' => $this->request->getVar('author_id'),
+        'book_price' => $book_price,
+        'loan_price' => $loan_price,
+    ];
+    $db->query($query, $params);
+
+    return $this->respondWithSuccess('Book added successfully', null, 201);
+}
+
+
 
     public function update($book_id = null)
     {

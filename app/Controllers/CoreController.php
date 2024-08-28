@@ -52,12 +52,23 @@ class CoreController extends ResourceController
         ], $code);
     }
 
-    protected function respondWithDeleted($message, $code = 200)
+    protected function respondWithDeleted($message, $code =  500)
     {
         return $this->respond([
             'status' => $code,
             'message' => $message
         ], $code);
     }
+
+protected function respondWithError($message, $data = null, $statusCode = 400)
+{
+    return $this->respond([
+        'status' => 'error',
+        'message' => $message,
+        'data' => $data
+    ], $statusCode);
+}
+
+
 }
 

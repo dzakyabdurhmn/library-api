@@ -13,8 +13,11 @@ $routes->get('/', 'HomeController::index');
 
 $routes->group('member', ['namespace' => 'App\Controllers'], function($routes) {
     $routes->get('', 'MemberController::index');  
-    $routes->post('create', 'MemberController::create');            
+    $routes->post('create', 'MemberController::create');
+    $routes->put('(:num)', 'MemberController::update/$1');  // Rute untuk update
+    $routes->delete('(:num)', 'MemberController::delete/$1'); // Menambahkan route untuk delete
 });
+
 
 $routes->group('admin', ['namespace' => 'App\Controllers'], function($routes) {
     $routes->post('register', 'AdminController::register');            
@@ -61,6 +64,13 @@ $routes->group('loan', ['namespace' => 'App\Controllers'], function($routes) {
 
 
 
-$routes->get('report', 'LiblaryReport::generate_report');
+$routes->group('reports', ['namespace' => 'App\Controllers'], function($routes) {
+    $routes->get('most-borrowed-books', 'ReportController::most_borrowed_books');
+    $routes->get('least-borrowed-books', 'ReportController::least_borrowed_books');
+    $routes->get('broken-books', 'ReportController::broken_books');
+    $routes->get('missing-books', 'ReportController::missing_books');
+    $routes->get('most-active-users', 'ReportController::most_active_users');
+    $routes->get('inactive-users', 'ReportController::inactive_users');
+});
 
 

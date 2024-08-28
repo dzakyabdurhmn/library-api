@@ -2,313 +2,131 @@
 
 namespace App\Controllers;
 
-use CodeIgniter\Controller;
-
-class ReportController extends Controller
+class ReportController extends CoreController
 {
+    protected $db;
 
-public function get_report()
+    public function __construct()
     {
-        $db = db_connect();
-
-        // Query untuk mendapatkan laporan tanpa filter
-        $reportQuery = "
-            SELECT 
-                r.report_id, 
-                r.user_id, 
-                r.username, 
-                r.email, 
-                r.full_name, 
-                r.address, 
-                rb.book_id,
-                rb.title,
-                rb.publisher_id,
-                rb.publication_year,
-                rb.isbn,
-                rb.stock_quantity,
-                rb.author_id
-            FROM report r
-            JOIN report_books rb ON r.report_id = rb.report_id
-        ";
-
-        $result = $db->query($reportQuery)->getResultArray();
-
-        // Organize the result into the desired format
-        $reports = [];
-        foreach ($result as $row) {
-            $reportId = $row['report_id'];
-            if (!isset($reports[$reportId])) {
-                $reports[$reportId] = [
-                    'report_id' => $row['report_id'],
-                    'user_id' => $row['user_id'],
-                    'username' => $row['username'],
-                    'email' => $row['email'],
-                    'full_name' => $row['full_name'],
-                    'address' => $row['address'],
-                    'books' => []
-                ];
-            }
-            
-            $reports[$reportId]['books'][] = [
-                'book_id' => $row['book_id'],
-                'title' => $row['title'],
-                'publisher_id' => $row['publisher_id'],
-                'publication_year' => $row['publication_year'],
-                'isbn' => $row['isbn'],
-                'stock_quantity' => $row['stock_quantity'],
-                'author_id' => $row['author_id']
-            ];
-        }
-
-        if (empty($reports)) {
-            return $this->response->setJSON([
-                'status' => 404,
-                'message' => 'No reports found'
-            ])->setStatusCode(404);
-        }
-
-        return $this->response->setJSON([
-            'status' => 200,
-            'message' => 'Reports retrieved successfully',
-            'data' => array_values($reports)
-        ])->setStatusCode(200);
+        $this->db = \Config\Database::connect();
     }
 
-    public function getReportByUser($user_id)
+    // Laporan buku yang paling banyak dipinjam
+    public function most_borrowed_books()
     {
-        $db = db_connect();
+        // Ambil data dari loan_book
+        $bookQuery = "SELECT book_id, book_title, COUNT(*) as borrow_count FROM loan_book GROUP BY book_id, book_title ORDER BY borrow_count DESC";
+        $books = $this->db->query($bookQuery)->getResultArray();
 
-        $reportQuery = "
-            SELECT 
-                r.report_id, 
-                r.user_id, 
-                r.username, 
-                r.email, 
-                r.full_name, 
-                r.address, 
-                rb.book_id,
-                rb.title,
-                rb.publisher_id,
-                rb.publication_year,
-                rb.isbn,
-                rb.stock_quantity,
-                rb.author_id
-            FROM report r
-            JOIN report_books rb ON r.report_id = rb.report_id
-            WHERE r.user_id = ?
-        ";
-
-        $result = $db->query($reportQuery, [$user_id])->getResultArray();
-
-        // Organize the result into the desired format
-        $reports = [];
-        foreach ($result as $row) {
-            $reportId = $row['report_id'];
-            if (!isset($reports[$reportId])) {
-                $reports[$reportId] = [
-                    'report_id' => $row['report_id'],
-                    'user_id' => $row['user_id'],
-                    'username' => $row['username'],
-                    'email' => $row['email'],
-                    'full_name' => $row['full_name'],
-                    'address' => $row['address'],
-                    'books' => []
-                ];
-            }
-            
-            $reports[$reportId]['books'][] = [
-                'book_id' => $row['book_id'],
-                'title' => $row['title'],
-                'publisher_id' => $row['publisher_id'],
-                'publication_year' => $row['publication_year'],
-                'isbn' => $row['isbn'],
-                'stock_quantity' => $row['stock_quantity'],
-                'author_id' => $row['author_id']
-            ];
+        // Untuk setiap buku, ambil detail tambahan dari tabel loan_book
+        foreach ($books as &$book) {
+            $bookDetailQuery = "SELECT * FROM loan_book WHERE book_id = ? LIMIT 1";
+            $bookDetail = $this->db->query($bookDetailQuery, [$book['book_id']])->getRowArray();
+            $book = array_merge($book, $bookDetail);
         }
 
-        if (empty($reports)) {
-            return $this->response->setJSON([
-                'status' => 404,
-                'message' => 'No reports found for this user'
-            ])->setStatusCode(404);
-        }
-
-        return $this->response->setJSON([
-            'status' => 200,
-            'message' => 'Reports retrieved successfully',
-            'data' => array_values($reports)
-        ])->setStatusCode(200);
+        return $this->respondWithSuccess('Most borrowed books retrieved successfully', $books);
     }
 
-    public function getReportByBook($book_id)
+    // Laporan buku yang paling sedikit dipinjam
+    public function least_borrowed_books()
     {
-        $db = db_connect();
+        // Ambil data dari loan_book
+        $bookQuery = "SELECT book_id, book_title, COUNT(*) as borrow_count FROM loan_book GROUP BY book_id, book_title ORDER BY borrow_count ASC";
+        $books = $this->db->query($bookQuery)->getResultArray();
 
-        $reportQuery = "
-            SELECT 
-                r.report_id, 
-                r.user_id, 
-                r.username, 
-                r.email, 
-                r.full_name, 
-                r.address, 
-                rb.book_id,
-                rb.title,
-                rb.publisher_id,
-                rb.publication_year,
-                rb.isbn,
-                rb.stock_quantity,
-                rb.author_id
-            FROM report r
-            JOIN report_books rb ON r.report_id = rb.report_id
-            WHERE rb.book_id = ?
-        ";
-
-        $result = $db->query($reportQuery, [$book_id])->getResultArray();
-
-        // Organize the result into the desired format
-        $reports = [];
-        foreach ($result as $row) {
-            $reportId = $row['report_id'];
-            if (!isset($reports[$reportId])) {
-                $reports[$reportId] = [
-                    'report_id' => $row['report_id'],
-                    'user_id' => $row['user_id'],
-                    'username' => $row['username'],
-                    'email' => $row['email'],
-                    'full_name' => $row['full_name'],
-                    'address' => $row['address'],
-                    'books' => []
-                ];
-            }
-            
-            $reports[$reportId]['books'][] = [
-                'book_id' => $row['book_id'],
-                'title' => $row['title'],
-                'publisher_id' => $row['publisher_id'],
-                'publication_year' => $row['publication_year'],
-                'isbn' => $row['isbn'],
-                'stock_quantity' => $row['stock_quantity'],
-                'author_id' => $row['author_id']
-            ];
+        // Untuk setiap buku, ambil detail tambahan dari tabel loan_book
+        foreach ($books as &$book) {
+            $bookDetailQuery = "SELECT * FROM loan_book WHERE book_id = ? LIMIT 1";
+            $bookDetail = $this->db->query($bookDetailQuery, [$book['book_id']])->getRowArray();
+            $book = array_merge($book, $bookDetail);
         }
 
-        if (empty($reports)) {
-            return $this->response->setJSON([
-                'status' => 404,
-                'message' => 'No reports found for this book'
-            ])->setStatusCode(404);
-        }
-
-        return $this->response->setJSON([
-            'status' => 200,
-            'message' => 'Reports retrieved successfully',
-            'data' => array_values($reports)
-        ])->setStatusCode(200);
+        return $this->respondWithSuccess('Least borrowed books retrieved successfully', $books);
     }
 
-
-    public function generate_report($user_id, $book_id)
+    // Laporan buku rusak dan hilang
+    private function get_books_by_status($status)
     {
-        $db = db_connect();
+        $loanQuery = "SELECT loan_id FROM loan_book WHERE status = ?";
+        $loans = $this->db->query($loanQuery, [$status])->getResultArray();
 
-        // Query untuk mendapatkan data user
-        $userQuery = "
-            SELECT 
-                user_id, 
-                username, 
-                email, 
-                COALESCE(full_name, '') as full_name, 
-                COALESCE(address, '') as address 
-            FROM member
-            WHERE user_id = ?
-        ";
+        $result = [];
+        foreach ($loans as $loan) {
+            $bookQuery = "SELECT * FROM loan_book WHERE loan_id = ?";
+            $book = $this->db->query($bookQuery, [$loan['loan_id']])->getRowArray();
 
-        $userData = $db->query($userQuery, [$user_id])->getRowArray();
-
-        if ($userData) {
-            // Insert atau Update data ke dalam tabel report
-            $reportQuery = "
-                INSERT INTO report (
-                    user_id, username, email, full_name, address
-                ) VALUES (?, ?, ?, ?, ?)
-                ON DUPLICATE KEY UPDATE
-                    username = VALUES(username), 
-                    email = VALUES(email), 
-                    full_name = VALUES(full_name), 
-                    address = VALUES(address)
-            ";
-
-            $db->query($reportQuery, [
-                $userData['user_id'],
-                $userData['username'],
-                $userData['email'],
-                $userData['full_name'],
-                $userData['address']
-            ]);
-
-            // Mendapatkan report_id dari report yang baru diinsert
-            $reportIdQuery = "SELECT report_id FROM report WHERE user_id = ?";
-            $reportId = $db->query($reportIdQuery, [$user_id])->getRowArray()['report_id'];
-
-            // Query untuk mendapatkan data buku
-            $bookQuery = "
-                SELECT 
-                    book_id, 
-                    title, 
-                    publisher_id, 
-                    publication_year, 
-                    isbn, 
-                    stock_quantity, 
-                    author_id
-                FROM catalog_books
-                WHERE book_id = ?
-            ";
-
-            $bookData = $db->query($bookQuery, [$book_id])->getRowArray();
-
-            if ($bookData) {
-                // Insert data ke dalam tabel report_books
-                $reportBookQuery = "
-                    INSERT INTO report_books (
-                        report_id, book_id, title, publisher_id, publication_year, isbn, stock_quantity, author_id
-                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-                ";
-
-                $db->query($reportBookQuery, [
-                    $reportId,
-                    $bookData['book_id'],
-                    $bookData['title'],
-                    $bookData['publisher_id'],
-                    $bookData['publication_year'],
-                    $bookData['isbn'],
-                    $bookData['stock_quantity'],
-                    $bookData['author_id']
-                ]);
-
-                // Return data sebagai array, bukan respon HTTP
-                return [
-                    'status' => 201,
-                    'message' => 'Report generated successfully',
-                    'data' => array_merge($userData, $bookData)
-                ];
-            } else {
-                // Return error sebagai array
-                return [
-                    'status' => 404,
-                    'message' => 'Book not found'
-                ];
+            if ($book) {
+                $key = $book['book_id'];
+                if (isset($result[$key])) {
+                    $result[$key][$status . '_count'] += 1;
+                } else {
+                    $result[$key] = array_merge($book, [$status . '_count' => 1]);
+                }
             }
-        } else {
-            // Return error sebagai array
-            return [
-                'status' => 404,
-                'message' => 'User not found'
-            ];
         }
+
+        return array_values($result); // Mengubah array asosiatif menjadi array numerik
+    }
+
+    public function broken_books()
+    {
+        $result = $this->get_books_by_status('Broken');
+
+        return $this->respondWithSuccess('Broken books retrieved successfully', $result);
+    }
+
+    public function missing_books()
+    {
+        $result = $this->get_books_by_status('Missing');
+
+        return $this->respondWithSuccess('Missing books retrieved successfully', $result);
+    }
+
+    public function most_active_users()
+    {
+        // Ambil semua data user dari tabel member
+        $userQuery = "SELECT user_id, full_name, email, username, address FROM member";
+        $users = $this->db->query($userQuery)->getResultArray();
+
+        $result = [];
+        foreach ($users as $user) {
+            // Hitung jumlah pinjaman untuk setiap user dari tabel loan_user
+            $loanCountQuery = "SELECT COUNT(*) as borrow_count FROM loan_user WHERE user_id = ?";
+            $loanCount = $this->db->query($loanCountQuery, [$user['user_id']])->getRowArray();
+
+            // Gabungkan data user dengan borrow_count
+            $result[] = array_merge($user, ['borrow_count' => $loanCount['borrow_count']]);
+        }
+
+        // Urutkan berdasarkan borrow_count dari yang terbesar
+        usort($result, function($a, $b) {
+            return $b['borrow_count'] <=> $a['borrow_count'];
+        });
+
+        return $this->respondWithSuccess('Most active users retrieved successfully', $result);
+    }
+
+    public function inactive_users()
+    {
+        // Ambil semua data user dari tabel member
+        $userQuery = "SELECT user_id, full_name, email, username, address FROM member";
+        $users = $this->db->query($userQuery)->getResultArray();
+
+        $result = [];
+        foreach ($users as $user) {
+            // Hitung jumlah pinjaman untuk setiap user
+            $loanCountQuery = "SELECT COUNT(*) as borrow_count FROM loan_user WHERE user_id = ?";
+            $loanCount = $this->db->query($loanCountQuery, [$user['user_id']])->getRowArray();
+
+            // Hanya tambahkan user yang memiliki borrow_count = 0
+            if ($loanCount['borrow_count'] == 0) {
+                $result[] = array_merge($user, ['borrow_count' => 0]);
+            }
+        }
+
+        return $this->respondWithSuccess('Inactive users retrieved successfully', $result);
     }
 }
 
 
-// saya mau membuat fiur report yang berisi tentang data yang berupa buku yang paling banyak di pinjam, buku yang telah r
