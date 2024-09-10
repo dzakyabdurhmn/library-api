@@ -85,39 +85,6 @@ class BookController extends CoreController
         return $this->respondWithSuccess('Book retrieved successfully', $book, 200);
     }
 
-// public function create()
-// {
-//     $rules = [
-//         'title' => 'required|min_length[5]|max_length[100]',
-//         'publisher_id' => 'required|min_length[1]|max_length[1000]',
-//         'publication_year' => 'required|min_length[4]|max_length[1000]',
-//         'isbn' => 'required|min_length[5]|max_length[1000]',
-//         'author_id' => 'required|min_length[1]|max_length[1000]',
-//         'book_price' => 'required|numeric|min_length[1]|max_length[1000]',
-//     ];
-
-//     if (!$this->validate($rules)) {
-//         return $this->respondWithValidationError('Validation errors', $this->validator->getErrors());
-//     }
-
-//     $book_price = $this->request->getVar('book_price');
-//     $loan_price = $book_price * 0.01;
-
-//     $db = \Config\Database::connect();
-//     $query = "INSERT INTO catalog_books (title, publisher_id, publication_year, isbn, author_id, book_price, loan_price) VALUES (:title:, :publisher_id:, :publication_year:, :isbn:, :author_id:, :book_price:, :loan_price:)";
-//     $params = [
-//         'title' => $this->request->getVar('title'),
-//         'publisher_id' => $this->request->getVar('publisher_id'),
-//         'publication_year' => $this->request->getVar('publication_year'),
-//         'isbn' => $this->request->getVar('isbn'),
-//         'author_id' => $this->request->getVar('author_id'),
-//         'book_price' => $book_price,
-//         'loan_price' => $loan_price,
-//     ];
-//     $db->query($query, $params);
-
-//     return $this->respondWithSuccess('Book added successfully', null, 201);
-// }
 
 
 public function create()
@@ -167,35 +134,49 @@ public function create()
 
 
 
-    public function update($book_id = null)
-    {
-        if ($book_id === null) {
-            return $this->respondWithValidationError('Book ID is required', [], 400);
-        }
+public function update($book_id = null)
+{
+    if ($book_id === null) {
+        return $this->respondWithValidationError('Book ID is required', [], 400);
+    }
 
-        $rules = [
-            'title' => 'required|min_length[5]|max_length[100]',
-            'publisher_id' => 'required|min_length[1]|max_length[1000]',
-            'publication_year' => 'required|min_length[4]|max_length[1000]',
-            'isbn' => 'required|min_length[5]|max_length[1000]',
-            'author_id' => 'required|min_length[1]|max_length[1000]',
-        ];
+    // Validation rules
+    $rules = [
+        'title' => 'permit_empty|min_length[5]|max_length[100]',
+        'publisher_id' => 'permit_empty|min_length[1]|max_length[1000]',
+        'publication_year' => 'permit_empty|min_length[4]|max_length[1000]',
+        'isbn' => 'permit_empty|min_length[5]|max_length[1000]',
+        'author_id' => 'permit_empty|min_length[1]|max_length[1000]',
+    ];
 
-        if (!$this->validate($rules)) {
-            return $this->respondWithValidationError('Validation errors', $this->validator->getErrors());
-        }
+    if (!$this->validate($rules)) {
+        return $this->respondWithValidationError('Validation errors', $this->validator->getErrors());
+    }
 
-        $db = \Config\Database::connect();
-        $query = "UPDATE catalog_books SET title = :title:, publisher_id = :publisher_id:, publication_year = :publication_year:, isbn = :isbn:, author_id = :author_id: WHERE book_id = :book_id:";
-        $params = [
-            'title' => $this->request->getVar('title'),
-            'publisher_id' => $this->request->getVar('publisher_id'),
-            'publication_year' => $this->request->getVar('publication_year'),
-            'isbn' => $this->request->getVar('isbn'),
-            'author_id' => $this->request->getVar('author_id'),
-            'book_id' => $book_id,
-        ];
-        $db->query($query, $params);
+    $db = \Config\Database::connect();
+    $builder = $db->table('catalog_books');
+
+    // Prepare data to update
+    $data = [];
+    if ($this->request->getVar('title')) {
+        $data['title'] = $this->request->getVar('title');
+    }
+    if ($this->request->getVar('publisher_id')) {
+        $data['publisher_id'] = $this->request->getVar('publisher_id');
+    }
+    if ($this->request->getVar('publication_year')) {
+        $data['publication_year'] = $this->request->getVar('publication_year');
+    }
+    if ($this->request->getVar('isbn')) {
+        $data['isbn'] = $this->request->getVar('isbn');
+    }
+    if ($this->request->getVar('author_id')) {
+        $data['author_id'] = $this->request->getVar('author_id');
+    }
+
+    if (!empty($data)) {
+        $builder->where('book_id', $book_id);
+        $builder->update($data);
 
         if ($db->affectedRows() == 0) {
             return $this->respondWithNotFound('Book not found or no changes made');
@@ -203,6 +184,10 @@ public function create()
 
         return $this->respondWithSuccess('Book updated successfully', null, 200);
     }
+
+    return $this->respondWithError('No data to update', null, 400);
+}
+
 
     public function delete($book_id = null)
     {

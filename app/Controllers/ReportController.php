@@ -127,6 +127,61 @@ class ReportController extends CoreController
 
         return $this->respondWithSuccess('Inactive users retrieved successfully', $result);
     }
+
+
+
+    public function get_status_count()
+  {
+        // Mendapatkan parameter `status` dari query string
+        $status = $this->request->getGet('status');
+
+        if($status !== 'Missing' && $status !== 'Borrowed' && status) {
+            return $this->respondWithNotFound('Par');
+        }
+
+        // Mendapatkan instance dari database
+        $db = \Config\Database::connect();
+
+        // Jika status diberikan, hitung hanya berdasarkan status yang dipilih
+        if ($status) {
+            // Menulis raw query untuk menghitung jumlah buku berdasarkan status tertentu
+            $query = $db->query("SELECT COUNT(*) as total FROM loan_book WHERE status = ?", [$status]);
+        } else {
+            // Menulis raw query untuk menghitung jumlah buku berdasarkan semua status
+            $query = $db->query("SELECT status, COUNT(*) as total FROM loan_book GROUP BY status");
+        }
+
+        // Mendapatkan hasil query
+        $results = $query->getResult();
+
+        // Jika tidak ada data
+        if (empty($results)) {
+            return $this->respondWithNotFound('No loan book data found.');
+        }
+
+        // Jika ada status tertentu yang diminta
+        if ($status) {
+            $total = $results[0]->total;
+            $data = [
+                'status' => $status,
+                'total' => $total
+            ];
+
+            return $this->respondWithSuccess("Count for status '$status' retrieved successfully.", $data);
+        }
+
+        // Menyiapkan data untuk semua status
+        $data = [];
+        foreach ($results as $row) {
+            $data[] = [
+                'status' => $row->status,
+                'total' => $row->total
+            ];
+        }
+
+        // Merespons dengan data hasil untuk semua status
+        return $this->respondWithSuccess('Status counts retrieved successfully.', $data);
+    }
 }
 
 

@@ -58,8 +58,11 @@ $routes->group('publisher', ['namespace' => 'App\Controllers'], function($routes
 });
 
 $routes->group('loan', ['namespace' => 'App\Controllers'], function($routes) {
+    $routes->get('', 'LoanController::index');
     $routes->post('borrow', 'LoanController::borrow_book');            
     $routes->post('deport', 'LoanController::return_book');  
+$routes->get('detail', 'LoanController::detail');
+
 });
 
 
@@ -71,6 +74,8 @@ $routes->group('reports', ['namespace' => 'App\Controllers'], function($routes) 
     $routes->get('missing-books', 'ReportController::missing_books');
     $routes->get('most-active-users', 'ReportController::most_active_users');
     $routes->get('inactive-users', 'ReportController::inactive_users');
+    $routes->get('get-status-count', 'ReportController::get_status_count');
+
 });
 
 
