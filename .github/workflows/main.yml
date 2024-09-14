@@ -3,7 +3,7 @@ name: Deploy
 on:
   push:
     branches:
-      - main  # Sesuaikan dengan nama branch utama kamu
+      - main # Sesuaikan dengan nama branch utama kamu
 
 jobs:
   deploy:
@@ -27,7 +27,7 @@ jobs:
             git pull origin main &&
             composer install &&
             php spark migrate &&
-            nohup php spark serve > /dev/null 2>&1 &   # Jalankan di background
+            nohup php spark serve > /dev/null 2>&1 & &&
             echo 'Server running in the background.'"
 
       - name: Post Checkout code
