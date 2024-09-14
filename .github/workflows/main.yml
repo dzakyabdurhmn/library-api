@@ -27,7 +27,7 @@ jobs:
             git pull origin main &&
             composer install &&
             php spark migrate &&
-            nohup php spark serve > /dev/null 2>&1 & &&
+            php spark serve &&
             echo 'Server running in the background.'"
 
       - name: Post Checkout code
