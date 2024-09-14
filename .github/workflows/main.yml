@@ -3,7 +3,7 @@ name: Deploy
 on:
   push:
     branches:
-      - main # Sesuaikan dengan nama branch utama kamu
+      - main
 
 jobs:
   deploy:
@@ -22,13 +22,13 @@ jobs:
           SSH_PASSWORD: ${{ secrets.SSH_PASSWORD }}
         run: |
           sshpass -p "$SSH_PASSWORD" ssh -o StrictHostKeyChecking=no -p 14333 root@0.tcp.ap.ngrok.io "
-            kill-port --port 8080 &&
+            fuser -k 8080/tcp || true &&
             cd library-api &&
-            git pull origin main &&
+            git pull --rebase origin main &&
             composer install &&
             php spark migrate &&
-            php spark serve &&
-            echo 'Server running in the background.'"
+            nohup php spark serve --port=8080 > /dev/null 2>&1 & &&
+            echo 'Server running in the background on port 8080.'"
 
       - name: Post Checkout code
         run: echo "Deployment completed successfully!"
