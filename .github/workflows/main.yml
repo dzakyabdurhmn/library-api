@@ -27,7 +27,7 @@ jobs:
             git pull --rebase origin main &&
             composer install &&
             php spark migrate &&
-            nohup php spark serve --port=8080 > /dev/null 2>&1 & &&
+            php spark serve --port=8080 &&
             echo 'Server running in the background on port 8080.'"
 
       - name: Post Checkout code
