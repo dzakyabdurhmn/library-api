@@ -6,7 +6,7 @@ class HomeController extends CoreController
 {
     public function index()
     {
-        $message = "Welcome to the Library API. Use the endpoints provided to interact with the library's resources.";
+        $message = "Welcome to the Library API. Use the endpoints provided to interact with the library's resources. enjoyy :)";
 
         return $this->respondWithSuccess($message, null, 200);
     }
