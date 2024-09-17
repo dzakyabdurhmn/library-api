@@ -61,10 +61,7 @@ writable/uploads/*
 !writable/uploads/index.html
 
 writable/debugbar/*
-!writable/debugbar/index.html
-
-writable/**/*.db
-writable/**/*.sqlite
+!writable/debugbar/.gitkeep
 
 php_errors.log
 
@@ -72,6 +69,9 @@ php_errors.log
 # User Guide Temp Files
 #-------------------------
 user_guide_src/build/*
+user_guide_src/cilexer/build/*
+user_guide_src/cilexer/dist/*
+user_guide_src/cilexer/pycilexer.egg-info/*
 
 #-------------------------
 # Test Files
@@ -85,7 +85,6 @@ phpunit
 # Composer
 #-------------------------
 vendor/
-composer.lock
 
 #-------------------------
 # IDE / Development Files
@@ -125,5 +124,3 @@ nb-configuration.xml
 
 /results/
 /phpunit*.xml
-
-/.php-cs-fixer.php
