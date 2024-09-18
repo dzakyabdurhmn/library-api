@@ -15,6 +15,22 @@ class AuthController extends CoreController
         $db = \Config\Database::connect();
 
 
+        $rules = [
+            'username' => 'required|min_length[5]',
+            'password' => 'required|min_length[8]',
+            'email' => 'required|valid_email',
+            'full_name' => 'required',
+            'nik' => 'required|numeric|min_length[16]|max_length[16]',
+            'role' => 'required|in_list[wearhouse,frontliner]', // Validasi role
+            'phone' => 'required|numeric',
+            'gender' => 'required|in_list[male,female]',
+            'address' => 'required'
+        ];
+
+        if (!$this->validate($rules)) {
+            return $this->respondWithValidationError('Validation errors', $this->validator->getErrors());
+        }
+
         $data = [
             'admin_username' => $this->request->getVar('username'),
             'admin_password' => $this->request->getVar('password'),
@@ -27,7 +43,6 @@ class AuthController extends CoreController
             'admin_address' => $this->request->getVar('address'),
         ];
 
-        
 
         // Validasi role apakah frontliner atau warehouse
         if ($data['admin_role'] === 'superadmin') {
@@ -44,14 +59,14 @@ class AuthController extends CoreController
                           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
                 $db->query($query, [
-                    $data['admin_username'], 
-                    $data['admin_password'], 
-                    $data['admin_email'], 
-                    $data['admin_full_name'], 
-                    $data['admin_nik'], 
-                    $data['admin_role'], 
-                    $data['admin_phone'], 
-                    $data['admin_gender'], 
+                    $data['admin_username'],
+                    $data['admin_password'],
+                    $data['admin_email'],
+                    $data['admin_full_name'],
+                    $data['admin_nik'],
+                    $data['admin_role'],
+                    $data['admin_phone'],
+                    $data['admin_gender'],
                     $data['admin_address']
                 ]);
 
@@ -68,8 +83,24 @@ class AuthController extends CoreController
     public function login()
     {
         $db = \Config\Database::connect();
+
+
+
+
+        $rules = [
+            'username' => 'required',
+            'password' => 'required'
+        ];
+
+        if (!$this->validate($rules)) {
+            return $this->respondWithValidationError('Validation errors', $this->validator->getErrors());
+        }
+
+
+
         $username = $this->request->getVar('username');
         $password = $this->request->getVar('password');
+
 
         try {
             // Raw query untuk mendapatkan data pengguna berdasarkan username
@@ -98,28 +129,4 @@ class AuthController extends CoreController
     {
         return $this->respondWithSuccess('Logged out successfully.');
     }
-}
-
-
-
-
-public function create()
-{
-    $validation = \Config\Services::validation();
-    
-    $validation->setRules([
-            'gender' => [
-            'label'  => 'Gender',
-            'rules'  => 'required|in_list[male,female,other]',
-            'errors' => [
-                'in_list' => 'The {field} must be one of: male, female, or other.',
-            ]
-        ]
-    ]);
-
-    if (!$validation->withRequest($this->request)->run()) {
-        return redirect()->back()->withInput()->with('errors', $validation->getErrors());
-    }
-
-    // Proses input valid
 }
