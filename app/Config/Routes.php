@@ -36,3 +36,20 @@ $routes->group('books', function ($routes) {
     $routes->put('(:num)', 'BookController::update/$1'); // Memperbarui buku berdasarkan ID
     $routes->delete('(:num)', 'BookController::delete/$1'); // Menghapus buku berdasarkan ID
 });
+
+
+$routes->group('authors', function ($routes) {
+    $routes->get('/', 'AuthorController::index'); // Mendapatkan semua penulis dengan pagination, search, dan filter
+    $routes->get('(:num)', 'AuthorController::show/$1'); // Mendapatkan penulis berdasarkan ID
+    $routes->post('/', 'AuthorController::create'); // Menambahkan penulis baru
+    $routes->put('(:num)', 'AuthorController::update/$1'); // Memperbarui penulis berdasarkan ID
+    $routes->delete('(:num)', 'AuthorController::delete/$1'); // Menghapus penulis berdasarkan ID
+});
+
+$routes->group('publishers', function ($routes) {
+    $routes->get('/', 'PublisherController::index'); // Mendapatkan semua penerbit dengan pagination, search, dan filter
+    $routes->get('(:num)', 'PublisherController::show/$1'); // Mendapatkan penerbit berdasarkan ID
+    $routes->post('/', 'PublisherController::create'); // Menambahkan penerbit baru
+    $routes->put('(:num)', 'PublisherController::update/$1'); // Memperbarui penerbit berdasarkan ID
+    $routes->delete('(:num)', 'PublisherController::delete/$1'); // Menghapus penerbit berdasarkan ID
+});
