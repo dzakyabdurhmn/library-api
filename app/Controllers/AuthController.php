@@ -3,7 +3,8 @@
 namespace App\Controllers;
 
 use CodeIgniter\Database\Exceptions\DatabaseException;
-
+use \Firebase\JWT\JWT;
+use \Firebase\JWT\Key;
 
 class AuthController extends CoreController
 {
@@ -51,6 +52,7 @@ class AuthController extends CoreController
             $params[] = (int) $offset;
 
             $users = $db->query($query, $params)->getResultArray();
+
 
             // Hitung total pengguna untuk pagination
             $totalQuery = "SELECT COUNT(*) as total FROM admin";
@@ -157,7 +159,10 @@ class AuthController extends CoreController
     }
 
 
-    // Fungsi untuk login (termasuk superadmin)
+
+
+
+
     public function login()
     {
         $db = \Config\Database::connect();
@@ -171,30 +176,39 @@ class AuthController extends CoreController
             return $this->respondWithValidationError('Validation errors', $this->validator->getErrors());
         }
 
-
-
         $username = $this->request->getVar('username');
         $password = $this->request->getVar('password');
 
-
         try {
-            // Raw query untuk mendapatkan data pengguna berdasarkan username
+            // Query untuk mendapatkan data user berdasarkan username
             $query = "SELECT * FROM admin WHERE admin_username = ?";
             $user = $db->query($query, [$username])->getRowArray();
 
             if ($user && password_verify($password, $user['admin_password'])) {
-                // Simpan sesi pengguna (di sini hanya contoh, sebaiknya gunakan JWT untuk API)
-                $sessionData = [
-                    'admin_id' => $user['admin_id'],
-                    'admin_username' => $user['admin_username'],
-                    'admin_role' => $user['admin_role'],
+                // Buat token random
+                $token = bin2hex(random_bytes(32));  // Random string sebagai token
+
+                // Simpan token ke database
+                $query = "INSERT INTO admin_token (admin_id, token, expires_at) VALUES (?, ?, ?)";
+                $db->query($query, [
+                    $user['admin_id'],
+                    $token,
+                    date('Y-m-d H:i:s', strtotime('+1 hour'))
+                ]);
+
+                // Format respons
+                $response = [
+                    'id' => $user['admin_id'],
+                    'username' => $user['admin_username'],
+                    'role' => $user['admin_role'],
+                    'token' => $token
                 ];
 
-                return $this->respondWithSuccess('Login successful.', $sessionData);
+                return $this->respondWithSuccess('Login successful.', $response);
             }
 
             return $this->respondWithUnauthorized('Invalid username or password.');
-        } catch (DatabaseException $e) {
+        } catch (\Exception $e) {
             return $this->respondWithError('Login failed: ' . $e->getMessage());
         }
     }
@@ -202,9 +216,30 @@ class AuthController extends CoreController
     // Fungsi logout (hanya contoh)
     public function logout()
     {
-        return $this->respondWithSuccess('Logged out successfully.');
-    }
+        $db = \Config\Database::connect();
 
+        // Ambil token dari request header (Bearer Token)
+        $authHeader = $this->request->getHeader(name: 'Authorization');
+        $token = null;
+
+        if ($authHeader) {
+            $token = str_replace('Bearer ', '', $authHeader->getValue());
+        }
+
+        if (!$token) {
+            return $this->respondWithValidationError('Token is required.');
+        }
+
+        try {
+            // Hapus token dari database
+            $query = "DELETE FROM admin_token WHERE token = ?";
+            $db->query($query, [$token]);
+
+            return $this->respondWithSuccess('Logged out successfully.');
+        } catch (\Exception $e) {
+            return $this->respondWithError('Logout failed: ' . $e->getMessage());
+        }
+    }
 
     public function delete_account($admin_id)
     {

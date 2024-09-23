@@ -3,14 +3,69 @@
 namespace App\Controllers;
 
 use CodeIgniter\Database\Exceptions\DatabaseException;
+use CodeIgniter\API\ResponseTrait;
+
 
 class AuthorController extends CoreController
 {
+
+
+
+
+
+    function validateToken($token)
+    {
+        $db = \Config\Database::connect();
+
+        if (!$token) {
+            return ['status' => 401, 'message' => 'Token is required.'];
+        }
+
+        // Cek token di database
+        $query = "SELECT * FROM admin_token WHERE token = ?";
+        $tokenData = $db->query($query, [$token])->getRowArray();
+
+        if (!$tokenData) {
+            return ['status' => 401, 'message' => 'Invalid token.'];
+        }
+
+        // Cek apakah token sudah expired
+        $currentTimestamp = time();
+        $expiresAt = strtotime($tokenData['expires_at']);
+
+        if ($expiresAt < $currentTimestamp) {
+            return ['status' => 401, 'message' => 'Token has expired.'];
+        }
+
+        // Jika token valid
+        return true;
+    }
+
+
+
+
     // Fungsi untuk menambahkan penulis (Create)
     public function create()
     {
         $db = \Config\Database::connect();
 
+        // helper('TokenHelper');
+
+        // Ambil token dari header Authorization
+        // $authHeader = $this->request->getHeader('Authorization');
+        // $token = null;
+
+        // if ($authHeader) {
+        //     $token = str_replace('Bearer ', '', $authHeader->getValue());
+        // }
+
+        // // Validasi token
+        // $tokenValidation = $this->validateToken($token); // Fungsi helper dipanggil
+        // if ($tokenValidation !== true) {
+        //     return $this->respond($tokenValidation, $tokenValidation['status']);
+        // }
+
+        // Validasi input
         $rules = [
             'author_name' => 'required|min_length[1]',
             'author_biography' => 'permit_empty'
@@ -20,17 +75,19 @@ class AuthorController extends CoreController
             return $this->respondWithValidationError('Validation errors', $this->validator->getErrors());
         }
 
+        // Ambil data dari request
         $data = [
             'author_name' => $this->request->getVar('author_name'),
             'author_biography' => $this->request->getVar('author_biography')
         ];
 
         try {
+            // Query untuk insert data ke tabel author
             $query = "INSERT INTO author (author_name, author_biography) VALUES (?, ?)";
             $db->query($query, array_values($data));
 
             return $this->respondWithSuccess('Author added successfully.');
-        } catch (DatabaseException $e) {
+        } catch (\Exception $e) {
             return $this->respondWithError('Failed to add author: ' . $e->getMessage());
         }
     }

@@ -8,7 +8,7 @@ class CoreController extends ResourceController
 {
     protected $format = 'json';
 
-    protected function respondWithSuccess($message, $data = null, $code = 201)
+    protected function respondWithSuccess($message, $data = null, $code = 200)
     {
         $response = [
             'status' => $code,
@@ -52,7 +52,7 @@ class CoreController extends ResourceController
         ], $code);
     }
 
-    protected function respondWithDeleted($message, $code =  500)
+    protected function respondWithDeleted($message, $code = 500)
     {
         return $this->respond([
             'status' => $code,
@@ -60,15 +60,14 @@ class CoreController extends ResourceController
         ], $code);
     }
 
-protected function respondWithError($message, $data = null, $statusCode = 400)
-{
-    return $this->respond([
-        'status' => 'error',
-        'message' => $message,
-        'data' => $data
-    ], $statusCode);
-}
-
+    protected function respondWithError($message, $data = null, $statusCode = 400)
+    {
+        return $this->respond([
+            'status' => 'error',
+            'message' => $message,
+            'data' => $data
+        ], $statusCode);
+    }
 
 }
 
