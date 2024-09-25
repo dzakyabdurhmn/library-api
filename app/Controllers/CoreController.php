@@ -8,15 +8,15 @@ class CoreController extends ResourceController
 {
     protected $format = 'json';
 
-    protected function respondWithSuccess($message, $data = null, $code = 200)
+    protected function respondWithSuccess($message, $result = null, $code = 200)
     {
         $response = [
             'status' => $code,
             'message' => $message,
         ];
 
-        if (!is_null($data) && !empty($data)) {
-            $response['data'] = $data;
+        if (!is_null($result) && !empty($result)) {
+            $response['result'] = $result;
         }
 
         return $this->respond($response, $code);

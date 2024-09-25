@@ -20,6 +20,11 @@ $routes->put('/auth/edit_account/(:num)', 'AuthController::edit_account/$1');
 $routes->get('auth/', 'AuthController::get_all_users'); // Mendapatkan semua pengguna
 $routes->get('auth/(:num)', 'AuthController::get_user_by_id/$1'); // Mendapatkan pengguna berdasarkan ID
 
+$routes->post('forgot-password', 'AuthController::sendResetPassword');
+$routes->post('reset-password', 'AuthController::resetPassword');
+
+
+
 $routes->group('members', function ($routes) {
     $routes->get('/', 'MemberController::index'); // Mendapatkan semua member
     $routes->get('(:num)', 'MemberController::show/$1'); // Mendapatkan detail member berdasarkan ID
