@@ -40,13 +40,16 @@ class PublisherController extends CoreController
     }
 
     // Fungsi untuk mendapatkan semua penerbit dengan pagination, search, dan filter (Read)
+
     public function index()
     {
         $db = \Config\Database::connect();
 
+        // Ambil parameter limit, page, search, dan filter
         $limit = $this->request->getVar('limit') ?? 10;
         $page = $this->request->getVar('page') ?? 1;
         $search = $this->request->getVar('search');
+        $filters = $this->request->getVar('filter') ?? []; // Filter array
 
         $offset = ($page - 1) * $limit;
 
@@ -55,30 +58,79 @@ class PublisherController extends CoreController
             $conditions = [];
             $params = [];
 
+            // Handle search untuk nama penerbit
             if ($search) {
                 $conditions[] = "publisher_name LIKE ?";
                 $params[] = "%$search%";
             }
 
+            // Map filter dari client ke nama field di database
+            $filterMapping = [
+                'name' => 'publisher_name',
+                'address' => 'publisher_address',
+                'phone' => 'publisher_phone',
+                'email' => 'publisher_email',
+            ];
+
+            // Handle filtering berdasarkan array filter
+            if (!empty($filters)) {
+                foreach ($filters as $key => $value) {
+                    if (array_key_exists($key, $filterMapping)) {
+                        $dbField = $filterMapping[$key];  // Ambil nama field yang sesuai di database
+                        if (is_array($value)) {
+                            // Jika value berupa array (misalnya range atau multiple values)
+                            $conditions[] = "$dbField IN (" . implode(',', array_fill(0, count($value), '?')) . ")";
+                            $params = array_merge($params, $value);
+                        } else {
+                            // Jika value single value
+                            $conditions[] = "$dbField = ?";
+                            $params[] = $value;
+                        }
+                    }
+                }
+            }
+
+            // Jika ada kondisi, tambahkan WHERE ke query
             if (count($conditions) > 0) {
                 $query .= ' WHERE ' . implode(' AND ', $conditions);
             }
 
+            // Tambahkan LIMIT dan OFFSET ke query
             $query .= " LIMIT ? OFFSET ?";
             $params[] = (int) $limit;
             $params[] = (int) $offset;
 
-            $publisher = $db->query($query, $params)->getResultArray();
+            // Jalankan query dan ambil hasil
+            $publishers = $db->query($query, $params)->getResultArray();
+
+
+
+            $result = [];
+            foreach ($publishers as $publisher) {
+                $result[] = [
+
+                    'id' => (int) $publisher['publisher_id'],
+                    'name' => $publisher['publisher_name'],
+                    'address' => $publisher['publisher_address'],
+                    'phone' => $publisher['publisher_phone'],
+                    'email' => $publisher['publisher_email']
+
+                ];
+            }
+
 
             // Hitung total penerbit untuk pagination
             $totalQuery = "SELECT COUNT(*) as total FROM publisher";
             if (count($conditions) > 0) {
                 $totalQuery .= ' WHERE ' . implode(' AND ', $conditions);
             }
-            $total = $db->query($totalQuery, $params)->getRow()->total;
 
-            return $this->respondWithSuccess('publisher retrieved successfully.', [
-                'publisher' => $publisher,
+            // Hitung total tanpa limit dan offset
+            $total = $db->query($totalQuery, array_slice($params, 0, -2))->getRow()->total;
+
+            // Kembalikan hasil dengan pagination
+            return $this->respondWithSuccess('Publisher retrieved successfully.', [
+                'data' => $result,
                 'total' => $total,
                 'limit' => (int) $limit,
                 'page' => (int) $page,
@@ -87,6 +139,7 @@ class PublisherController extends CoreController
             return $this->respondWithError('Failed to retrieve publisher: ' . $e->getMessage());
         }
     }
+
 
     // Fungsi untuk mendapatkan penerbit berdasarkan ID (Read)
     public function show($id = null)
@@ -97,11 +150,19 @@ class PublisherController extends CoreController
             $query = "SELECT * FROM publisher WHERE publisher_id = ?";
             $publisher = $db->query($query, [$id])->getRowArray();
 
+            $result = [
+                'id' => $publisher['publisher_id'],
+                'name' => $publisher['publisher_name'],
+                'address' => $publisher['publisher_address'],
+                'phone' => $publisher['publisher_phone'],
+                'email' => $publisher['publisher_email'],
+            ];
+
             if (!$publisher) {
                 return $this->respondWithNotFound('Publisher not found.');
             }
 
-            return $this->respondWithSuccess('Publisher found.', $publisher);
+            return $this->respondWithSuccess('Publisher found.', $result);
         } catch (DatabaseException $e) {
             return $this->respondWithError('Failed to retrieve publisher: ' . $e->getMessage());
         }
@@ -185,3 +246,6 @@ class PublisherController extends CoreController
         }
     }
 }
+
+
+// https://chatgpt.com/c/66f6315e-78ac-8013-9a5e-1a6c55ed5f37

@@ -56,19 +56,38 @@ class AuthController extends CoreController
             $params[] = (int) $limit;
             $params[] = (int) $offset;
 
+            // Eksekusi query untuk mendapatkan daftar pengguna
             $users = $db->query($query, $params)->getResultArray();
 
+            // Siapkan hasil
+            $result = [];
+            foreach ($users as $user) {
+                $result[] = [
+                    'id' => (int) $user['admin_id'],
+                    'username' => $user['admin_username'],
+                    'email' => $user['admin_email'],
+                    'full_name' => $user['admin_full_name'],
+                    'nik' => $user['admin_nik'],
+                    'role' => $user['admin_role'],
+                    'phone' => $user['admin_phone'],
+                    'gender' => $user['admin_gender'],
+                    'address' => $user['admin_address'],
+                ];
+            }
 
-            // Hitung total pengguna untuk pagination
+            // Query total pengguna untuk pagination
             $totalQuery = "SELECT COUNT(*) as total FROM admin";
+            $totalParams = [];
             if (count($conditions) > 0) {
                 $totalQuery .= ' WHERE ' . implode(' AND ', $conditions);
+                $totalParams = array_slice($params, 0, count($params) - 2); // Exclude LIMIT and OFFSET
             }
-            $total = $db->query($totalQuery, $params)->getRow()->total;
+
+            $total = $db->query($totalQuery, $totalParams)->getRow()->total;
 
             return $this->respondWithSuccess('Users retrieved successfully.', [
-                'data' => $users,
-                'total' => $total,
+                'data' => $result,
+                'total' => (int) $total,
                 'limit' => (int) $limit,
                 'page' => (int) $page,
             ]);
@@ -76,9 +95,6 @@ class AuthController extends CoreController
             return $this->respondWithError('Failed to retrieve users: ' . $e->getMessage());
         }
     }
-
-
-
 
 
     public function get_user_by_id($admin_id)
@@ -90,17 +106,17 @@ class AuthController extends CoreController
             $user = $db->query($query, [$admin_id])->getRowArray();
 
             $data = [
-                'id' => $user['admin_id'],
-                'username' => $user['admin_username'],
-                'email' => $user['admin_email'],
-                'full_name' => $user['admin_full_name'],
-                'nik' => $user['admin_nik'],
-                'role' => $user['admin_role'],
-                'phone' => $user['admin_phone'],
-                'gender' => $user['admin_gender'],
-                'address' => $user['admin_address'],
-
-
+                'data' => [
+                    'id' => (int) $user['admin_id'],
+                    'username' => $user['admin_username'],
+                    'email' => $user['admin_email'],
+                    'full_name' => $user['admin_full_name'],
+                    'nik' => $user['admin_nik'],
+                    'role' => $user['admin_role'],
+                    'phone' => $user['admin_phone'],
+                    'gender' => $user['admin_gender'],
+                    'address' => $user['admin_address'],
+                ]
             ];
 
             if (!$user) {
@@ -192,7 +208,16 @@ class AuthController extends CoreController
                 $admin_id
             ]);
 
-            return $this->respondWithSuccess('Account updated successfully.');
+
+            $result = [
+                'username' => $data['admin_username'],
+                'email' => $data['admin_email'],
+                'full_name' => $data['admin_full_name'],
+                'phone' => $data['admin_phone'],
+                'address' => $data['admin_address']
+            ];
+
+            return $this->respondWithSuccess('Account updated successfully.', $result);
         } catch (DatabaseException $e) {
             return $this->respondWithError('Update failed: ' . $e->getMessage());
         }
@@ -298,9 +323,17 @@ class AuthController extends CoreController
 
                 // Format respons
                 $response = [
-                    'id' => $user['admin_id'],
-                    'username' => $user['admin_username'],
-                    'role' => $user['admin_role'],
+                    'data' => [
+                        'id' => (int) $user['admin_id'],
+                        'username' => $user['admin_username'],
+                        'email' => $user['admin_email'],
+                        'full name' => $user['admin_full_name'],
+                        'nik' => $user['admin_nik'],
+                        'role' => $user['admin_role'],
+                        'phone' => $user['admin_phone'],
+                        'gender' => $user['admin_gender'],
+                        'address' => $user['admin_address']
+                    ],
                     'token' => $token
                 ];
 
@@ -341,84 +374,6 @@ class AuthController extends CoreController
         }
     }
 
-
-
-    // public function resetPassword()
-    // {
-    //     $db = \Config\Database::connect();
-
-    //     $email = $this->request->getVar('email');
-
-    //     // Validasi input
-    //     if (!$email || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
-    //         return $this->respondWithValidationError('Invalid email address.');
-    //     }
-
-    //     try {
-    //         // Cek apakah email tersebut ada di database
-    //         $query = "SELECT admin_id, admin_username FROM admin WHERE admin_email = ?";
-    //         $user = $db->query($query, [$email])->getRowArray();
-
-    //         if (!$user) {
-    //             return $this->respondWithNotFound('Email not found.');
-    //         }
-
-    //         // Buat token reset password
-    //         $resetToken = bin2hex(random_bytes(32));  // Random token
-    //         $expiresAt = date('Y-m-d H:i:s', strtotime('+1 hour'));  // Token berlaku 1 jam
-
-    //         // Simpan token reset password di tabel admin_token
-    //         $query = "INSERT INTO admin_token (admin_id, token, expires_at) VALUES (?, ?, ?)";
-    //         $db->query($query, [$user['admin_id'], $resetToken, $expiresAt]);
-
-    //         // Kirim email reset password menggunakan SMTP Zoho
-    //         $resetLink = base_url("/reset-password?token=$resetToken");
-
-    //         if ($this->sendResetEmail($email, $resetLink)) {
-    //             return $this->respondWithSuccess('Password reset link has been sent to your email.');
-    //         } else {
-    //             return $this->respondWithError('Failed to send reset password email.');
-    //         }
-
-    //     } catch (\Exception $e) {
-    //         return $this->respondWithError('Reset password failed: ' . $e->getMessage());
-    //     }
-    // }
-
-    // // Fungsi untuk mengirim email reset password
-    // private function sendResetEmail($email, $resetLink)
-    // {
-    //     $mail = new PHPMailer(true);
-
-    //     try {
-    //         // Konfigurasi SMTP Zoho
-    //         $mail->isSMTP();
-    //         $mail->Host = 'smtp.zoho.com';  // SMTP server Zoho
-    //         $mail->SMTPAuth = true;
-    //         $mail->Username = 'hello@dzakyabdurhmn.me';  // Ganti dengan email Zoho kamu
-    //         $mail->Password = 'e6b7467bd37b2160a5cb4cf9-2ddc603bd48e8f6ce4cb8abfc5273775445ddd16acfc5ea02b0e200f3b1d3c3e3176ded2ec52b122e87de37823de9ce8d77cce3c78523eed5603de5ec6bbdd26a55939b8a8569ce444530d6d94b9ef6b46751a6927acf8fd44c2e68004264d010dfaac5f8426';  // Ganti dengan password Zoho kamu
-    //         $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
-    //         $mail->Port = 587;
-
-    //         // Pengaturan email pengirim dan penerima
-    //         $mail->setFrom('hello@dzakyabdurhmn.me', 'Your Company');
-    //         $mail->addAddress($email);
-
-    //         // Konten email
-    //         $mail->isHTML(true);
-    //         $mail->Subject = 'Reset Password';
-    //         $mail->Body = "Click the following link to reset your password: <a href='$resetLink'>$resetLink</a>";
-
-    //         // Kirim email
-    //         return $mail->send();
-    //     } catch (Exception $e) {
-    //         log_message('error', 'Email could not be sent. Mailer Error: ' . $mail->ErrorInfo);
-    //         return false;
-    //     }
-    // }
-
-
-
     public function sendResetPassword()
     {
         $email = $this->request->getVar('email');
@@ -434,7 +389,7 @@ class AuthController extends CoreController
 
         // Buat token reset password
         $token = bin2hex(random_bytes(32)); // Random string sebagai token
-        $expiresAt = date('Y-m-d H:i:s', timestamp: strtotime('+5 hour'));
+        $expiresAt = date('Y-m-d H:i:s', timestamp: strtotime('+1 hour'));
 
         // Simpan token ke tabel admin_token
         try {
@@ -463,11 +418,11 @@ class AuthController extends CoreController
         try {
             // Kirim email
             $response = $mailtrap->send($emailMessage);
-            $messageIds = ResponseHelper::toArray($response)['message_ids'];
+            // $messageIds = ResponseHelper::toArray($response);
 
-            return $this->respondWithSuccess('Link reset password telah dikirim ke email Anda.', [
-                'message_ids' => $messageIds
-            ]);
+
+
+            return $this->respondWithSuccess('Link reset password telah dikirim ke email Anda.', );
         } catch (\Exception $e) {
             return $this->respondWithError('Gagal mengirim email: ' . $e->getMessage());
         }
@@ -518,8 +473,6 @@ class AuthController extends CoreController
 
         return $this->respondWithSuccess('Password berhasil direset.');
     }
-
-
 
 }
 

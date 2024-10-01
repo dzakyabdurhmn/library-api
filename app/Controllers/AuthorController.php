@@ -121,7 +121,19 @@ class AuthorController extends CoreController
             $params[] = (int) $limit;
             $params[] = (int) $offset;
 
-            $author = $db->query($query, $params)->getResultArray();
+            $authors = $db->query($query, $params)->getResultArray();
+
+
+
+            $result = [];
+            foreach ($authors as $author) {
+                $result[] = [
+                    'id' => $author['author_id'],
+                    'name' => $author['author_name'],
+                    'biography' => $author['author_biography'],
+                ];
+            }
+
 
             // Hitung total penulis untuk pagination
             $totalQuery = "SELECT COUNT(*) as total FROM author";
@@ -131,7 +143,7 @@ class AuthorController extends CoreController
             $total = $db->query($totalQuery, $params)->getRow()->total;
 
             return $this->respondWithSuccess('author retrieved successfully.', [
-                'author' => $author,
+                'data' => $result,
                 'total' => $total,
                 'limit' => (int) $limit,
                 'page' => (int) $page,
@@ -154,7 +166,16 @@ class AuthorController extends CoreController
                 return $this->respondWithNotFound('Author not found.');
             }
 
-            return $this->respondWithSuccess('Author found.', $author);
+
+            $data = [
+                'data' => [
+                    'id' => $author['author_id'],
+                    'name' => $author['author_name'],
+                    'biography' => 'author_biography'
+                ],
+            ];
+
+            return $this->respondWithSuccess('Author found.', $data);
         } catch (DatabaseException $e) {
             return $this->respondWithError('Failed to retrieve author: ' . $e->getMessage());
         }

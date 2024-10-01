@@ -100,6 +100,24 @@ class BookController extends CoreController
 
             $books = $db->query($query, $params)->getResultArray();
 
+
+            $result = [];
+            foreach ($books as $book) {
+                $result[] = [
+                    'id' => (int) $book['book_id'],
+                    'publisher_id' => (int) $book['books_publisher_id'],
+                    'publisher' => $book['books_author_id'],
+                    'title' => $book['books_title'],
+                    'publication_year' => $book['books_publication_year'],
+                    'isbn' => $book['books_stock_quantity'],
+                    'price' => $book['books_price'],
+                    'barcode' => $book['books_barcode']
+
+                ];
+            }
+
+
+
             // Hitung total buku untuk pagination
             $totalQuery = "SELECT COUNT(*) as total FROM books";
             if (count($conditions) > 0) {
@@ -108,7 +126,7 @@ class BookController extends CoreController
             $total = $db->query($totalQuery, $params)->getRow()->total;
 
             return $this->respondWithSuccess('Books retrieved successfully.', [
-                'books' => $books,
+                'data' => $result,
                 'total' => $total,
                 'limit' => (int) $limit,
                 'page' => (int) $page,
@@ -131,7 +149,23 @@ class BookController extends CoreController
                 return $this->respondWithNotFound('Book not found.');
             }
 
-            return $this->respondWithSuccess('Book found.', $book);
+
+            $result = [
+                'data' => [
+                    'id' => (int) $book['book_id'],
+                    'publisher_id' => (int) $book['books_publisher_id'],
+                    'title' => $book['books_author_id'],
+                    'publication_year' => $book['books_title'],
+                    'isbn' => $book['books_publication_year'],
+                    'stock_quantity' => (int) $book['books_stock_quantity'],
+                    'author_id' => (int) $book['books_stock_quantity'],
+                    'price' => (int) $book['books_price'],
+                    'author' => (int) $book['books_barcode']
+
+                ]
+            ];
+
+            return $this->respondWithSuccess('Book found.', $result);
         } catch (DatabaseException $e) {
             return $this->respondWithError('Failed to retrieve book: ' . $e->getMessage());
         }
