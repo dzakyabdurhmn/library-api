@@ -59,5 +59,9 @@ $routes->group('', ['filter' => 'authToken'], function ($routes) {
         $routes->put('(:num)', 'PublisherController::update/$1'); // Memperbarui penerbit berdasarkan ID
         $routes->delete('(:num)', 'PublisherController::delete/$1'); // Menghapus penerbit berdasarkan ID
     });
+
+    $routes->post('transaction/deport', 'LoanController::return_book');
+    $routes->post('transaction/borrow', 'LoanController::borrow_book');
+
 });
 

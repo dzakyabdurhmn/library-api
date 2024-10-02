@@ -21,7 +21,7 @@ class AuthController extends CoreController
         $db = \Config\Database::connect();
 
         // Ambil parameter dari query string
-        $limit = $this->request->getVar('limit') ?? 10; // Default limit 10
+        $limit = $this->request->getVar('limit') ?? 2; // Default limit 2 (sesuai permintaan)
         $page = $this->request->getVar('page') ?? 1; // Default page 1
         $search = $this->request->getVar('search');
         $filter = $this->request->getVar('filter');
@@ -85,11 +85,33 @@ class AuthController extends CoreController
 
             $total = $db->query($totalQuery, $totalParams)->getRow()->total;
 
+            // Hitung total jumlah halaman
+            $jumlah_page = ceil($total / $limit);
+
+            // Hitung halaman sebelumnya dan selanjutnya
+            $prev = ($page > 1) ? $page - 1 : null;
+            $next = ($page < $jumlah_page) ? $page + 1 : null;
+
+            // Hitung posisi data awal dan akhir berdasarkan limit
+            $start = ($page - 1) * $limit + 1;
+            $end = min($page * $limit, $total);
+
+            // Siapkan pagination detail
+            $detail = range(max(1, $page - 2), min($jumlah_page, $page + 2));
+
+            // Return dengan pagination format yang diminta
             return $this->respondWithSuccess('Users retrieved successfully.', [
                 'data' => $result,
-                'total' => (int) $total,
-                'limit' => (int) $limit,
-                'page' => (int) $page,
+                'pagination' => [
+                    'total_data' => (int) $total,
+                    'jumlah_page' => (int) $jumlah_page,
+                    'prev' => $prev,
+                    'page' => (int) $page,
+                    'next' => $next,
+                    'detail' => $detail,
+                    'start' => $start,
+                    'end' => $end,
+                ]
             ]);
         } catch (DatabaseException $e) {
             return $this->respondWithError('Failed to retrieve users: ' . $e->getMessage());
