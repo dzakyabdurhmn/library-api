@@ -228,6 +228,8 @@ class MemberController extends CoreController
 
 
     // Fungsi untuk mendapatkan semua member dengan pagination, search, dan filter
+
+
     public function index()
     {
         $db = \Config\Database::connect();
@@ -236,34 +238,50 @@ class MemberController extends CoreController
         $limit = $this->request->getVar('limit') ?? 10; // Default limit is 10
         $page = $this->request->getVar('page') ?? 1; // Default page is 1
         $search = $this->request->getVar('search');
-        $filter = $this->request->getVar('filter'); // Can be status, job, etc.
+        $filters = $this->request->getVar('filter') ?? []; // Can be status, job, etc.
 
         // Calculate offset for pagination
         $offset = ($page - 1) * $limit;
 
         try {
             // Base query
-            $query = "SELECT * FROM member";
+            $query = "SELECT member_id, member_username, member_email, member_full_name, member_address, member_job, member_status, member_religion, member_barcode, member_gender FROM member";
             $conditions = [];
             $params = [];
 
-            // Add filter and search if present
+            // Add search conditions for multiple fields
             if ($search) {
-                $conditions[] = "(member_username LIKE ? OR member_full_name LIKE ?)";
+                $conditions[] = "(member_username LIKE ? OR member_full_name LIKE ? OR member_email LIKE ? OR member_address LIKE ? OR member_job LIKE ? OR member_religion LIKE ?)";
+                $params[] = "%$search%";
+                $params[] = "%$search%";
+                $params[] = "%$search%";
+                $params[] = "%$search%";
                 $params[] = "%$search%";
                 $params[] = "%$search%";
             }
 
-            if ($filter) {
-                $conditions[] = "member_status = ?";
-                $params[] = $filter;
+            // Map filter from client to database field names
+            $filterMapping = [
+                'status' => 'member_status',
+                'job' => 'member_job',
+                // Add other filters as needed
+            ];
+
+            // Handle filtering based on the filter array
+            foreach ($filters as $key => $value) {
+                if (array_key_exists($key, $filterMapping)) {
+                    $dbField = $filterMapping[$key];  // Get the corresponding field name in the database
+                    $conditions[] = "$dbField = ?";
+                    $params[] = $value;
+                }
             }
 
+            // If there are conditions, add WHERE to the query
             if (count($conditions) > 0) {
                 $query .= ' WHERE ' . implode(' AND ', $conditions);
             }
 
-            // Add limit and offset for pagination
+            // Add LIMIT and OFFSET to the query
             $query .= " LIMIT ? OFFSET ?";
             $params[] = (int) $limit;
             $params[] = (int) $offset;
@@ -275,7 +293,7 @@ class MemberController extends CoreController
             $response = [];
             foreach ($members as $member) {
                 $response[] = [
-                    'id' => $member['member_id'],
+                    'id' => (int) $member['member_id'],
                     'username' => $member['member_username'],
                     'email' => $member['member_email'],
                     'full_name' => $member['member_full_name'],
@@ -293,19 +311,35 @@ class MemberController extends CoreController
             if (count($conditions) > 0) {
                 $totalQuery .= ' WHERE ' . implode(' AND ', $conditions);
             }
-            $total = $db->query($totalQuery, array_slice($params, 0, count($params) - 2))->getRow()->total; // Remove limit and offset params for count query
+            $total = $db->query($totalQuery, array_slice($params, 0, count($params) - 2))->getRow()->total; // Exclude limit and offset params
 
-            // Return the paginated response
+            // Calculate pagination details
+            $jumlah_page = ceil($total / $limit);
+            $prev = ($page > 1) ? $page - 1 : null;
+            $next = ($page < $jumlah_page) ? $page + 1 : null;
+            $start = ($page - 1) * $limit + 1;
+            $end = min($page * $limit, $total);
+            $detail = range(max(1, $page - 2), min($jumlah_page, $page + 2));
+
+            // Return response
             return $this->respondWithSuccess('Members retrieved successfully.', [
-                'members' => $response,
-                'total' => $total,
-                'limit' => (int) $limit,
-                'page' => (int) $page,
+                'data' => $response,
+                'pagination' => [
+                    'total_data' => (int) $total,
+                    'jumlah_page' => (int) $jumlah_page,
+                    'prev' => $prev,
+                    'page' => (int) $page,
+                    'next' => $next,
+                    'detail' => $detail,
+                    'start' => $start,
+                    'end' => $end,
+                ]
             ]);
         } catch (DatabaseException $e) {
             return $this->respondWithError('Failed to retrieve members: ' . $e->getMessage());
         }
     }
+
 
 }
 

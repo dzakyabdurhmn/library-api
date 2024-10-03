@@ -93,65 +93,104 @@ class AuthorController extends CoreController
     }
 
     // Fungsi untuk mendapatkan semua penulis dengan pagination, search, dan filter (Read)
+
     public function index()
     {
         $db = \Config\Database::connect();
 
+        // Get parameters from query string
         $limit = $this->request->getVar('limit') ?? 10;
         $page = $this->request->getVar('page') ?? 1;
         $search = $this->request->getVar('search');
+        $filters = $this->request->getVar('filter') ?? []; // Get all filters
 
+        // Calculate offset for pagination
         $offset = ($page - 1) * $limit;
 
         try {
+            // Start building the query
             $query = "SELECT * FROM author";
             $conditions = [];
             $params = [];
 
+            // Handle search condition
             if ($search) {
                 $conditions[] = "author_name LIKE ?";
-                $params[] = "%$search%";
+                $params[] = "%$search%"; // Prepare search parameter
             }
 
+            // Define mapping for additional filters if needed
+            $filterMapping = [
+                'name' => 'author_name',
+                // Add other mappings as necessary
+            ];
+
+            // Handle additional filters
+            foreach ($filters as $key => $value) {
+                if (!empty($value) && array_key_exists($key, $filterMapping)) {
+                    $conditions[] = "{$filterMapping[$key]} = ?";
+                    $params[] = $value;
+                }
+            }
+
+            // Add conditions to the query
             if (count($conditions) > 0) {
                 $query .= ' WHERE ' . implode(' AND ', $conditions);
             }
 
+            // Add limit and offset for pagination
             $query .= " LIMIT ? OFFSET ?";
             $params[] = (int) $limit;
             $params[] = (int) $offset;
 
+            // Execute query to get author data
             $authors = $db->query($query, $params)->getResultArray();
 
-
-
+            // Format the result
             $result = [];
             foreach ($authors as $author) {
                 $result[] = [
-                    'id' => $author['author_id'],
+                    'id' => (int) $author['author_id'],
                     'name' => $author['author_name'],
                     'biography' => $author['author_biography'],
                 ];
             }
 
-
-            // Hitung total penulis untuk pagination
+            // Query total authors for pagination
             $totalQuery = "SELECT COUNT(*) as total FROM author";
             if (count($conditions) > 0) {
                 $totalQuery .= ' WHERE ' . implode(' AND ', $conditions);
             }
-            $total = $db->query($totalQuery, $params)->getRow()->total;
+            $total = $db->query($totalQuery, array_slice($params, 0, count($params) - 2))->getRow()->total; // Exclude LIMIT and OFFSET params
 
-            return $this->respondWithSuccess('author retrieved successfully.', [
+            // Calculate pagination details
+            $jumlah_page = ceil($total / $limit);
+            $prev = ($page > 1) ? $page - 1 : null;
+            $next = ($page < $jumlah_page) ? $page + 1 : null;
+            $start = ($page - 1) * $limit + 1;
+            $end = min($page * $limit, $total);
+            $detail = range(max(1, $page - 2), min($jumlah_page, $page + 2));
+
+            // Return response
+            return $this->respondWithSuccess('Authors retrieved successfully.', [
                 'data' => $result,
-                'total' => $total,
-                'limit' => (int) $limit,
-                'page' => (int) $page,
+                'pagination' => [
+                    'total_data' => (int) $total,
+                    'jumlah_page' => (int) $jumlah_page,
+                    'prev' => $prev,
+                    'page' => (int) $page,
+                    'next' => $next,
+                    'detail' => $detail,
+                    'start' => $start,
+                    'end' => $end,
+                ]
             ]);
         } catch (DatabaseException $e) {
-            return $this->respondWithError('Failed to retrieve author: ' . $e->getMessage());
+            return $this->respondWithError('Failed to retrieve authors: ' . $e->getMessage());
         }
     }
+
+
 
     // Fungsi untuk mendapatkan penulis berdasarkan ID (Read)
     public function show($id = null)

@@ -18,107 +18,6 @@ class AuthController extends CoreController
     protected $format = 'json';
 
 
-    // public function get_all_users()
-    // {
-    //     $db = \Config\Database::connect();
-
-
-    //     // Ambil parameter dari query string
-    //     $limit = $this->request->getVar('limit') ?? 2; // Default limit 2 (sesuai permintaan)
-    //     $page = $this->request->getVar('page') ?? 1; // Default page 1
-    //     $search = $this->request->getVar('search');
-    //     $filter = $this->request->getVar('filter');
-
-    //     // Hitung offset untuk pagination
-    //     $offset = ($page - 1) * $limit;
-
-    //     try {
-    //         // Query dasar tanpa mengikutkan password
-    //         $query = "SELECT admin_id, admin_username, admin_email, admin_full_name, admin_nik, admin_role, admin_phone, admin_gender, admin_address FROM admin";
-    //         $conditions = [];
-    //         $params = [];
-
-
-    //         if ($search) {
-    //             $conditions[] = "(admin_username LIKE '{%$search%}' OR admin_full_name LIKE '%{$search}%' OR admin_email LIKE '%{$search}%' OR admin_nik LIKE '%{$search}%' OR admin_phone LIKE '%{$search}%' OR admin_address LIKE '%{$search}%')";
-    //         }
-
-    //         if ($filter) {
-    //             $conditions[] = "admin_role = ?";
-    //             $params[] = $filter;
-    //         }
-
-    //         if (count($conditions) > 0) {
-    //             $query .= ' WHERE ' . implode(' AND ', $conditions);
-    //         }
-
-    //         // Tambahkan limit dan offset untuk pagination
-    //         $query .= " LIMIT ? OFFSET ?";
-    //         $params[] = (int) $limit;
-    //         $params[] = (int) $offset;
-
-    //         // Eksekusi query untuk mendapatkan daftar pengguna
-    //         $users = $db->query($query, $params)->getResultArray();
-
-
-    //         $result = [];
-    //         foreach ($users as $user) {
-    //             $result[] = [
-    //                 'id' => (int) $user['admin_id'],
-    //                 'username' => $user['admin_username'],
-    //                 'email' => $user['admin_email'],
-    //                 'full_name' => $user['admin_full_name'],
-    //                 'nik' => $user['admin_nik'],
-    //                 'role' => $user['admin_role'],
-    //                 'phone' => $user['admin_phone'],
-    //                 'gender' => $user['admin_gender'],
-    //                 'address' => $user['admin_address'],
-    //             ];
-    //         }
-
-    //         // Query total pengguna untuk pagination
-    //         $totalQuery = "SELECT COUNT(*) as total FROM admin";
-    //         $totalParams = [];
-    //         if (count($conditions) > 0) {
-    //             $totalQuery .= ' WHERE ' . implode(' AND ', $conditions);
-    //             $totalParams = array_slice($params, 0, count($params) - 2); // Exclude LIMIT and OFFSET
-    //         }
-
-    //         $total = $db->query($totalQuery, $totalParams)->getRow()->total;
-
-    //         // Hitung total jumlah halaman
-    //         $jumlah_page = ceil($total / $limit);
-
-    //         // Hitung halaman sebelumnya dan selanjutnya
-    //         $prev = ($page > 1) ? $page - 1 : null;
-    //         $next = ($page < $jumlah_page) ? $page + 1 : null;
-
-    //         // Hitung posisi data awal dan akhir berdasarkan limit
-    //         $start = ($page - 1) * $limit + 1;
-    //         $end = min($page * $limit, $total);
-
-    //         // Siapkan pagination detail
-    //         $detail = range(max(1, $page - 2), min($jumlah_page, $page + 2));
-
-    //         // Return dengan pagination format yang diminta
-    //         return $this->respondWithSuccess('Users retrieved successfully.', [
-    //             'data' => $result,
-    //             'pagination' => [
-    //                 'total_data' => (int) $total,
-    //                 'jumlah_page' => (int) $jumlah_page,
-    //                 'prev' => $prev,
-    //                 'page' => (int) $page,
-    //                 'next' => $next,
-    //                 'detail' => $detail,
-    //                 'start' => $start,
-    //                 'end' => $end,
-    //             ]
-    //         ]);
-    //     } catch (DatabaseException $e) {
-    //         return $this->respondWithError('Failed to retrieve users: ' . $e->getMessage());
-    //     }
-    // }
-
 
 
 
@@ -142,17 +41,30 @@ class AuthController extends CoreController
 
         // Handle search condition
         if ($search) {
-            $conditions[] = "(admin_username LIKE '{%$search%}' OR admin_full_name LIKE '%{$search}%' OR admin_email LIKE '%{$search}%' OR admin_nik LIKE '%{$search}%' OR admin_phone LIKE '%{$search}%' OR admin_address LIKE '%{$search}%')";
+            $conditions[] = "(admin_username LIKE ? OR admin_full_name LIKE ? OR admin_email LIKE ? OR admin_nik LIKE ? OR admin_phone LIKE ? OR admin_address LIKE ?)";
+            $searchParam = '%' . $search . '%'; // Prepare search parameter
+            $params = array_fill(0, 6, $searchParam); // Fill params array
         }
+
+        // Define the mapping of filter keys to database columns
+        $filterMapping = [
+            'username' => 'admin_username',
+            'full_name' => 'admin_full_name',
+            'email' => 'admin_email',
+            'role' => 'admin_role',
+            'nik' => 'admin_nik',
+            'phone' => 'admin_phone',
+            'gender' => 'admin_gender',
+            'address' => 'admin_address'
+        ];
 
         // Handle additional filters
         foreach ($filters as $key => $value) {
-            if (!empty($value)) {
-                $conditions[] = "$key = ?";
+            if (!empty($value) && array_key_exists($key, $filterMapping)) {
+                $conditions[] = "{$filterMapping[$key]} = ?";
                 $params[] = $value;
             }
         }
-
 
         // Add conditions to the query
         if (count($conditions) > 0) {
@@ -222,6 +134,7 @@ class AuthController extends CoreController
             return $this->respondWithError('Failed to retrieve users: ' . $e->getMessage());
         }
     }
+
 
 
 
