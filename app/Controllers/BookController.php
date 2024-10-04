@@ -68,73 +68,116 @@ class BookController extends CoreController
     {
         $db = \Config\Database::connect();
 
-        $limit = $this->request->getVar('limit') ?? 10;
-        $page = $this->request->getVar('page') ?? 1;
+        // Ambil parameter dari query string
+        $limit = $this->request->getVar('limit') ?? 10; // Default limit
+        $page = $this->request->getVar('page') ?? 1; // Default page
         $search = $this->request->getVar('search');
-        $filter = $this->request->getVar('filter'); // Misalnya filter berdasarkan publisher atau author
+        $filters = $this->request->getVar('filter') ?? []; // Get all filters
 
+        // Hitung offset untuk pagination
         $offset = ($page - 1) * $limit;
 
+        // Start building the query
+        $query = "SELECT book_id, books_publisher_id, books_author_id, books_title, books_publication_year, books_isbn, books_stock_quantity, books_price, books_barcode FROM books";
+        $conditions = [];
+        $params = [];
+
+        // Handle search condition
+        if ($search) {
+            $conditions[] = "(books_title LIKE ?)";
+            $params[] = "%$search%"; // Prepare search parameter
+        }
+
+        // Define the mapping of filter keys to database columns
+        $filterMapping = [
+            'publisher_id' => 'books_publisher_id',
+            'author_id' => 'books_author_id',
+            'isbn' => 'books_isbn',
+            'title' => 'books_title',
+            'year' => 'books_publication_year',
+            'stock_quantity' => 'books_stock_quantity',
+            'price' => 'books_price',
+            'barcode' => 'books_barcode'
+        ];
+
+        // Handle additional filters
+        foreach ($filters as $key => $value) {
+            if (!empty($value) && array_key_exists($key, $filterMapping)) {
+                $conditions[] = "{$filterMapping[$key]} = ?";
+                $params[] = $value;
+            }
+        }
+
+        // Add conditions to the query
+        if (count($conditions) > 0) {
+            $query .= ' WHERE ' . implode(' AND ', $conditions);
+        }
+
+        // Add limit and offset for pagination
+        $query .= " LIMIT ? OFFSET ?";
+        $params[] = (int) $limit;
+        $params[] = (int) $offset;
+
         try {
-            $query = "SELECT * FROM books";
-            $conditions = [];
-            $params = [];
-
-            if ($search) {
-                $conditions[] = "books_title LIKE ?";
-                $params[] = "%$search%";
-            }
-
-            if ($filter) {
-                $conditions[] = "books_publisher_id = ?";
-                $params[] = $filter;
-            }
-
-            if (count($conditions) > 0) {
-                $query .= ' WHERE ' . implode(' AND ', $conditions);
-            }
-
-            $query .= " LIMIT ? OFFSET ?";
-            $params[] = (int) $limit;
-            $params[] = (int) $offset;
-
+            // Execute query to get book data
             $books = $db->query($query, $params)->getResultArray();
-
 
             $result = [];
             foreach ($books as $book) {
                 $result[] = [
                     'id' => (int) $book['book_id'],
                     'publisher_id' => (int) $book['books_publisher_id'],
-                    'publisher' => $book['books_author_id'],
+                    'author_id' => (int) $book['books_author_id'],
                     'title' => $book['books_title'],
-                    'publication_year' => $book['books_publication_year'],
-                    'isbn' => $book['books_stock_quantity'],
-                    'price' => $book['books_price'],
-                    'barcode' => $book['books_barcode']
-
+                    'publication_year' => (int) $book['books_publication_year'],
+                    'isbn' => $book['books_isbn'],
+                    'stock_quantity' => (int) $book['books_stock_quantity'],
+                    'price' => (float) $book['books_price'],
+                    'barcode' => $book['books_barcode'],
                 ];
             }
 
-
-
-            // Hitung total buku untuk pagination
+            // Query total books for pagination
             $totalQuery = "SELECT COUNT(*) as total FROM books";
             if (count($conditions) > 0) {
                 $totalQuery .= ' WHERE ' . implode(' AND ', $conditions);
             }
-            $total = $db->query($totalQuery, $params)->getRow()->total;
+            $total = $db->query($totalQuery, array_slice($params, 0, count($params) - 2))->getRow()->total; // Exclude LIMIT and OFFSET params
 
+            // Calculate total pages
+            $jumlah_page = ceil($total / $limit);
+
+            // Calculate previous and next pages
+            $prev = ($page > 1) ? $page - 1 : null;
+            $next = ($page < $jumlah_page) ? $page + 1 : null;
+
+            // Calculate start and end positions for pagination
+            $start = ($page - 1) * $limit + 1;
+            $end = min($page * $limit, $total);
+
+            // Prepare pagination details
+            $detail = range(max(1, $page - 2), min($jumlah_page, $page + 2));
+
+            // Return response
             return $this->respondWithSuccess('Books retrieved successfully.', [
                 'data' => $result,
-                'total' => $total,
-                'limit' => (int) $limit,
-                'page' => (int) $page,
+                'pagination' => [
+                    'total_data' => (int) $total,
+                    'jumlah_page' => (int) $jumlah_page,
+                    'prev' => $prev,
+                    'page' => (int) $page,
+                    'next' => $next,
+                    'detail' => $detail,
+                    'start' => $start,
+                    'end' => $end,
+                ]
             ]);
         } catch (DatabaseException $e) {
             return $this->respondWithError('Failed to retrieve books: ' . $e->getMessage());
         }
     }
+
+
 
     // Fungsi untuk mendapatkan buku berdasarkan ID (Read)
     public function show($id = null)

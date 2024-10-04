@@ -60,7 +60,7 @@ $routes->group('', ['filter' => 'authToken'], function ($routes) {
         $routes->delete('(:num)', 'PublisherController::delete/$1'); // Menghapus penerbit berdasarkan ID
     });
 
-    $routes->post('transaction/deport', 'LoanController::return_book');
+    $routes->post('transaction/deport', 'LoanController::deport');
     $routes->post('transaction/borrow', 'LoanController::borrow_book');
 
 });
