@@ -78,6 +78,8 @@ $routes->group('', ['filter' => 'authToken'], function ($routes) {
         $routes->get('active-admins', 'ReportController::active_admins');
         $routes->get('detailed-member-activity', 'ReportController::detailed_member_activity');
         $routes->get('detailed-borrowed-books', 'ReportController::detailed_borrowed_books');
+        $routes->get('count-books-status', 'ReportController::count_books_status');
+
     });
 
 
