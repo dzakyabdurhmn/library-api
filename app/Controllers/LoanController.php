@@ -463,5 +463,75 @@ class LoanController extends CoreController
     }
 
 
+    public function detailed_member_activity()
+    {
+        $db = Database::connect();
+        $query = "
+            SELECT loan_member_id, COUNT(*) as activity_count
+            FROM loan
+            GROUP BY loan_member_id
+            ORDER BY activity_count DESC
+            LIMIT 10";
+        $members = $db->query($query)->getResultArray();
+
+        $detailedMembers = [];
+        foreach ($members as $member) {
+            $memberId = $member['loan_member_id'];
+
+            $memberQuery = "SELECT * FROM member WHERE member_id = ?";
+            $memberDetails = $db->query($memberQuery, [$memberId])->getRowArray();
+
+            if ($memberDetails) {
+                $detailedMembers[] = [
+                    'member_id' => $memberDetails['member_id'],
+                    'username' => $memberDetails['member_username'],
+                    'email' => $memberDetails['member_email'],
+                    'full_name' => $memberDetails['member_full_name'],
+                    'address' => $memberDetails['member_address'],
+                    'activity_count' => $member['activity_count'],
+                ];
+            }
+        }
+
+        return $this->respondWithSuccess('Detailed member activity retrieved.', ['data' => $detailedMembers]);
+    }
+
+    public function detailed_borrowed_books()
+    {
+        $db = Database::connect();
+        $query = "
+            SELECT loan_detail_book_id as book_id, loan_detail_book_title as book_title,
+                   loan_detail_borrow_date as borrow_date, loan_detail_return_date as return_date,
+                   loan_detail_status as status, loan_detail_loan_transaction_code
+            FROM loan_detail";
+        $borrowedBooks = $db->query($query)->getResultArray();
+
+        $detailedBooks = [];
+        foreach ($borrowedBooks as $borrowedBook) {
+            $bookId = $borrowedBook['book_id'];
+
+            $bookQuery = "SELECT * FROM books WHERE book_id = ?";
+            $bookDetails = $db->query($bookQuery, [$bookId])->getRowArray();
+
+            if ($bookDetails) {
+                $detailedBooks[] = [
+                    'book_id' => $bookDetails['book_id'],
+                    'book_title' => $borrowedBook['book_title'],
+                    'borrow_date' => $borrowedBook['borrow_date'],
+                    'return_date' => $borrowedBook['return_date'],
+                    'status' => $borrowedBook['status'],
+                    'transaction_code' => $borrowedBook['loan_detail_loan_transaction_code'],
+                    'publisher_name' => $bookDetails['books_publisher_id'], // Assuming this maps to publisher table
+                    'publication_year' => $bookDetails['books_publication_year'],
+                    'isbn' => $bookDetails['books_isbn'],
+                    'price' => $bookDetails['books_price'],
+                ];
+            }
+        }
+
+        return $this->respondWithSuccess('Detailed borrowed books retrieved.', ['data' => $detailedBooks]);
+    }
+
+
 
 }

@@ -69,6 +69,16 @@ $routes->group('', ['filter' => 'authToken'], function ($routes) {
         $routes->post('borrow', 'LoanController::borrow_book');
     });
 
+    $routes->group('report', function ($routes) {
+        $routes->get('most-borrowed-books', 'ReportController::most_borrowed_books');
+        $routes->get('least-borrowed-books', 'ReportController::least_borrowed_books');
+        $routes->get('broken-missing-books', 'ReportController::broken_missing_books');
+        $routes->get('most-active-users', 'ReportController::most_active_users');
+        $routes->get('inactive-users', 'ReportController::inactive_users');
+        $routes->get('active-admins', 'ReportController::active_admins');
+        $routes->get('detailed-member-activity', 'ReportController::detailed_member_activity');
+        $routes->get('detailed-borrowed-books', 'ReportController::detailed_borrowed_books');
+    });
 
 
 });
