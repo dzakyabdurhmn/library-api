@@ -4,12 +4,18 @@ namespace App\Controllers;
 
 use CodeIgniter\Database\Exceptions\DatabaseException;
 
-class PublisherController extends CoreController
+class PublisherController extends AuthorizationController
 {
     // Fungsi untuk menambahkan penerbit (Create)
     public function create()
     {
         $db = \Config\Database::connect();
+
+        $tokenValidation = $this->validateToken('superadmin'); // Fungsi helper dipanggil
+
+        if ($tokenValidation !== true) {
+            return $this->respond($tokenValidation, $tokenValidation['status']);
+        }
 
         $rules = [
             'publisher_name' => 'required|min_length[1]',
@@ -44,6 +50,12 @@ class PublisherController extends CoreController
     public function index()
     {
         $db = \Config\Database::connect();
+
+        $tokenValidation = $this->validateToken('superadmin,warehouse,frontliner'); // Fungsi helper dipanggil
+
+        if ($tokenValidation !== true) {
+            return $this->respond($tokenValidation, $tokenValidation['status']);
+        }
 
         // Get parameters from query string
         $limit = $this->request->getVar('limit') ?? 10;
@@ -157,20 +169,35 @@ class PublisherController extends CoreController
 
 
     // Fungsi untuk mendapatkan penerbit berdasarkan ID (Read)
-    public function show($id = null)
+    public function get_detail()
     {
         $db = \Config\Database::connect();
+
+        $id = $this->request->getVar('id'); // Get ID from query parameter
+
+
+        if (!$id) {
+            return $this->respondWithValidationError('Parameter ID is required.', );
+        }
+
+        $tokenValidation = $this->validateToken('superadmin,warehouse,frontliner'); // Fungsi helper dipanggil
+
+        if ($tokenValidation !== true) {
+            return $this->respond($tokenValidation, $tokenValidation['status']);
+        }
 
         try {
             $query = "SELECT * FROM publisher WHERE publisher_id = ?";
             $publisher = $db->query($query, [$id])->getRowArray();
 
             $result = [
-                'id' => $publisher['publisher_id'],
-                'name' => $publisher['publisher_name'],
-                'address' => $publisher['publisher_address'],
-                'phone' => $publisher['publisher_phone'],
-                'email' => $publisher['publisher_email'],
+                'data' => [
+                    'id' => $publisher['publisher_id'],
+                    'name' => $publisher['publisher_name'],
+                    'address' => $publisher['publisher_address'],
+                    'phone' => $publisher['publisher_phone'],
+                    'email' => $publisher['publisher_email'],
+                ]
             ];
 
             if (!$publisher) {
@@ -187,6 +214,13 @@ class PublisherController extends CoreController
     public function update($id = null)
     {
         $db = \Config\Database::connect();
+
+
+        $tokenValidation = $this->validateToken('superadmin'); // Fungsi helper dipanggil
+
+        if ($tokenValidation !== true) {
+            return $this->respond($tokenValidation, $tokenValidation['status']);
+        }
 
         $rules = [
             'publisher_name' => 'permit_empty|min_length[1]',
@@ -235,6 +269,13 @@ class PublisherController extends CoreController
     {
         $db = \Config\Database::connect();
 
+
+        $tokenValidation = $this->validateToken('superadmin'); // Fungsi helper dipanggil
+
+        if ($tokenValidation !== true) {
+            return $this->respond($tokenValidation, $tokenValidation['status']);
+        }
+
         try {
             // Cek apakah penerbit dengan ID tersebut ada
             $query = "SELECT COUNT(*) as count FROM publisher WHERE publisher_id = ?";
@@ -263,4 +304,3 @@ class PublisherController extends CoreController
 }
 
 
-// https://chatgpt.com/c/66f6315e-78ac-8013-9a5e-1a6c55ed5f37

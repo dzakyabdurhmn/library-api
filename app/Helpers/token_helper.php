@@ -6,12 +6,12 @@ function validateToken($token)
     $appToken = getenv('token');
 
     if (!$token) {
-        return ['status' => 401, 'message' => 'Token is required.'];
+        return ['status' => 400, 'message' => 'Token is required.'];
     }
 
     // Cek apakah token cocok dengan yang ada di .env
     if ($token !== $appToken) {
-        return ['status' => 401, 'message' => 'Invalid token.'];
+        return ['status' => 400, 'message' => 'Invalid token.'];
     }
 
     // Jika token valid

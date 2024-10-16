@@ -6,13 +6,19 @@ use CodeIgniter\Database\Exceptions\DatabaseException;
 use CodeIgniter\RESTful\ResourceController;
 use Config\Database;
 
-class LoanController extends CoreController
+class LoanController extends AuthorizationController
 {
 
 
     public function borrow_book()
     {
         $request = $this->request->getJSON(true);
+
+        $tokenValidation = $this->validateToken('frontliner'); // Fungsi helper dipanggil
+
+        if ($tokenValidation !== true) {
+            return $this->respond($tokenValidation, $tokenValidation['status']);
+        }
 
         if (empty($request['member_id']) || empty($request['borrow_book'])) {
             return $this->respondWithError("Member ID and book details are required.", null, 400);
@@ -129,6 +135,13 @@ class LoanController extends CoreController
     {
         $db = Database::connect();
 
+
+        $tokenValidation = $this->validateToken('superadmin'); // Fungsi helper dipanggil
+
+        if ($tokenValidation !== true) {
+            return $this->respond($tokenValidation, $tokenValidation['status']);
+        }
+
         $request = $this->request->getJSON(true);
 
         if (empty($request['member_id']) || empty($request['borrow_book'])) {
@@ -243,11 +256,17 @@ class LoanController extends CoreController
     {
         $db = Database::connect();
 
+        $tokenValidation = $this->validateToken('superadmin,frontliner');
+        if ($tokenValidation !== true) {
+            return $this->respond($tokenValidation, $tokenValidation['status']);
+        }
+
         // Ambil parameter dari query string
         $limit = $this->request->getVar('limit') ?? 10; // Default limit
         $page = $this->request->getVar('page') ?? 1; // Default page
         $search = $this->request->getVar('search');
         $filters = $this->request->getVar('filter') ?? []; // Get all filters
+        $enablePagination = $this->request->getVar('pagination') !== 'false'; // Enable pagination by default
 
         // Hitung offset untuk pagination
         $offset = ($page - 1) * $limit;
@@ -257,11 +276,11 @@ class LoanController extends CoreController
         $conditions = [];
         $params = [];
 
-        // Handle search condition
+        // Handle search condition across all fields
         if ($search) {
-            $conditions[] = "(loan_member_username LIKE ? OR loan_member_full_name LIKE ? OR loan_member_email LIKE ? OR loan_transaction_code LIKE ?)";
+            $conditions[] = "(loan_member_username LIKE ? OR loan_member_full_name LIKE ? OR loan_member_email LIKE ? OR loan_transaction_code LIKE ? OR loan_member_address LIKE ?)";
             $searchParam = '%' . $search . '%'; // Prepare search parameter
-            $params = array_fill(0, 4, $searchParam); // Fill params array
+            $params = array_fill(0, 5, $searchParam); // Fill params array for each searchable column
         }
 
         // Define the mapping of filter keys to database columns
@@ -287,10 +306,12 @@ class LoanController extends CoreController
             $query .= ' WHERE ' . implode(' AND ', $conditions);
         }
 
-        // Add limit and offset for pagination
-        $query .= " LIMIT ? OFFSET ?";
-        $params[] = (int) $limit;
-        $params[] = (int) $offset;
+        // Add limit and offset for pagination if enabled
+        if ($enablePagination) {
+            $query .= " LIMIT ? OFFSET ?";
+            $params[] = (int) $limit;
+            $params[] = (int) $offset;
+        }
 
         try {
             // Execute query to get loan data
@@ -311,31 +332,25 @@ class LoanController extends CoreController
                 ];
             }
 
-            // Query total loans for pagination
-            $totalQuery = "SELECT COUNT(*) as total FROM loan";
-            if (count($conditions) > 0) {
-                $totalQuery .= ' WHERE ' . implode(' AND ', $conditions);
-            }
-            $total = $db->query($totalQuery, array_slice($params, 0, count($params) - 2))->getRow()->total; // Exclude LIMIT and OFFSET params
+            // Count total loans for pagination if enabled
+            $pagination = [];
+            if ($enablePagination) {
+                $totalQuery = "SELECT COUNT(*) as total FROM loan";
+                if (count($conditions) > 0) {
+                    $totalQuery .= ' WHERE ' . implode(' AND ', $conditions);
+                }
+                $total = $db->query($totalQuery, array_slice($params, 0, count($params) - 2))->getRow()->total;
 
-            // Calculate total pages
-            $totalPages = ceil($total / $limit);
+                // Calculate total pages and pagination details
+                $totalPages = ceil($total / $limit);
+                $prev = ($page > 1) ? $page - 1 : null;
+                $next = ($page < $totalPages) ? $page + 1 : null;
+                $start = ($page - 1) * $limit + 1;
+                $end = min($page * $limit, $total);
+                $detail = range(max(1, $page - 2), min($totalPages, $page + 2));
 
-            // Calculate previous and next pages
-            $prev = ($page > 1) ? $page - 1 : null;
-            $next = ($page < $totalPages) ? $page + 1 : null;
-
-            // Calculate start and end positions for pagination
-            $start = ($page - 1) * $limit + 1;
-            $end = min($page * $limit, $total);
-
-            // Prepare pagination details
-            $detail = range(max(1, $page - 2), min($totalPages, $page + 2));
-
-            // Return response
-            return $this->respondWithSuccess('Loans retrieved successfully.', [
-                'data' => $result,
-                'pagination' => [
+                // Prepare pagination details
+                $pagination = [
                     'total_data' => (int) $total,
                     'total_pages' => (int) $totalPages,
                     'prev' => $prev,
@@ -344,7 +359,13 @@ class LoanController extends CoreController
                     'detail' => $detail,
                     'start' => $start,
                     'end' => $end,
-                ]
+                ];
+            }
+
+            // Return response
+            return $this->respondWithSuccess('Loans retrieved successfully.', [
+                'data' => $result,
+                'pagination' => $pagination
             ]);
         } catch (\Exception $e) {
             return $this->respondWithError('Failed to retrieve loans: ' . $e->getMessage());
@@ -352,10 +373,16 @@ class LoanController extends CoreController
     }
 
 
+
     public function get_detail_loan()
     {
         $db = Database::connect();
 
+        $tokenValidation = $this->validateToken('superadmin,frontliner'); // Fungsi helper dipanggil
+
+        if ($tokenValidation !== true) {
+            return $this->respond($tokenValidation, $tokenValidation['status']);
+        }
         // Ambil parameter id dari query string (bisa loan_id atau book_id)
         $loanId = $this->request->getVar('loan_id');
         $bookId = $this->request->getVar('book_id');
@@ -466,6 +493,13 @@ class LoanController extends CoreController
     public function detailed_member_activity()
     {
         $db = Database::connect();
+
+        $tokenValidation = $this->validateToken('superadmin,frontliner'); // Fungsi helper dipanggil
+
+        if ($tokenValidation !== true) {
+            return $this->respond($tokenValidation, $tokenValidation['status']);
+        }
+
         $query = "
             SELECT loan_member_id, COUNT(*) as activity_count
             FROM loan
@@ -499,6 +533,13 @@ class LoanController extends CoreController
     public function detailed_borrowed_books()
     {
         $db = Database::connect();
+
+        $tokenValidation = $this->validateToken('superadmin,frontliner'); // Fungsi helper dipanggil
+
+        if ($tokenValidation !== true) {
+            return $this->respond($tokenValidation, $tokenValidation['status']);
+        }
+
         $query = "
             SELECT loan_detail_book_id as book_id, loan_detail_book_title as book_title,
                    loan_detail_borrow_date as borrow_date, loan_detail_return_date as return_date,

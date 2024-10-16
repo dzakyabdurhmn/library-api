@@ -3,72 +3,30 @@
 namespace App\Controllers;
 
 use CodeIgniter\Database\Exceptions\DatabaseException;
-use CodeIgniter\API\ResponseTrait;
 
 
-class AuthorController extends CoreController
+class AuthorController extends AuthorizationController
 {
-
-
-
-
-
-    function validateToken($token)
-    {
-        $db = \Config\Database::connect();
-
-        if (!$token) {
-            return ['status' => 401, 'message' => 'Token is required.'];
-        }
-
-        // Cek token di database
-        $query = "SELECT * FROM admin_token WHERE token = ?";
-        $tokenData = $db->query($query, [$token])->getRowArray();
-
-        if (!$tokenData) {
-            return ['status' => 401, 'message' => 'Invalid token.'];
-        }
-
-        // Cek apakah token sudah expired
-        $currentTimestamp = time();
-        $expiresAt = strtotime($tokenData['expires_at']);
-
-        if ($expiresAt < $currentTimestamp) {
-            return ['status' => 401, 'message' => 'Token has expired.'];
-        }
-
-        // Jika token valid
-        return true;
-    }
-
-
-
-
-    // Fungsi untuk menambahkan penulis (Create)
     public function create()
     {
         $db = \Config\Database::connect();
 
-        // helper('TokenHelper');
+        $tokenValidation = $this->validateToken('superadmin'); // Fungsi helper dipanggil
 
-        // Ambil token dari header Authorization
-        // $authHeader = $this->request->getHeader('Authorization');
-        // $token = null;
+        if ($tokenValidation !== true) {
+            return $this->respond($tokenValidation, $tokenValidation['status']);
+        }
 
-        // if ($authHeader) {
-        //     $token = str_replace('Bearer ', '', $authHeader->getValue());
-        // }
 
-        // // Validasi token
-        // $tokenValidation = $this->validateToken($token); // Fungsi helper dipanggil
-        // if ($tokenValidation !== true) {
-        //     return $this->respond($tokenValidation, $tokenValidation['status']);
-        // }
+
+
+
+
 
         // Validasi input
         $rules = [
-            'author_name' => 'required|min_length[1]',
-            'author_biography' => 'permit_empty'
+            'author_name' => 'required|min_length[1]|max_length[255]',
+            'author_biography' => 'required'
         ];
 
         if (!$this->validate($rules)) {
@@ -86,23 +44,29 @@ class AuthorController extends CoreController
             $query = "INSERT INTO author (author_name, author_biography) VALUES (?, ?)";
             $db->query($query, array_values($data));
 
-            return $this->respondWithSuccess('Author added successfully.');
+            return $this->respondWithSuccess('Author successfully added successfully.');
         } catch (\Exception $e) {
             return $this->respondWithError('Failed to add author: ' . $e->getMessage());
         }
     }
 
     // Fungsi untuk mendapatkan semua penulis dengan pagination, search, dan filter (Read)
-
     public function index()
     {
         $db = \Config\Database::connect();
+
+        $tokenValidation = $this->validateToken('superadmin,warehouse,frontliner');
+
+        if ($tokenValidation !== true) {
+            return $this->respond($tokenValidation, $tokenValidation['status']);
+        }
 
         // Get parameters from query string
         $limit = $this->request->getVar('limit') ?? 10;
         $page = $this->request->getVar('page') ?? 1;
         $search = $this->request->getVar('search');
-        $filters = $this->request->getVar('filter') ?? []; // Get all filters
+        $filters = $this->request->getVar('filter') ?? [];
+        $enablePagination = $this->request->getVar('pagination') ?? 'true'; // Enable or disable pagination
 
         // Calculate offset for pagination
         $offset = ($page - 1) * $limit;
@@ -113,15 +77,18 @@ class AuthorController extends CoreController
             $conditions = [];
             $params = [];
 
-            // Handle search condition
+            // Handle search across all columns (for example purposes: author_name and author_biography)
             if ($search) {
-                $conditions[] = "author_name LIKE ?";
-                $params[] = "%$search%"; // Prepare search parameter
+                $conditions[] = "(author_name LIKE ? OR author_biography LIKE ?)";
+                $params[] = "%$search%";
+                $params[] = "%$search%";
             }
 
-            // Define mapping for additional filters if needed
+            // Define mapping for additional filters
             $filterMapping = [
                 'name' => 'author_name',
+                'biography' => 'author_biography',
+
                 // Add other mappings as necessary
             ];
 
@@ -138,10 +105,13 @@ class AuthorController extends CoreController
                 $query .= ' WHERE ' . implode(' AND ', $conditions);
             }
 
-            // Add limit and offset for pagination
-            $query .= " LIMIT ? OFFSET ?";
-            $params[] = (int) $limit;
-            $params[] = (int) $offset;
+            // Handle pagination
+            if ($enablePagination === 'true') {
+                // Add limit and offset for pagination
+                $query .= " LIMIT ? OFFSET ?";
+                $params[] = (int) $limit;
+                $params[] = (int) $offset;
+            }
 
             // Execute query to get author data
             $authors = $db->query($query, $params)->getResultArray();
@@ -156,25 +126,24 @@ class AuthorController extends CoreController
                 ];
             }
 
-            // Query total authors for pagination
-            $totalQuery = "SELECT COUNT(*) as total FROM author";
-            if (count($conditions) > 0) {
-                $totalQuery .= ' WHERE ' . implode(' AND ', $conditions);
-            }
-            $total = $db->query($totalQuery, array_slice($params, 0, count($params) - 2))->getRow()->total; // Exclude LIMIT and OFFSET params
+            // If pagination is enabled, calculate pagination details
+            $pagination = [];
+            if ($enablePagination === 'true') {
+                // Query total authors for pagination
+                $totalQuery = "SELECT COUNT(*) as total FROM author";
+                if (count($conditions) > 0) {
+                    $totalQuery .= ' WHERE ' . implode(' AND ', $conditions);
+                }
+                $total = $db->query($totalQuery, array_slice($params, 0, count($params) - 2))->getRow()->total;
 
-            // Calculate pagination details
-            $jumlah_page = ceil($total / $limit);
-            $prev = ($page > 1) ? $page - 1 : null;
-            $next = ($page < $jumlah_page) ? $page + 1 : null;
-            $start = ($page - 1) * $limit + 1;
-            $end = min($page * $limit, $total);
-            $detail = range(max(1, $page - 2), min($jumlah_page, $page + 2));
+                $jumlah_page = ceil($total / $limit);
+                $prev = ($page > 1) ? $page - 1 : null;
+                $next = ($page < $jumlah_page) ? $page + 1 : null;
+                $start = ($page - 1) * $limit + 1;
+                $end = min($page * $limit, $total);
+                $detail = range(max(1, $page - 2), min($jumlah_page, $page + 2));
 
-            // Return response
-            return $this->respondWithSuccess('Authors retrieved successfully.', [
-                'data' => $result,
-                'pagination' => [
+                $pagination = [
                     'total_data' => (int) $total,
                     'jumlah_page' => (int) $jumlah_page,
                     'prev' => $prev,
@@ -183,8 +152,15 @@ class AuthorController extends CoreController
                     'detail' => $detail,
                     'start' => $start,
                     'end' => $end,
-                ]
+                ];
+            }
+
+            // Return response
+            return $this->respondWithSuccess('Authors retrieved successfully.', [
+                'data' => $result,
+                'pagination' => $pagination
             ]);
+
         } catch (DatabaseException $e) {
             return $this->respondWithError('Failed to retrieve authors: ' . $e->getMessage());
         }
@@ -192,10 +168,23 @@ class AuthorController extends CoreController
 
 
 
+
     // Fungsi untuk mendapatkan penulis berdasarkan ID (Read)
-    public function show($id = null)
+    public function get_detail()
     {
         $db = \Config\Database::connect();
+        $id = $this->request->getVar('id'); // Get ID from query parameter
+
+
+        if (!$id) {
+            return $this->respondWithValidationError('Parameter ID is required.', );
+        }
+
+        $tokenValidation = $this->validateToken('superadmin,warehouse,frontliner'); // Call the helper function
+
+        if ($tokenValidation !== true) {
+            return $this->respond($tokenValidation, $tokenValidation['status']);
+        }
 
         try {
             $query = "SELECT * FROM author WHERE author_id = ?";
@@ -205,30 +194,38 @@ class AuthorController extends CoreController
                 return $this->respondWithNotFound('Author not found.');
             }
 
-
             $data = [
                 'data' => [
                     'id' => $author['author_id'],
                     'name' => $author['author_name'],
-                    'biography' => 'author_biography'
+                    'biography' => $author['author_biography'] // Access biography correctly
                 ],
             ];
 
             return $this->respondWithSuccess('Author found.', $data);
-        } catch (DatabaseException $e) {
+        } catch (\CodeIgniter\Database\Exceptions\DatabaseException $e) {
             return $this->respondWithError('Failed to retrieve author: ' . $e->getMessage());
         }
     }
+
 
     // Fungsi untuk memperbarui data penulis (Update)
     public function update($id = null)
     {
         $db = \Config\Database::connect();
 
+        $tokenValidation = $this->validateToken('superadmin'); // Fungsi helper dipanggil
+
+        if ($tokenValidation !== true) {
+            return $this->respond($tokenValidation, $tokenValidation['status']);
+        }
+
         $rules = [
-            'author_name' => 'permit_empty|min_length[1]',
-            'author_biography' => 'permit_empty'
+            'id' => 'required',
+            'author_name' => 'required|min_length[1]|max_length[255]',
+            'author_biography' => 'required'
         ];
+
 
         if (!$this->validate($rules)) {
             return $this->respondWithValidationError('Validation errors', $this->validator->getErrors());
@@ -265,6 +262,15 @@ class AuthorController extends CoreController
     public function delete($id = null)
     {
         $db = \Config\Database::connect();
+
+        $tokenValidation = $this->validateToken('superadmin'); // Fungsi helper dipanggil
+
+        if ($tokenValidation !== true) {
+            return $this->respond($tokenValidation, $tokenValidation['status']);
+        }
+
+
+
 
         try {
             // Cek apakah penulis dengan ID tersebut ada

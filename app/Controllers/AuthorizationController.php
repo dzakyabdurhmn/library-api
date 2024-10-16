@@ -10,29 +10,59 @@ class AuthorizationController extends CoreController
     protected $format = 'json';
 
 
-    function validateToken($token)
+
+    function validateToken($role)
     {
         $db = Database::connect();
 
+        $token = $this->request->getHeaderLine('token');
+
+
+        // dah bisa tinggal gimana entar
+        $roleArray = explode(',', $role);
+
+
         if (!$token) {
-            return ['status' => 401, 'message' => 'Token is required.'];
+            return ['status' => 400, 'message' => 'Token is required.'];
         }
 
         // Cek token di database
         $query = "SELECT * FROM admin_token WHERE token = ?";
         $tokenData = $db->query($query, [$token])->getRowArray();
 
+
         if (!$tokenData) {
-            return ['status' => 401, 'message' => 'Invalid token.'];
+            return ['status' => 400, 'message' => 'Invalid token.'];
         }
+
+        $sql_get_employee = "SELECT admin_role FROM admin WHERE admin_id = ?";
+        $get_employee = $db->query($sql_get_employee, [$tokenData['admin_id']])->getRowArray();
+        $admin_role = $get_employee['admin_role'];
+
+
+
+
+
+        if (!in_array($admin_role, $roleArray)) {
+            return ['status' => 400, 'message' => "only $role can acess this data"];
+        }
+        if (!$tokenData) {
+            return ['status' => 400, 'message' => 'Invalid token.'];
+        }
+
+
+
 
         // Cek apakah token sudah expired
         $currentTimestamp = time();
         $expiresAt = strtotime($tokenData['expires_at']);
 
         if ($expiresAt < $currentTimestamp) {
-            return ['status' => 401, 'message' => 'Token has expired.'];
+            return ['status' => 400, 'message' => 'Token has expired.'];
         }
+
+
+
 
         // Jika token valid
         return true;

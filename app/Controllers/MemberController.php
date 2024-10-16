@@ -4,13 +4,18 @@ namespace App\Controllers;
 
 use CodeIgniter\Database\Exceptions\DatabaseException;
 
-class MemberController extends CoreController
+class MemberController extends AuthorizationController
 {
     // Fungsi untuk menambahkan member baru (Create)
     public function create()
     {
         $db = \Config\Database::connect();
 
+        $tokenValidation = $this->validateToken('superadmin,frontliner'); // Fungsi helper dipanggil
+
+        if ($tokenValidation !== true) {
+            return $this->respond($tokenValidation, $tokenValidation['status']);
+        }
         $rules = [
             'username' => 'required|min_length[5]',
             'email' => 'required|valid_email',
@@ -63,9 +68,23 @@ class MemberController extends CoreController
     }
 
     // Fungsi untuk mendapatkan detail member berdasarkan member_id (Read)
-    public function show($id = null)
+    public function get_detail()
     {
         $db = \Config\Database::connect();
+
+        $id = $this->request->getVar('id'); // Get ID from query parameter
+
+
+        if (!$id) {
+            return $this->respondWithValidationError('Parameter ID is required.', );
+        }
+
+
+        $tokenValidation = $this->validateToken('superadmin,frontliner'); // Fungsi helper dipanggil
+
+        if ($tokenValidation !== true) {
+            return $this->respond($tokenValidation, $tokenValidation['status']);
+        }
 
         try {
             // Raw query untuk mendapatkan data member berdasarkan member_id
@@ -80,16 +99,18 @@ class MemberController extends CoreController
             }
 
             $response = [
-                'id' => $member['member_id'],
-                'username' => $member['member_username'],
-                'email' => $member['member_email'],
-                'full_name' => $member['member_full_name'],
-                'address' => $member['member_address'],
-                'job' => $member['member_job'],
-                'status' => $member['member_status'],
-                'religion' => $member['member_religion'],
-                'barcode' => $member['member_barcode'],
-                'gender' => $member['member_gender']
+                'data' => [
+                    'id' => $member['member_id'],
+                    'username' => $member['member_username'],
+                    'email' => $member['member_email'],
+                    'full_name' => $member['member_full_name'],
+                    'address' => $member['member_address'],
+                    'job' => $member['member_job'],
+                    'status' => $member['member_status'],
+                    'religion' => $member['member_religion'],
+                    'barcode' => $member['member_barcode'],
+                    'gender' => $member['member_gender']
+                ]
             ];
 
 
@@ -104,6 +125,13 @@ class MemberController extends CoreController
     public function update($id = null)
     {
         $db = \Config\Database::connect();
+
+
+        $tokenValidation = $this->validateToken('superadmin,frontliner'); // Fungsi helper dipanggil
+
+        if ($tokenValidation !== true) {
+            return $this->respond($tokenValidation, $tokenValidation['status']);
+        }
 
         // Define validation rules for all fields
         $validationRules = [
@@ -206,7 +234,11 @@ class MemberController extends CoreController
     {
         $db = \Config\Database::connect();
 
+        $tokenValidation = $this->validateToken('superadmin,frontliner'); // Fungsi helper dipanggil
 
+        if ($tokenValidation !== true) {
+            return $this->respond($tokenValidation, $tokenValidation['status']);
+        }
 
 
         try {
@@ -234,11 +266,17 @@ class MemberController extends CoreController
     {
         $db = \Config\Database::connect();
 
+        $tokenValidation = $this->validateToken('superadmin,frontliner');
+        if ($tokenValidation !== true) {
+            return $this->respond($tokenValidation, $tokenValidation['status']);
+        }
+
         // Get parameters from query string
-        $limit = $this->request->getVar('limit') ?? 10; // Default limit is 10
-        $page = $this->request->getVar('page') ?? 1; // Default page is 1
+        $limit = $this->request->getVar('limit') ?? 10;
+        $page = $this->request->getVar('page') ?? 1;
         $search = $this->request->getVar('search');
-        $filters = $this->request->getVar('filter') ?? []; // Can be status, job, etc.
+        $filters = $this->request->getVar('filter') ?? [];
+        $enablePagination = $this->request->getVar('pagination') !== 'false'; // Enable pagination if not 'false'
 
         // Calculate offset for pagination
         $offset = ($page - 1) * $limit;
@@ -249,50 +287,53 @@ class MemberController extends CoreController
             $conditions = [];
             $params = [];
 
-            // Add search conditions for multiple fields
+            // Handle search across all fields
             if ($search) {
-                $conditions[] = "(member_username LIKE ? OR member_full_name LIKE ? OR member_email LIKE ? OR member_address LIKE ? OR member_job LIKE ? OR member_religion LIKE ?)";
-                $params[] = "%$search%";
-                $params[] = "%$search%";
-                $params[] = "%$search%";
-                $params[] = "%$search%";
-                $params[] = "%$search%";
-                $params[] = "%$search%";
+                $conditions[] = "(member_id = ? OR member_username LIKE ? OR member_full_name LIKE ? OR member_email LIKE ? OR member_address LIKE ? OR member_job LIKE ? OR member_status LIKE ? OR member_religion LIKE ? OR member_barcode LIKE ? OR member_gender LIKE ?)";
+                $params[] = (int) $search; // Mencari berdasarkan ID
+                $params = array_merge($params, array_fill(0, 9, "%$search%")); // Mencari di kolom lainnya
             }
 
-            // Map filter from client to database field names
+            // Map filter keys to database columns
             $filterMapping = [
-                'status' => 'member_status',
+                'id' => 'member_id',
+                'username' => 'member_username',
+                'email' => 'member_email',
+                'full_name' => 'member_full_name',
+                'address' => 'member_address',
                 'job' => 'member_job',
-                // Add other filters as needed
+                'status' => 'member_status',
+                'religion' => 'member_religion',
+                'barcode' => 'member_barcode',
+                'gender' => 'member_gender',
             ];
 
-            // Handle filtering based on the filter array
+            // Apply filters
             foreach ($filters as $key => $value) {
                 if (array_key_exists($key, $filterMapping)) {
-                    $dbField = $filterMapping[$key];  // Get the corresponding field name in the database
-                    $conditions[] = "$dbField = ?";
+                    $conditions[] = "{$filterMapping[$key]} = ?";
                     $params[] = $value;
                 }
             }
 
-            // If there are conditions, add WHERE to the query
-            if (count($conditions) > 0) {
+            // Apply conditions to query
+            if (!empty($conditions)) {
                 $query .= ' WHERE ' . implode(' AND ', $conditions);
             }
 
-            // Add LIMIT and OFFSET to the query
-            $query .= " LIMIT ? OFFSET ?";
-            $params[] = (int) $limit;
-            $params[] = (int) $offset;
+            // Handle pagination (if enabled)
+            if ($enablePagination) {
+                $query .= " LIMIT ? OFFSET ?";
+                $params[] = (int) $limit;
+                $params[] = (int) $offset;
+            }
 
-            // Execute the query and fetch results
+            // Execute query and fetch results
             $members = $db->query($query, $params)->getResultArray();
 
-            // Prepare the members response
-            $response = [];
-            foreach ($members as $member) {
-                $response[] = [
+            // Prepare response to include all required fields
+            $response = array_map(function ($member) {
+                return [
                     'id' => (int) $member['member_id'],
                     'username' => $member['member_username'],
                     'email' => $member['member_email'],
@@ -304,41 +345,43 @@ class MemberController extends CoreController
                     'barcode' => $member['member_barcode'],
                     'gender' => $member['member_gender'],
                 ];
-            }
+            }, $members);
 
-            // Count total members for pagination
-            $totalQuery = "SELECT COUNT(*) as total FROM member";
-            if (count($conditions) > 0) {
-                $totalQuery .= ' WHERE ' . implode(' AND ', $conditions);
-            }
-            $total = $db->query($totalQuery, array_slice($params, 0, count($params) - 2))->getRow()->total; // Exclude limit and offset params
+            // Count total members for pagination if enabled
+            $pagination = [];
+            if ($enablePagination) {
+                $totalQuery = "SELECT COUNT(*) as total FROM member";
+                if (!empty($conditions)) {
+                    $totalQuery .= ' WHERE ' . implode(' AND ', $conditions);
+                }
+                $total = $db->query($totalQuery, array_slice($params, 0, count($params) - 2))->getRow()->total;
 
-            // Calculate pagination details
-            $jumlah_page = ceil($total / $limit);
-            $prev = ($page > 1) ? $page - 1 : null;
-            $next = ($page < $jumlah_page) ? $page + 1 : null;
-            $start = ($page - 1) * $limit + 1;
-            $end = min($page * $limit, $total);
-            $detail = range(max(1, $page - 2), min($jumlah_page, $page + 2));
+                $jumlah_page = ceil($total / $limit);
+                $pagination = [
+                    'total_data' => (int) $total,
+                    'jumlah_page' => (int) $jumlah_page,
+                    'prev' => ($page > 1) ? $page - 1 : null,
+                    'page' => (int) $page,
+                    'next' => ($page < $jumlah_page) ? $page + 1 : null,
+                    'start' => ($page - 1) * $limit + 1,
+                    'end' => min($page * $limit, $total),
+                    'detail' => range(max(1, $page - 2), min($jumlah_page, $page + 2)),
+                ];
+            }
 
             // Return response
             return $this->respondWithSuccess('Members retrieved successfully.', [
                 'data' => $response,
-                'pagination' => [
-                    'total_data' => (int) $total,
-                    'jumlah_page' => (int) $jumlah_page,
-                    'prev' => $prev,
-                    'page' => (int) $page,
-                    'next' => $next,
-                    'detail' => $detail,
-                    'start' => $start,
-                    'end' => $end,
-                ]
+                'pagination' => $pagination
             ]);
+
         } catch (DatabaseException $e) {
             return $this->respondWithError('Failed to retrieve members: ' . $e->getMessage());
         }
     }
+
+
+
 
 
 }

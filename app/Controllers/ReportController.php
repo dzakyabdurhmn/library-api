@@ -1,90 +1,154 @@
 <?php
 namespace App\Controllers;
 
-use CodeIgniter\Controller;
 use Config\Database;
 
-class ReportController extends Controller
+class ReportController extends AuthorizationController
 {
-    protected function respondWithSuccess($message, $data, $code = 200)
-    {
-        return $this->response->setJSON([
-            'status' => $code,
-            'message' => $message,
-            'result' => $data
-        ]);
-    }
-
-    protected function respondWithError($message, $code = 400)
-    {
-        return $this->response->setJSON([
-            'status' => $code,
-            'message' => $message,
-            'result' => null
-        ]);
-    }
-
     public function most_borrowed_books()
     {
         $db = Database::connect();
 
-        // Ambil parameter dari query string
-        $limit = $this->request->getVar('limit') ?? 10; // Default limit
-        $page = $this->request->getVar('page') ?? 1; // Default page
+        // Parameters from query string
+        $limit = (int) ($this->request->getVar('limit') ?? 10);
+        $page = (int) ($this->request->getVar('page') ?? 1);
+        $search = $this->request->getVar('search');
+        $paginate = $this->request->getVar('pagination') !== 'false';
         $offset = ($page - 1) * $limit;
 
+        // Base query
         $query = "
-            SELECT loan_detail_book_id as book_id, COUNT(*) as borrow_count
-            FROM loan_detail
-            WHERE loan_detail_status = 'Borrowed'
-            GROUP BY loan_detail_book_id
-            ORDER BY borrow_count DESC LIMIT ? OFFSET ?";
+        SELECT 
+        loan_detail_book_id AS book_id, 
+        COUNT(*) AS borrow_count,
+        (SELECT books_title FROM books WHERE book_id = loan_detail_book_id) AS book_title,
+        (SELECT books_publication_year FROM books WHERE book_id = loan_detail_book_id) AS publication_year,
+        (SELECT books_isbn FROM books WHERE book_id = loan_detail_book_id) AS isbn,
+        (SELECT books_price FROM books WHERE book_id = loan_detail_book_id) AS price,
+        (SELECT books_stock_quantity FROM books WHERE book_id = loan_detail_book_id) AS stock_quantity,
+        (SELECT books_barcode FROM books WHERE book_id = loan_detail_book_id) AS barcode,
+        (SELECT books_publisher_id FROM books WHERE book_id = loan_detail_book_id) AS publisher_id,
+        (SELECT publisher_name FROM publisher WHERE publisher_id = (SELECT books_publisher_id FROM books WHERE book_id = loan_detail_book_id)) AS publisher_name,
+        (SELECT publisher_address FROM publisher WHERE publisher_id = (SELECT books_publisher_id FROM books WHERE book_id = loan_detail_book_id)) AS publisher_address,
+        (SELECT publisher_phone FROM publisher WHERE publisher_id = (SELECT books_publisher_id FROM books WHERE book_id = loan_detail_book_id)) AS publisher_phone,
+        (SELECT publisher_email FROM publisher WHERE publisher_id = (SELECT books_publisher_id FROM books WHERE book_id = loan_detail_book_id)) AS publisher_email,
+        (SELECT books_author_id FROM books WHERE book_id = loan_detail_book_id) AS author_id,
+        (SELECT author_name FROM author WHERE author_id = (SELECT books_author_id FROM books WHERE book_id = loan_detail_book_id)) AS author_name,
+        (SELECT author_biography FROM author WHERE author_id = (SELECT books_author_id FROM books WHERE book_id = loan_detail_book_id)) AS author_biography
+        FROM loan_detail
+        WHERE loan_detail_status = 'Borrowed'";
 
-        $borrowedBooks = $db->query($query, [(int) $limit, (int) $offset])->getResultArray();
+        $conditions = [];
+        $params = [];
 
-        $detailedBooks = [];
-        foreach ($borrowedBooks as $borrowedBook) {
-            $bookId = $borrowedBook['book_id'];
+        // Search conditions
+        if ($search) {
+            $conditions[] = "(EXISTS (SELECT 1 FROM books WHERE book_id = loan_detail_book_id AND (books_title LIKE ? OR books_isbn LIKE ?)))";
+            $params[] = "%$search%";
+            $params[] = "%$search%";
+        }
 
-            $bookQuery = "SELECT * FROM books WHERE book_id = ?";
-            $bookDetails = $db->query($bookQuery, [$bookId])->getRowArray();
+        // Additional filters
+        $filters = [
+            'book_id' => 'loan_detail_book_id',
+            'publisher_id' => '(SELECT books_publisher_id FROM books WHERE book_id = loan_detail_book_id)',
+            'publication_year' => '(SELECT books_publication_year FROM books WHERE book_id = loan_detail_book_id)',
+            'author_id' => '(SELECT books_author_id FROM books WHERE book_id = loan_detail_book_id)',
+            'price_min' => '(SELECT books_price FROM books WHERE book_id = loan_detail_book_id) >= ?',
+            'price_max' => '(SELECT books_price FROM books WHERE book_id = loan_detail_book_id) <= ?',
+            'book_title' => 'EXISTS (SELECT 1 FROM books WHERE book_id = loan_detail_book_id AND books_title LIKE ?)',
+            'borrow_count' => 'COUNT(*) >= ?',
+            'publisher_name' => 'EXISTS (SELECT 1 FROM publisher WHERE publisher_id = (SELECT books_publisher_id FROM books WHERE book_id = loan_detail_book_id) AND publisher_name LIKE ?)',
+        ];
 
-            if ($bookDetails) {
-                $detailedBooks[] = [
-                    'book_id' => $bookDetails['book_id'],
-                    'book_title' => $bookDetails['books_title'],
-                    'borrow_count' => $borrowedBook['borrow_count'],
-                    'publisher_name' => $bookDetails['books_publisher_id'],
-                    'publication_year' => $bookDetails['books_publication_year'],
-                    'isbn' => $bookDetails['books_isbn'],
-                    'price' => $bookDetails['books_price'],
-                ];
+        foreach ($filters as $filterKey => $dbColumn) {
+            $filterValue = $this->request->getVar("filter[$filterKey]");
+            if ($filterValue !== null && $filterValue !== '') {
+                if (in_array($filterKey, ['price_min', 'price_max', 'borrow_count'])) {
+                    $conditions[] = $dbColumn;
+                    $params[] = (float) $filterValue; // Ensure numeric value for price and borrow count
+                } elseif (strpos($dbColumn, 'LIKE') !== false) {
+                    $conditions[] = $dbColumn;
+                    $params[] = "%$filterValue%";
+                } else {
+                    $conditions[] = "$dbColumn = ?";
+                    $params[] = $filterValue;
+                }
             }
         }
 
+        // Add conditions to query
+        if (!empty($conditions)) {
+            $query .= ' AND ' . implode(' AND ', $conditions);
+        }
+
+        // Group and order by borrow count
+        $query .= " GROUP BY loan_detail_book_id ORDER BY borrow_count DESC, book_title ASC";
+
+        // Pagination
+        if ($paginate) {
+            $query .= " LIMIT ? OFFSET ?";
+            $params[] = $limit;
+            $params[] = $offset;
+        }
+
+        // Fetch borrowed books
+        $borrowedBooks = $db->query($query, $params)->getResultArray();
+
+
+        $borrowedBooks = array_map(function ($book) {
+            // Simpan 'id' terlebih dahulu
+            $id = $book['book_id'];
+            unset($book['book_id']);  // Hapus 'book_id'
+
+            // Letakkan 'id' di urutan teratas
+            $book = array_merge(['id' => $id], $book);
+
+            return $book;
+        }, $borrowedBooks);
+
+        // Pagination response
+        $paginationResponse = [
+            'total_data' => 0,
+            'total_pages' => 0,
+            'prev' => null,
+            'page' => $page,
+            'next' => null,
+            'detail' => [],
+            'start' => 0,
+            'end' => 0,
+        ];
+
         // Total count for pagination
-        $totalQuery = "
-            SELECT COUNT(DISTINCT loan_detail_book_id) as total
+        if ($paginate) {
+            $totalQuery = "
+            SELECT COUNT(DISTINCT loan_detail_book_id) AS total
             FROM loan_detail
             WHERE loan_detail_status = 'Borrowed'";
-        $total = $db->query($totalQuery)->getRow()->total;
 
-        $jumlah_page = ceil($total / $limit);
-        $prev = ($page > 1) ? $page - 1 : null;
-        $next = ($page < $jumlah_page) ? $page + 1 : null;
+            if (!empty($conditions)) {
+                $totalQuery .= ' AND ' . implode(' AND ', $conditions);
+            }
 
-        return $this->respondWithSuccess('Most borrowed books retrieved.', [
-            'data' => $detailedBooks,
-            'pagination' => [
+            // Execute total query
+            $total = $db->query($totalQuery, array_slice($params, 0, -2))->getRow()->total;
+
+            // Update pagination response
+            $paginationResponse = [
                 'total_data' => (int) $total,
-                'total_pages' => (int) $jumlah_page,
-                'prev' => $prev,
-                'page' => (int) $page,
-                'next' => $next,
-                'detail' => range(max(1, $page - 2), min($jumlah_page, $page + 2)),
+                'total_pages' => (int) ceil($total / $limit),
+                'prev' => ($page > 1) ? $page - 1 : null,
+                'page' => $page,
+                'next' => ($page < ceil($total / $limit)) ? $page + 1 : null,
+                'detail' => range(max(1, $page - 2), min(ceil($total / $limit), $page + 2)),
                 'start' => ($page - 1) * $limit + 1,
                 'end' => min($page * $limit, $total),
-            ]
+            ];
+        }
+
+        return $this->respondWithSuccess('Most borrowed books retrieved.', [
+            'data' => $borrowedBooks,
+            'pagination' => $paginate ? $paginationResponse : (object) [],
         ]);
     }
 
@@ -92,420 +156,794 @@ class ReportController extends Controller
     {
         $db = Database::connect();
 
-        // Ambil parameter dari query string
-        $limit = $this->request->getVar('limit') ?? 10; // Default limit
-        $page = $this->request->getVar('page') ?? 1; // Default page
+        // Parameters from query string
+        $limit = (int) ($this->request->getVar('limit') ?? 10);
+        $page = (int) ($this->request->getVar('page') ?? 1);
+        $search = $this->request->getVar('search');
+        $paginate = $this->request->getVar('pagination') !== 'false';
         $offset = ($page - 1) * $limit;
 
+        // Base query
         $query = "
-            SELECT loan_detail_book_id as book_id, COUNT(*) as borrow_count
-            FROM loan_detail
-            WHERE loan_detail_status = 'Borrowed'
-            GROUP BY loan_detail_book_id
-            ORDER BY borrow_count ASC LIMIT ? OFFSET ?";
+    SELECT 
+    loan_detail_book_id AS book_id, 
+    COUNT(*) AS borrow_count,
+    (SELECT books_title FROM books WHERE book_id = loan_detail_book_id) AS book_title,
+    (SELECT books_publication_year FROM books WHERE book_id = loan_detail_book_id) AS publication_year,
+    (SELECT books_isbn FROM books WHERE book_id = loan_detail_book_id) AS isbn,
+    (SELECT books_price FROM books WHERE book_id = loan_detail_book_id) AS price,
+    (SELECT books_stock_quantity FROM books WHERE book_id = loan_detail_book_id) AS stock_quantity,
+    (SELECT books_barcode FROM books WHERE book_id = loan_detail_book_id) AS barcode,
+    (SELECT books_publisher_id FROM books WHERE book_id = loan_detail_book_id) AS publisher_id,
+    (SELECT publisher_name FROM publisher WHERE publisher_id = (SELECT books_publisher_id FROM books WHERE book_id = loan_detail_book_id)) AS publisher_name,
+    (SELECT publisher_address FROM publisher WHERE publisher_id = (SELECT books_publisher_id FROM books WHERE book_id = loan_detail_book_id)) AS publisher_address,
+    (SELECT publisher_phone FROM publisher WHERE publisher_id = (SELECT books_publisher_id FROM books WHERE book_id = loan_detail_book_id)) AS publisher_phone,
+    (SELECT publisher_email FROM publisher WHERE publisher_id = (SELECT books_publisher_id FROM books WHERE book_id = loan_detail_book_id)) AS publisher_email,
+    (SELECT books_author_id FROM books WHERE book_id = loan_detail_book_id) AS author_id,
+    (SELECT author_name FROM author WHERE author_id = (SELECT books_author_id FROM books WHERE book_id = loan_detail_book_id)) AS author_name,
+    (SELECT author_biography FROM author WHERE author_id = (SELECT books_author_id FROM books WHERE book_id = loan_detail_book_id)) AS author_biography
+    FROM loan_detail
+    WHERE loan_detail_status = 'Borrowed'";
 
-        $borrowedBooks = $db->query($query, [(int) $limit, (int) $offset])->getResultArray();
+        $conditions = [];
+        $params = [];
 
-        $detailedBooks = [];
-        foreach ($borrowedBooks as $borrowedBook) {
-            $bookId = $borrowedBook['book_id'];
+        // Expanded search conditions
+        if ($search) {
+            $conditions[] = "(
+            EXISTS (
+                SELECT 1 FROM books 
+                WHERE book_id = loan_detail_book_id 
+                AND (
+                    books_title LIKE ? 
+                    OR books_isbn LIKE ? 
+                    OR books_publication_year LIKE ? 
+                    OR books_barcode LIKE ?
+                    OR EXISTS (
+                        SELECT 1 FROM publisher 
+                        WHERE publisher_id = books_publisher_id 
+                        AND (
+                            publisher_name LIKE ? 
+                            OR publisher_address LIKE ? 
+                            OR publisher_phone LIKE ? 
+                            OR publisher_email LIKE ?
+                        )
+                    )
+                    OR EXISTS (
+                        SELECT 1 FROM author 
+                        WHERE author_id = books_author_id 
+                        AND (
+                            author_name LIKE ? 
+                            OR author_biography LIKE ?
+                        )
+                    )
+                )
+            )
+        )";
+            $searchParam = "%$search%";
+            $params = array_merge($params, array_fill(0, 10, $searchParam));
+        }
 
-            $bookQuery = "SELECT * FROM books WHERE book_id = ?";
-            $bookDetails = $db->query($bookQuery, [$bookId])->getRowArray();
+        // Additional filters (unchanged)
+        $filters = [
+            'id' => 'loan_detail_book_id',
+            'publisher_id' => '(SELECT books_publisher_id FROM books WHERE book_id = loan_detail_book_id)',
+            'publication_year' => '(SELECT books_publication_year FROM books WHERE book_id = loan_detail_book_id)',
+            'author_id' => '(SELECT books_author_id FROM books WHERE book_id = loan_detail_book_id)',
+            'price_min' => '(SELECT books_price FROM books WHERE book_id = loan_detail_book_id) >= ?',
+            'price_max' => '(SELECT books_price FROM books WHERE book_id = loan_detail_book_id) <= ?',
+            'book_title' => 'EXISTS (SELECT 1 FROM books WHERE book_id = loan_detail_book_id AND books_title LIKE ?)',
+            'borrow_count' => 'COUNT(*) <= ?',
+            'publisher_name' => 'EXISTS (SELECT 1 FROM publisher WHERE publisher_id = (SELECT books_publisher_id FROM books WHERE book_id = loan_detail_book_id) AND publisher_name LIKE ?)',
+        ];
 
-            if ($bookDetails) {
-                $detailedBooks[] = [
-                    'book_id' => $bookDetails['book_id'],
-                    'book_title' => $bookDetails['books_title'],
-                    'borrow_count' => $borrowedBook['borrow_count'],
-                    'publisher_name' => $bookDetails['books_publisher_id'],
-                    'publication_year' => $bookDetails['books_publication_year'],
-                    'isbn' => $bookDetails['books_isbn'],
-                    'price' => $bookDetails['books_price'],
-                ];
+        foreach ($filters as $filterKey => $dbColumn) {
+            $filterValue = $this->request->getVar("filter[$filterKey]");
+            if ($filterValue !== null && $filterValue !== '') {
+                if (in_array($filterKey, ['price_min', 'price_max', 'borrow_count'])) {
+                    $conditions[] = $dbColumn;
+                    $params[] = (float) $filterValue; // Ensure numeric value for price and borrow count
+                } elseif (strpos($dbColumn, 'LIKE') !== false) {
+                    $conditions[] = $dbColumn;
+                    $params[] = "%$filterValue%";
+                } else {
+                    $conditions[] = "$dbColumn = ?";
+                    $params[] = $filterValue;
+                }
             }
         }
 
+        // Add conditions to query
+        if (!empty($conditions)) {
+            $query .= ' AND ' . implode(' AND ', $conditions);
+        }
+
+        // Group and order by borrow count
+        $query .= " GROUP BY loan_detail_book_id ORDER BY borrow_count ASC, book_title ASC";
+
+        // Pagination
+        if ($paginate) {
+            $query .= " LIMIT ? OFFSET ?";
+            $params[] = $limit;
+            $params[] = $offset;
+        }
+
+        // Fetch borrowed books
+        $borrowedBooks = $db->query($query, $params)->getResultArray();
+
+
+
+        $borrowedBooks = array_map(function ($book) {
+            // Simpan 'id' terlebih dahulu
+            $id = $book['book_id'];
+            unset($book['book_id']);  // Hapus 'book_id'
+
+            // Letakkan 'id' di urutan teratas
+            $book = array_merge(['id' => $id], $book);
+
+            return $book;
+        }, $borrowedBooks);
+
+        // Pagination response
+        $paginationResponse = [
+            'total_data' => 0,
+            'total_pages' => 0,
+            'prev' => null,
+            'page' => $page,
+            'next' => null,
+            'detail' => [],
+            'start' => 0,
+            'end' => 0,
+        ];
+
         // Total count for pagination
-        $totalQuery = "
-            SELECT COUNT(DISTINCT loan_detail_book_id) as total
-            FROM loan_detail
-            WHERE loan_detail_status = 'Borrowed'";
-        $total = $db->query($totalQuery)->getRow()->total;
+        if ($paginate) {
+            $totalQuery = "
+        SELECT COUNT(DISTINCT loan_detail_book_id) AS total
+        FROM loan_detail
+        WHERE loan_detail_status = 'Borrowed'";
 
-        $jumlah_page = ceil($total / $limit);
-        $prev = ($page > 1) ? $page - 1 : null;
-        $next = ($page < $jumlah_page) ? $page + 1 : null;
+            if (!empty($conditions)) {
+                $totalQuery .= ' AND ' . implode(' AND ', $conditions);
+            }
 
-        return $this->respondWithSuccess('Least borrowed books retrieved.', [
-            'data' => $detailedBooks,
-            'pagination' => [
+            // Execute total query
+            $total = $db->query($totalQuery, array_slice($params, 0, -2))->getRow()->total;
+
+            // Update pagination response
+            $paginationResponse = [
                 'total_data' => (int) $total,
-                'total_pages' => (int) $jumlah_page,
-                'prev' => $prev,
-                'page' => (int) $page,
-                'next' => $next,
-                'detail' => range(max(1, $page - 2), min($jumlah_page, $page + 2)),
+                'total_pages' => (int) ceil($total / $limit),
+                'prev' => ($page > 1) ? $page - 1 : null,
+                'page' => $page,
+                'next' => ($page < ceil($total / $limit)) ? $page + 1 : null,
+                'detail' => range(max(1, $page - 2), min(ceil($total / $limit), $page + 2)),
                 'start' => ($page - 1) * $limit + 1,
                 'end' => min($page * $limit, $total),
-            ]
+            ];
+        }
+
+        return $this->respondWithSuccess('Least borrowed books retrieved.', [
+            'data' => $borrowedBooks,
+            'pagination' => $paginate ? $paginationResponse : (object) [],
         ]);
     }
+
 
     public function broken_missing_books()
     {
         $db = Database::connect();
 
-        // Ambil parameter dari query string
-        $limit = $this->request->getVar('limit') ?? 10; // Default limit
-        $page = $this->request->getVar('page') ?? 1; // Default page
+        // Parameters from query string
+        $limit = (int) ($this->request->getVar('limit') ?? 10);
+        $page = (int) ($this->request->getVar('page') ?? 1);
+        $search = $this->request->getVar('search');
+        $paginate = $this->request->getVar('pagination') !== 'false';
         $offset = ($page - 1) * $limit;
 
-        // Start building the query
+        // Base query
         $query = "
-            SELECT loan_detail_book_id as book_id, loan_detail_status, COUNT(*) as count
-            FROM loan_detail
-            WHERE loan_detail_status IN ('Broken', 'Missing')
-            GROUP BY loan_detail_book_id, loan_detail_status
-            LIMIT ? OFFSET ?";
+        SELECT 
+        loan_detail_book_id AS book_id, 
+        loan_detail_status AS status,
+        COUNT(*) AS count,
+        (SELECT books_title FROM books WHERE book_id = loan_detail_book_id) AS book_title,
+        (SELECT books_publication_year FROM books WHERE book_id = loan_detail_book_id) AS publication_year,
+        (SELECT books_isbn FROM books WHERE book_id = loan_detail_book_id) AS isbn,
+        (SELECT books_price FROM books WHERE book_id = loan_detail_book_id) AS price,
+        (SELECT books_stock_quantity FROM books WHERE book_id = loan_detail_book_id) AS stock_quantity,
+        (SELECT books_barcode FROM books WHERE book_id = loan_detail_book_id) AS barcode,
+        (SELECT books_publisher_id FROM books WHERE book_id = loan_detail_book_id) AS publisher_id,
+        (SELECT publisher_name FROM publisher WHERE publisher_id = (SELECT books_publisher_id FROM books WHERE book_id = loan_detail_book_id)) AS publisher_name,
+        (SELECT publisher_address FROM publisher WHERE publisher_id = (SELECT books_publisher_id FROM books WHERE book_id = loan_detail_book_id)) AS publisher_address,
+        (SELECT publisher_phone FROM publisher WHERE publisher_id = (SELECT books_publisher_id FROM books WHERE book_id = loan_detail_book_id)) AS publisher_phone,
+        (SELECT publisher_email FROM publisher WHERE publisher_id = (SELECT books_publisher_id FROM books WHERE book_id = loan_detail_book_id)) AS publisher_email,
+        (SELECT books_author_id FROM books WHERE book_id = loan_detail_book_id) AS author_id,
+        (SELECT author_name FROM author WHERE author_id = (SELECT books_author_id FROM books WHERE book_id = loan_detail_book_id)) AS author_name,
+        (SELECT author_biography FROM author WHERE author_id = (SELECT books_author_id FROM books WHERE book_id = loan_detail_book_id)) AS author_biography
+        FROM loan_detail
+        WHERE loan_detail_status IN ('Broken', 'Missing')";
 
-        $brokenMissingBooks = $db->query($query, [(int) $limit, (int) $offset])->getResultArray();
+        $conditions = [];
+        $params = [];
 
-        $detailedBooks = [];
-        foreach ($brokenMissingBooks as $book) {
-            $bookId = $book['book_id'];
+        // Expanded search conditions
+        if ($search) {
+            $conditions[] = "(
+            EXISTS (
+                SELECT 1 FROM books 
+                WHERE book_id = loan_detail_book_id 
+                AND (
+                    books_title LIKE ? 
+                    OR books_isbn LIKE ? 
+                    OR books_publication_year LIKE ? 
+                    OR books_barcode LIKE ?
+                    OR EXISTS (
+                        SELECT 1 FROM publisher 
+                        WHERE publisher_id = books_publisher_id 
+                        AND (
+                            publisher_name LIKE ? 
+                            OR publisher_address LIKE ? 
+                            OR publisher_phone LIKE ? 
+                            OR publisher_email LIKE ?
+                        )
+                    )
+                    OR EXISTS (
+                        SELECT 1 FROM author 
+                        WHERE author_id = books_author_id 
+                        AND (
+                            author_name LIKE ? 
+                            OR author_biography LIKE ?
+                        )
+                    )
+                )
+            )
+        )";
+            $searchParam = "%$search%";
+            $params = array_merge($params, array_fill(0, 10, $searchParam));
+        }
 
-            $bookQuery = "SELECT * FROM books WHERE book_id = ?";
-            $bookDetails = $db->query($bookQuery, [$bookId])->getRowArray();
+        // Additional filters
+        $filters = [
+            'book_id' => 'loan_detail_book_id',
+            'publisher_id' => '(SELECT books_publisher_id FROM books WHERE book_id = loan_detail_book_id)',
+            'publication_year' => '(SELECT books_publication_year FROM books WHERE book_id = loan_detail_book_id)',
+            'author_id' => '(SELECT books_author_id FROM books WHERE book_id = loan_detail_book_id)',
+            'price_min' => '(SELECT books_price FROM books WHERE book_id = loan_detail_book_id) >= ?',
+            'price_max' => '(SELECT books_price FROM books WHERE book_id = loan_detail_book_id) <= ?',
+            'book_title' => 'EXISTS (SELECT 1 FROM books WHERE book_id = loan_detail_book_id AND books_title LIKE ?)',
+            'status' => 'loan_detail_status',
+            'count' => 'COUNT(*) >= ?',
+            'publisher_name' => 'EXISTS (SELECT 1 FROM publisher WHERE publisher_id = (SELECT books_publisher_id FROM books WHERE book_id = loan_detail_book_id) AND publisher_name LIKE ?)',
+        ];
 
-            if ($bookDetails) {
-                $detailedBooks[] = [
-                    'book_id' => $bookDetails['book_id'],
-                    'book_title' => $bookDetails['books_title'],
-                    'status' => $book['loan_detail_status'],
-                    'count' => $book['count'],
-                    'publisher_name' => $bookDetails['books_publisher_id'],
-                    'publication_year' => $bookDetails['books_publication_year'],
-                    'isbn' => $bookDetails['books_isbn'],
-                ];
+        foreach ($filters as $filterKey => $dbColumn) {
+            $filterValue = $this->request->getVar("filter[$filterKey]");
+            if ($filterValue !== null && $filterValue !== '') {
+                if (in_array($filterKey, ['price_min', 'price_max', 'count'])) {
+                    $conditions[] = $dbColumn;
+                    $params[] = (float) $filterValue; // Ensure numeric value for price and count
+                } elseif (strpos($dbColumn, 'LIKE') !== false) {
+                    $conditions[] = $dbColumn;
+                    $params[] = "%$filterValue%";
+                } else {
+                    $conditions[] = "$dbColumn = ?";
+                    $params[] = $filterValue;
+                }
             }
         }
 
+        // Add conditions to query
+        if (!empty($conditions)) {
+            $query .= ' AND ' . implode(' AND ', $conditions);
+        }
+
+        // Group and order by count
+        $query .= " GROUP BY loan_detail_book_id, loan_detail_status ORDER BY count DESC, book_title ASC";
+
+        // Pagination
+        if ($paginate) {
+            $query .= " LIMIT ? OFFSET ?";
+            $params[] = $limit;
+            $params[] = $offset;
+        }
+
+        // Fetch broken and missing books
+        $brokenMissingBooks = $db->query($query, $params)->getResultArray();
+
+        // Pagination response
+        $paginationResponse = [
+            'total_data' => 0,
+            'total_pages' => 0,
+            'prev' => null,
+            'page' => $page,
+            'next' => null,
+            'detail' => [],
+            'start' => 0,
+            'end' => 0,
+        ];
+
         // Total count for pagination
-        $totalQuery = "
-            SELECT COUNT(*) as total FROM loan_detail
-            WHERE loan_detail_status IN ('Broken', 'Missing')";
-        $total = $db->query($totalQuery)->getRow()->total;
+        if ($paginate) {
+            $totalQuery = "
+        SELECT COUNT(*) AS total
+        FROM (
+            SELECT DISTINCT loan_detail_book_id, loan_detail_status
+            FROM loan_detail
+            WHERE loan_detail_status IN ('Broken', 'Missing')
+        ) AS subquery";
 
-        $jumlah_page = ceil($total / $limit);
-        $prev = ($page > 1) ? $page - 1 : null;
-        $next = ($page < $jumlah_page) ? $page + 1 : null;
+            if (!empty($conditions)) {
+                $totalQuery = "
+            SELECT COUNT(*) AS total
+            FROM (
+                SELECT DISTINCT loan_detail_book_id, loan_detail_status
+                FROM loan_detail
+                WHERE loan_detail_status IN ('Broken', 'Missing')
+                AND " . implode(' AND ', $conditions) . "
+            ) AS subquery";
+            }
 
-        return $this->respondWithSuccess('Broken and missing books retrieved.', [
-            'data' => $detailedBooks,
-            'pagination' => [
+            // Execute total query
+            $total = $db->query($totalQuery, array_slice($params, 0, -2))->getRow()->total;
+
+            // Update pagination response
+            $paginationResponse = [
                 'total_data' => (int) $total,
-                'total_pages' => (int) $jumlah_page,
-                'prev' => $prev,
-                'page' => (int) $page,
-                'next' => $next,
-                'detail' => range(max(1, $page - 2), min($jumlah_page, $page + 2)),
+                'total_pages' => (int) ceil($total / $limit),
+                'prev' => ($page > 1) ? $page - 1 : null,
+                'page' => $page,
+                'next' => ($page < ceil($total / $limit)) ? $page + 1 : null,
+                'detail' => range(max(1, $page - 2), min(ceil($total / $limit), $page + 2)),
                 'start' => ($page - 1) * $limit + 1,
                 'end' => min($page * $limit, $total),
-            ]
+            ];
+        }
+
+        return $this->respondWithSuccess('Broken and missing books retrieved.', [
+            'data' => $brokenMissingBooks,
+            'pagination' => $paginate ? $paginationResponse : (object) [],
         ]);
     }
+
 
     public function most_active_users()
     {
         $db = Database::connect();
 
-        // Ambil parameter dari query string
-        $limit = $this->request->getVar('limit') ?? 10; // Default limit
-        $page = $this->request->getVar('page') ?? 1; // Default page
+        // Parameters from query string
+        $limit = (int) ($this->request->getVar('limit') ?? 10);
+        $page = (int) ($this->request->getVar('page') ?? 1);
+        $search = $this->request->getVar('search');
+        $paginate = $this->request->getVar('pagination') !== 'false';
         $offset = ($page - 1) * $limit;
 
+        // Base query
         $query = "
-            SELECT loan_member_id, COUNT(*) as activity_count
-            FROM loan
-            WHERE loan_date >= DATE_SUB(CURDATE(), INTERVAL 30 DAY)
-            GROUP BY loan_member_id
-            ORDER BY activity_count DESC
-            LIMIT ? OFFSET ?";
+    SELECT 
+        m.member_id,
+        m.member_username,
+        m.member_email,
+        m.member_full_name,
+        m.member_address,
+        m.member_job,
+        m.member_status,
+        m.member_religion,
+        m.member_barcode,
+        m.member_gender,
+        (SELECT COUNT(*) FROM loan WHERE loan_member_id = m.member_id AND loan_date >= DATE_SUB(CURDATE(), INTERVAL 30 DAY)) as activity_count
+    FROM member m
+    WHERE 1=1";
 
-        $members = $db->query($query, [(int) $limit, (int) $offset])->getResultArray();
+        $conditions = [];
+        $params = [];
 
-        $detailedMembers = [];
-        foreach ($members as $member) {
-            $memberId = $member['loan_member_id'];
+        // Search conditions
+        if ($search) {
+            $searchFields = ['m.member_username', 'm.member_email', 'm.member_full_name', 'm.member_address', 'm.member_job', 'm.member_religion', 'm.member_barcode'];
+            $searchConditions = array_map(fn($field) => "$field LIKE ?", $searchFields);
+            $conditions[] = '(' . implode(' OR ', $searchConditions) . ')';
+            $params = array_merge($params, array_fill(0, count($searchFields), "%$search%"));
+        }
 
-            $memberQuery = "SELECT * FROM member WHERE member_id = ?";
-            $memberDetails = $db->query($memberQuery, [$memberId])->getRowArray();
+        // Additional filters
+        $filters = [
+            'member_id' => 'm.member_id',
+            'username' => 'm.member_username',
+            'email' => 'm.member_email',
+            'full_name' => 'm.member_full_name',
+            'address' => 'm.member_address',
+            'job' => 'm.member_job',
+            'status' => 'm.member_status',
+            'religion' => 'm.member_religion',
+            'barcode' => 'm.member_barcode',
+            'gender' => 'm.member_gender',
+            'activity_count_min' => '(SELECT COUNT(*) FROM loan WHERE loan_member_id = m.member_id AND loan_date >= DATE_SUB(CURDATE(), INTERVAL 30 DAY)) >= ?',
+            'activity_count_max' => '(SELECT COUNT(*) FROM loan WHERE loan_member_id = m.member_id AND loan_date >= DATE_SUB(CURDATE(), INTERVAL 30 DAY)) <= ?',
+        ];
 
-            if ($memberDetails) {
-                $detailedMembers[] = [
-                    'member_id' => $memberDetails['member_id'],
-                    'username' => $memberDetails['member_username'],
-                    'email' => $memberDetails['member_email'],
-                    'full_name' => $memberDetails['member_full_name'],
-                    'address' => $memberDetails['member_address'],
-                    'activity_count' => $member['activity_count'],
-                ];
+        foreach ($filters as $filterKey => $dbColumn) {
+            $filterValue = $this->request->getVar("filter[$filterKey]");
+            if ($filterValue !== null && $filterValue !== '') {
+                if (in_array($filterKey, ['activity_count_min', 'activity_count_max'])) {
+                    $conditions[] = $dbColumn;
+                    $params[] = (int) $filterValue;
+                } elseif (in_array($filterKey, ['address', 'full_name', 'job', 'religion'])) {
+                    $conditions[] = "$dbColumn LIKE ?";
+                    $params[] = "%$filterValue%";
+                } else {
+                    $conditions[] = "$dbColumn = ?";
+                    $params[] = $filterValue;
+                }
             }
         }
 
-        // Total count for pagination
-        $totalQuery = "
-            SELECT COUNT(DISTINCT loan_member_id) as total
-            FROM loan
-            WHERE loan_date >= DATE_SUB(CURDATE(), INTERVAL 30 DAY)";
-        $total = $db->query($totalQuery)->getRow()->total;
+        // Add conditions to query
+        if (!empty($conditions)) {
+            $query .= ' AND ' . implode(' AND ', $conditions);
+        }
 
-        $jumlah_page = ceil($total / $limit);
-        $prev = ($page > 1) ? $page - 1 : null;
-        $next = ($page < $jumlah_page) ? $page + 1 : null;
+        // Order by activity count
+        $query .= " ORDER BY activity_count DESC, m.member_username ASC";
+
+        // Pagination
+        if ($paginate) {
+            $countQuery = "SELECT COUNT(*) as total FROM ($query) as subquery";
+            $total = $db->query($countQuery, $params)->getRow()->total;
+
+            $query .= " LIMIT ? OFFSET ?";
+            $params[] = $limit;
+            $params[] = $offset;
+        }
+
+        // Execute query
+        $result = $db->query($query, $params)->getResultArray();
+
+
+
+        $result = array_map(function ($book) {
+            // Simpan 'id' terlebih dahulu
+            $id = $book['member_id'];
+            unset($book['member_id']);  // Hapus 'book_id'
+
+            // Letakkan 'id' di urutan teratas
+            $book = array_merge(['id' => $id], $book);
+
+            return $book;
+        }, $result);
+
+        // Pagination response
+        $paginationResponse = [
+            'total_data' => $paginate ? (int) $total : count($result),
+            'total_pages' => $paginate ? (int) ceil($total / $limit) : 1,
+            'prev' => ($page > 1) ? $page - 1 : null,
+            'page' => $page,
+            'next' => $paginate && ($page < ceil($total / $limit)) ? $page + 1 : null,
+            'detail' => $paginate ? range(max(1, $page - 2), min(ceil($total / $limit), $page + 2)) : [],
+            'start' => $paginate ? ($page - 1) * $limit + 1 : 1,
+            'end' => $paginate ? min($page * $limit, $total) : count($result),
+        ];
 
         return $this->respondWithSuccess('Most active users retrieved.', [
-            'data' => $detailedMembers,
-            'pagination' => [
-                'total_data' => (int) $total,
-                'total_pages' => (int) $jumlah_page,
-                'prev' => $prev,
-                'page' => (int) $page,
-                'next' => $next,
-                'detail' => range(max(1, $page - 2), min($jumlah_page, $page + 2)),
-                'start' => ($page - 1) * $limit + 1,
-                'end' => min($page * $limit, $total),
-            ]
+            'data' => $result,
+            'pagination' => $paginate ? $paginationResponse : (object) [],
         ]);
     }
+
 
     public function inactive_users()
     {
         $db = Database::connect();
 
-        // Ambil parameter dari query string
-        $limit = $this->request->getVar('limit') ?? 10; // Default limit
-        $page = $this->request->getVar('page') ?? 1; // Default page
+        // Parameters from query string
+        $limit = (int) ($this->request->getVar('limit') ?? 10);
+        $page = (int) ($this->request->getVar('page') ?? 1);
+        $search = $this->request->getVar('search');
+        $paginate = $this->request->getVar('pagination') !== 'false';
         $offset = ($page - 1) * $limit;
 
+        // Base query
         $query = "
-            SELECT member_id, member_username, member_email
-            FROM member
-            WHERE member_id NOT IN (
-                SELECT loan_member_id FROM loan WHERE loan_date >= DATE_SUB(CURDATE(), INTERVAL 30 DAY)
-            )
-            LIMIT ? OFFSET ?";
+        SELECT 
+        m.member_id,
+        m.member_username,
+        m.member_email,
+        m.member_full_name,
+        m.member_address,
+        m.member_job,
+        m.member_status,
+        m.member_religion,
+        m.member_barcode,
+        m.member_gender,
+        (SELECT COUNT(*) FROM loan WHERE loan_member_id = m.member_id AND loan_date >= DATE_SUB(CURDATE(), INTERVAL 30 DAY)) as activity_count
+    FROM member m
+    WHERE (SELECT COUNT(*) FROM loan WHERE loan_member_id = m.member_id AND loan_date >= DATE_SUB(CURDATE(), INTERVAL 30 DAY)) = 0";
 
-        $result = $db->query($query, [(int) $limit, (int) $offset])->getResultArray();
+        $conditions = [];
+        $params = [];
 
-        // Total count for pagination
-        $totalQuery = "
-            SELECT COUNT(*) as total FROM member
-            WHERE member_id NOT IN (
-                SELECT loan_member_id FROM loan WHERE loan_date >= DATE_SUB(CURDATE(), INTERVAL 30 DAY)
-            )";
-        $total = $db->query($totalQuery)->getRow()->total;
+        // Search conditions
+        if ($search) {
+            $searchFields = ['m.member_username', 'm.member_email', 'm.member_full_name', 'm.member_address', 'm.member_job', 'm.member_religion', 'm.member_barcode'];
+            $searchConditions = array_map(fn($field) => "$field LIKE ?", $searchFields);
+            $conditions[] = '(' . implode(' OR ', $searchConditions) . ')';
+            $params = array_merge($params, array_fill(0, count($searchFields), "%$search%"));
+        }
 
-        $jumlah_page = ceil($total / $limit);
-        $prev = ($page > 1) ? $page - 1 : null;
-        $next = ($page < $jumlah_page) ? $page + 1 : null;
+        // Additional filters
+        $filters = [
+            'id' => 'm.member_id',
+            'username' => 'm.member_username',
+            'email' => 'm.member_email',
+            'full_name' => 'm.member_full_name',
+            'address' => 'm.member_address',
+            'job' => 'm.member_job',
+            'status' => 'm.member_status',
+            'religion' => 'm.member_religion',
+            'barcode' => 'm.member_barcode',
+            'gender' => 'm.member_gender',
+        ];
+
+        foreach ($filters as $filterKey => $dbColumn) {
+            $filterValue = $this->request->getVar("filter[$filterKey]");
+            if ($filterValue !== null && $filterValue !== '') {
+                if (in_array($filterKey, ['address', 'full_name', 'job', 'religion'])) {
+                    $conditions[] = "$dbColumn LIKE ?";
+                    $params[] = "%$filterValue%";
+                } else {
+                    $conditions[] = "$dbColumn = ?";
+                    $params[] = $filterValue;
+                }
+            }
+        }
+
+        // Add conditions to query
+        if (!empty($conditions)) {
+            $query .= ' AND ' . implode(' AND ', $conditions);
+        }
+
+        // Order by member username
+        $query .= " ORDER BY m.member_username ASC";
+
+        // Pagination
+        if ($paginate) {
+            $countQuery = "SELECT COUNT(*) as total FROM ($query) as subquery";
+            $total = $db->query($countQuery, $params)->getRow()->total;
+
+            $query .= " LIMIT ? OFFSET ?";
+            $params[] = $limit;
+            $params[] = $offset;
+        }
+
+        // Execute query
+        $result = $db->query($query, $params)->getResultArray();
+
+        // Pagination response
+        $paginationResponse = [
+            'total_data' => $paginate ? (int) $total : count($result),
+            'total_pages' => $paginate ? (int) ceil($total / $limit) : 1,
+            'prev' => ($page > 1) ? $page - 1 : null,
+            'page' => $page,
+            'next' => $paginate && ($page < ceil($total / $limit)) ? $page + 1 : null,
+            'detail' => $paginate ? range(max(1, $page - 2), min(ceil($total / $limit), $page + 2)) : [],
+            'start' => $paginate ? ($page - 1) * $limit + 1 : 1,
+            'end' => $paginate ? min($page * $limit, $total) : count($result),
+        ];
 
         return $this->respondWithSuccess('Inactive users retrieved.', [
             'data' => $result,
-            'pagination' => [
-                'total_data' => (int) $total,
-                'total_pages' => (int) $jumlah_page,
-                'prev' => $prev,
-                'page' => (int) $page,
-                'next' => $next,
-                'detail' => range(max(1, $page - 2), min($jumlah_page, $page + 2)),
-                'start' => ($page - 1) * $limit + 1,
-                'end' => min($page * $limit, $total),
-            ]
+            'pagination' => $paginate ? $paginationResponse : (object) [],
         ]);
     }
-
-    // public function active_admins()
-    // {
-    //     $db = Database::connect();
-
-    //     // Ambil parameter dari query string
-    //     $limit = $this->request->getVar('limit') ?? 10; // Default limit
-    //     $page = $this->request->getVar('page') ?? 1; // Default page
-    //     $offset = ($page - 1) * $limit;
-
-    //     $query = "
-    //         SELECT admin_id, admin_username, admin_email
-    //         FROM admin
-    //         WHERE admin_id IN (
-    //             SELECT admin_id FROM admin_token WHERE created_at >= DATE_SUB(CURDATE(), INTERVAL 30 DAY)
-    //         )
-    //         LIMIT ? OFFSET ?";
-
-    //     $result = $db->query($query, [(int) $limit, (int) $offset])->getResultArray();
-
-    //     // Total count for pagination
-    //     $totalQuery = "
-    //         SELECT COUNT(*) as total FROM admin
-    //         WHERE admin_id IN (
-    //             SELECT admin_id FROM admin_token WHERE created_at >= DATE_SUB(CURDATE(), INTERVAL 30 DAY)
-    //         )";
-    //     $total = $db->query($totalQuery)->getRow()->total;
-
-    //     $jumlah_page = ceil($total / $limit);
-    //     $prev = ($page > 1) ? $page - 1 : null;
-    //     $next = ($page < $jumlah_page) ? $page + 1 : null;
-
-    //     return $this->respondWithSuccess('Active admins retrieved.', [
-    //         'data' => $result,
-    //         'pagination' => [
-    //             'total_data' => (int) $total,
-    //             'total_pages' => (int) $jumlah_page,
-    //             'prev' => $prev,
-    //             'page' => (int) $page,
-    //             'next' => $next,
-    //             'detail' => range(max(1, $page - 2), min($jumlah_page, $page + 2)),
-    //             'start' => ($page - 1) * $limit + 1,
-    //             'end' => min($page * $limit, $total),
-    //         ]
-    //     ]);
-    // }
-
-
 
     public function detailed_member_activity()
     {
         $db = Database::connect();
-        $limit = $this->request->getVar('limit') ?? 10; // Default limit
-        $page = $this->request->getVar('page') ?? 1; // Default page
+
+        // Parameters from query string
+        $limit = (int) ($this->request->getVar('limit') ?? 10);
+        $page = (int) ($this->request->getVar('page') ?? 1);
+        $search = $this->request->getVar('search');
+        $paginate = $this->request->getVar('pagination') !== 'false';
         $offset = ($page - 1) * $limit;
 
-        // Ambil semua member dengan pagination
-        $membersQuery = "SELECT member_id, member_username, member_email, member_full_name, member_address FROM member LIMIT ? OFFSET ?";
-        $members = $db->query($membersQuery, [(int) $limit, (int) $offset])->getResultArray();
+        // Base query
+        $query = "
+    SELECT 
+        m.member_id,
+        m.member_username,
+        m.member_email,
+        m.member_full_name,
+        m.member_address,
+        m.member_job,
+        m.member_status,
+        m.member_religion,
+        m.member_barcode,
+        m.member_gender,
+        (SELECT COUNT(*) FROM loan WHERE loan_member_id = m.member_id) as activity_count
+    FROM member m
+    WHERE 1=1";
 
-        // Menyimpan detail member
+        $conditions = [];
+        $params = [];
+
+        // Search conditions
+        if ($search) {
+            $searchFields = ['m.member_username', 'm.member_email', 'm.member_full_name', 'm.member_address', 'm.member_job', 'm.member_religion', 'm.member_barcode'];
+            $searchConditions = array_map(fn($field) => "$field LIKE ?", $searchFields);
+            $conditions[] = '(' . implode(' OR ', $searchConditions) . ')';
+            $params = array_merge($params, array_fill(0, count($searchFields), "%$search%"));
+        }
+
+        // Additional filters
+        $filters = [
+            'member_id' => 'm.member_id',
+            'username' => 'm.member_username',
+            'email' => 'm.member_email',
+            'full_name' => 'm.member_full_name',
+            'address' => 'm.member_address',
+            'job' => 'm.member_job',
+            'status' => 'm.member_status',
+            'religion' => 'm.member_religion',
+            'barcode' => 'm.member_barcode',
+            'gender' => 'm.member_gender',
+            'activity_count_min' => '(SELECT COUNT(*) FROM loan WHERE loan_member_id = m.member_id) >= ?',
+            'activity_count_max' => '(SELECT COUNT(*) FROM loan WHERE loan_member_id = m.member_id) <= ?',
+        ];
+
+        foreach ($filters as $filterKey => $dbColumn) {
+            $filterValue = $this->request->getVar("filter[$filterKey]");
+            if ($filterValue !== null && $filterValue !== '') {
+                if (in_array($filterKey, ['activity_count_min', 'activity_count_max'])) {
+                    $conditions[] = $dbColumn;
+                    $params[] = (int) $filterValue;
+                } elseif (in_array($filterKey, ['address', 'full_name', 'job', 'religion'])) {
+                    $conditions[] = "$dbColumn LIKE ?";
+                    $params[] = "%$filterValue%";
+                } else {
+                    $conditions[] = "$dbColumn = ?";
+                    $params[] = $filterValue;
+                }
+            }
+        }
+
+        // Add conditions to query
+        if (!empty($conditions)) {
+            $query .= ' AND ' . implode(' AND ', $conditions);
+        }
+
+        // Order by member_id
+        $query .= " ORDER BY m.member_id ASC";
+
+        // Pagination
+        if ($paginate) {
+            $countQuery = "SELECT COUNT(*) as total FROM ($query) as subquery";
+            $total = $db->query($countQuery, $params)->getRow()->total;
+
+            $query .= " LIMIT ? OFFSET ?";
+            $params[] = $limit;
+            $params[] = $offset;
+        }
+
+        // Execute query
+        $members = $db->query($query, $params)->getResultArray();
+
+        // Fetch loan details for each member
         $detailedMembers = [];
         foreach ($members as $member) {
             $memberId = $member['member_id'];
 
-            // Hitung jumlah pinjaman per member
-            $activityCountQuery = "SELECT COUNT(loan_id) as activity_count FROM loan WHERE loan_member_id = ?";
-            $activityCount = $db->query($activityCountQuery, [$memberId])->getRow()->activity_count;
-
-            // Ambil detail pinjaman member
+            // Fetch loan details
             $loansQuery = "
-            SELECT loan_id, loan_transaction_code, loan_date, loan_member_username, loan_member_email, loan_member_full_name, loan_member_address 
-            FROM loan 
-            WHERE loan_member_id = ?";
+        SELECT 
+            loan_id, 
+            loan_transaction_code, 
+            loan_date, 
+            loan_member_username, 
+            loan_member_email, 
+            loan_member_full_name, 
+            loan_member_address 
+        FROM loan 
+        WHERE loan_member_id = ?
+        ORDER BY loan_date DESC
+        LIMIT 5"; // Limiting to last 5 loans for performance
             $loans = $db->query($loansQuery, [$memberId])->getResultArray();
 
-            // Menyusun detail member
-            $detailedMembers[] = [
-                'member_id' => $member['member_id'],
-                'username' => $member['member_username'],
-                'email' => $member['member_email'],
-                'full_name' => $member['member_full_name'],
-                'address' => $member['member_address'],
-                'activity_count' => (int) $activityCount,
-                'loans' => $loans // Detail pinjaman
-            ];
+            $member['loans'] = $loans;
+            $detailedMembers[] = $member;
         }
 
-        // Total count untuk pagination
-        $totalQuery = "SELECT COUNT(*) as total FROM member";
-        $total = $db->query($totalQuery)->getRow()->total;
-
-        $jumlah_page = ceil($total / $limit);
-        $prev = ($page > 1) ? $page - 1 : null;
-        $next = ($page < $jumlah_page) ? $page + 1 : null;
+        // Pagination response
+        $paginationResponse = [
+            'total_data' => $paginate ? (int) $total : count($detailedMembers),
+            'total_pages' => $paginate ? (int) ceil($total / $limit) : 1,
+            'prev' => ($page > 1) ? $page - 1 : null,
+            'page' => $page,
+            'next' => $paginate && ($page < ceil($total / $limit)) ? $page + 1 : null,
+            'detail' => $paginate ? range(max(1, $page - 2), min(ceil($total / $limit), $page + 2)) : [],
+            'start' => $paginate ? ($page - 1) * $limit + 1 : 1,
+            'end' => $paginate ? min($page * $limit, $total) : count($detailedMembers),
+        ];
 
         return $this->respondWithSuccess('Detailed member activity retrieved.', [
             'data' => $detailedMembers,
-            'pagination' => [
-                'total_data' => (int) $total,
-                'total_pages' => (int) $jumlah_page,
-                'prev' => $prev,
-                'page' => (int) $page,
-                'next' => $next,
-                'detail' => range(max(1, $page - 2), min($jumlah_page, $page + 2)),
-                'start' => ($page - 1) * $limit + 1,
-                'end' => min($page * $limit, $total),
-            ]
+            'pagination' => $paginate ? $paginationResponse : (object) [],
         ]);
     }
-
-
 
     public function count_books_status()
     {
         $db = Database::connect();
 
-        // Count damaged books
-        $damagedQuery = "SELECT COUNT(*) as damaged_count FROM loan_detail WHERE loan_detail_status = 'Broken'";
-        $damagedCount = $db->query($damagedQuery)->getRow()->damaged_count;
+        // Books Status
+        $booksStatusQuery = "
+        SELECT 
+            SUM(CASE WHEN loan_detail_status = 'Broken' THEN 1 ELSE 0 END) as damaged_count,
+            SUM(CASE WHEN loan_detail_status = 'Missing' THEN 1 ELSE 0 END) as missing_count,
+            SUM(CASE WHEN loan_detail_status = 'Borrowed' THEN 1 ELSE 0 END) as borrowed_count,
+            (SELECT COUNT(*) FROM books) as total_books
+        FROM loan_detail";
+        $booksStatus = $db->query($booksStatusQuery)->getRow();
 
-        // Count missing books
-        $missingQuery = "SELECT COUNT(*) as missing_count FROM loan_detail WHERE loan_detail_status = 'Missing'";
-        $missingCount = $db->query($missingQuery)->getRow()->missing_count;
+        // Loans Activity
+        $loansActivityQuery = "
+        SELECT 
+            SUM(CASE WHEN DATE(loan_date) = CURDATE() THEN 1 ELSE 0 END) as today_loans,
+            SUM(CASE WHEN YEARWEEK(loan_date, 1) = YEARWEEK(CURDATE(), 1) THEN 1 ELSE 0 END) as this_week_loans,
+            SUM(CASE WHEN loan_date >= DATE_SUB(CURDATE(), INTERVAL 30 DAY) THEN 1 ELSE 0 END) as last_30_days_loans,
+            COUNT(*) as total_loans
+        FROM loan";
+        $loansActivity = $db->query($loansActivityQuery)->getRow();
 
-        // Count currently borrowed books
-        $currentlyBorrowedQuery = "SELECT COUNT(*) as borrowed_count FROM loan_detail WHERE loan_detail_status = 'Borrowed'";
-        $currentlyBorrowedCount = $db->query($currentlyBorrowedQuery)->getRow()->borrowed_count;
+        // Users Statistics
+        $usersStatsQuery = "
+        SELECT 
+            (SELECT COUNT(*) FROM member) as total_members,
+            (SELECT COUNT(*) FROM admin WHERE admin_id IN (SELECT admin_id FROM admin_token WHERE created_at >= DATE_SUB(CURDATE(), INTERVAL 30 DAY))) as active_admins
+        FROM dual";
+        $usersStats = $db->query($usersStatsQuery)->getRow();
 
-        // Count total books in the library
-        $totalBooksQuery = "SELECT COUNT(*) as total_books FROM books";
-        $totalBooksCount = $db->query($totalBooksQuery)->getRow()->total_books;
+        // Library Resources
+        $libraryResourcesQuery = "
+        SELECT 
+            (SELECT COUNT(*) FROM publisher) as total_publishers,
+            (SELECT COUNT(*) FROM author) as total_authors
+        FROM dual";
+        $libraryResources = $db->query($libraryResourcesQuery)->getRow();
 
-        // Count total loans for today
-        $todayActiveLoansQuery = "SELECT COUNT(*) as today_loans FROM loan WHERE DATE(loan_date) = CURDATE()";
-        $todayActiveLoansCount = $db->query($todayActiveLoansQuery)->getRow()->today_loans;
-
-        // Count total loans for this week
-        $thisWeekActiveLoansQuery = "SELECT COUNT(*) as this_week_loans FROM loan WHERE YEARWEEK(loan_date, 1) = YEARWEEK(CURDATE(), 1)";
-        $thisWeekActiveLoansCount = $db->query($thisWeekActiveLoansQuery)->getRow()->this_week_loans;
-
-        // Count total members
-        $totalMembersQuery = "SELECT COUNT(*) as total_members FROM member";
-        $totalMembersCount = $db->query($totalMembersQuery)->getRow()->total_members;
-
-        // Count total active admins
-        $activeAdminsQuery = "SELECT COUNT(*) as active_admins FROM admin WHERE admin_id IN (SELECT admin_id FROM admin_token WHERE created_at >= DATE_SUB(CURDATE(), INTERVAL 30 DAY))";
-        $activeAdminsCount = $db->query($activeAdminsQuery)->getRow()->active_admins;
-
-        // Count total loans in the last 30 days
-        $totalLoansLast30DaysQuery = "SELECT COUNT(*) as total_loans FROM loan WHERE loan_date >= DATE_SUB(CURDATE(), INTERVAL 30 DAY)";
-        $totalLoansLast30DaysCount = $db->query($totalLoansLast30DaysQuery)->getRow()->total_loans;
-
-        // Count total publishers
-        $totalPublishersQuery = "SELECT COUNT(*) as total_publishers FROM publisher";
-        $totalPublishersCount = $db->query($totalPublishersQuery)->getRow()->total_publishers;
-
-        // Count total authors
-        $totalAuthorsQuery = "SELECT COUNT(*) as total_authors FROM author";
-        $totalAuthorsCount = $db->query($totalAuthorsQuery)->getRow()->total_authors;
+        // Calculate percentages and additional metrics
+        $availableBooks = $booksStatus->total_books - $booksStatus->borrowed_count - $booksStatus->damaged_count - $booksStatus->missing_count;
+        $borrowedPercentage = ($booksStatus->total_books > 0) ? ($booksStatus->borrowed_count / $booksStatus->total_books) * 100 : 0;
+        $averageDailyLoans = ($loansActivity->last_30_days_loans / 30);
 
         // Prepare response data
         $result = [
-          'data' => [
-                'damaged_count' => (int) $damagedCount,
-                'missing_count' => (int) $missingCount,
-                'currently_borrowed_count' => (int) $currentlyBorrowedCount,
-                'total_books_count' => (int) $totalBooksCount,
-                'today_active_loans_count' => (int) $todayActiveLoansCount,
-                'this_week_active_loans_count' => (int) $thisWeekActiveLoansCount,
-                'total_members_count' => (int) $totalMembersCount,
-                'active_admins_count' => (int) $activeAdminsCount,
-                'total_loans_last_30_days' => (int) $totalLoansLast30DaysCount,
-                'total_publishers_count' => (int) $totalPublishersCount,
-                'total_authors_count' => (int) $totalAuthorsCount,
-          ]
+            'books_status' => [
+                'total' => (int) $booksStatus->total_books,
+                'available' => (int) $availableBooks,
+                'borrowed' => (int) $booksStatus->borrowed_count,
+                'damaged' => (int) $booksStatus->damaged_count,
+                'missing' => (int) $booksStatus->missing_count,
+                'borrowed_percentage' => round($borrowedPercentage, 2)
+            ],
+            'loans_activity' => [
+                'today' => (int) $loansActivity->today_loans,
+                'this_week' => (int) $loansActivity->this_week_loans,
+                'last_30_days' => (int) $loansActivity->last_30_days_loans,
+                'total' => (int) $loansActivity->total_loans,
+                'average_daily' => round($averageDailyLoans, 2)
+            ],
+            'users_statistics' => [
+                'total_members' => (int) $usersStats->total_members,
+                'active_admins' => (int) $usersStats->active_admins
+            ],
+            'library_resources' => [
+                'total_publishers' => (int) $libraryResources->total_publishers,
+                'total_authors' => (int) $libraryResources->total_authors
+            ]
         ];
 
-        return $this->respondWithSuccess('Report status counts retrieved.', $result);
+        return $this->respondWithSuccess('Library statistics retrieved successfully.', $result);
     }
 
-
 }
-
