@@ -21,7 +21,7 @@ class LoanController extends AuthorizationController
         }
 
         if (empty($request['member_id']) || empty($request['borrow_book'])) {
-            return $this->respondWithError("Member ID and book details are required.", null, 400);
+            return $this->respondWithError("Member buku dan id buku di perlukan.", null, 400);
         }
 
         $memberId = $request['member_id'];
@@ -51,7 +51,7 @@ class LoanController extends AuthorizationController
 
         // Periksa apakah sudah mencapai batas
         if ($currentLoans >= 3) {
-            return $this->respondWithError("You cannot borrow more than 3 books at a time.", null, 400);
+            return $this->respondWithError("Anda tidak dapat meminjam lebih dari 3 buku dalam satu waktu", null, 400);
         }
 
         // Batasi jumlah buku yang dapat dipinjam
@@ -61,7 +61,7 @@ class LoanController extends AuthorizationController
 
         // Validasi total buku yang ingin dipinjam
         if (count($booksToBorrow) + $currentLoans > 3) {
-            return $this->respondWithError("You can only borrow " . (3 - $currentLoans) . " more book(s).", null, 400);
+            return $this->respondWithError("Anda hanya bisa meminjam " . (3 - $currentLoans) . "buku.", null, 400);
         }
 
         $db->transStart();
@@ -124,10 +124,10 @@ class LoanController extends AuthorizationController
         $db->transComplete();
 
         if ($db->transStatus() === false) {
-            return $this->respondWithError("Failed to borrow books.", null, 500);
+            return $this->respondWithError("Terdapat kesalahan di sisi server:", null, 500);
         }
 
-        return $this->respondWithSuccess("Books borrowed successfully.");
+        return $this->respondWithSuccess("Behasil meminjam data buku");
     }
 
 

@@ -25,7 +25,7 @@ class PublisherController extends AuthorizationController
         ];
 
         if (!$this->validate($rules)) {
-            return $this->respondWithValidationError('Validation errors', $this->validator->getErrors());
+            return $this->respondWithValidationError('Validasi error', $this->validator->getErrors());
         }
 
         $data = [
@@ -39,9 +39,9 @@ class PublisherController extends AuthorizationController
             $query = "INSERT INTO publisher (publisher_name, publisher_address, publisher_phone, publisher_email) VALUES (?, ?, ?, ?)";
             $db->query($query, array_values($data));
 
-            return $this->respondWithSuccess('Publisher added successfully.');
+            return $this->respondWithSuccess('Berhasil mengupdate data publiser.');
         } catch (DatabaseException $e) {
-            return $this->respondWithError('Failed to add publisher: ' . $e->getMessage());
+            return $this->respondWithError('Terdapat kesalahan di sisi server:: ' . $e->getMessage());
         }
     }
 
@@ -148,7 +148,7 @@ class PublisherController extends AuthorizationController
             $detail = range(max(1, $page - 2), min($jumlah_page, $page + 2));
 
             // Return response
-            return $this->respondWithSuccess('Publisher retrieved successfully.', [
+            return $this->respondWithSuccess('Berhasil mendapatkan data publisher.', [
                 'data' => $result,
                 'pagination' => [
                     'total_data' => (int) $total,
@@ -162,7 +162,7 @@ class PublisherController extends AuthorizationController
                 ]
             ]);
         } catch (DatabaseException $e) {
-            return $this->respondWithError('Failed to retrieve publisher: ' . $e->getMessage());
+            return $this->respondWithError('Terdapat kesalahan di sisi server:: ' . $e->getMessage());
         }
     }
 
@@ -177,7 +177,7 @@ class PublisherController extends AuthorizationController
 
 
         if (!$id) {
-            return $this->respondWithValidationError('Parameter ID is required.', );
+            return $this->respondWithValidationError('Parameter ID di perlukan', );
         }
 
         $tokenValidation = $this->validateToken('superadmin,warehouse,frontliner'); // Fungsi helper dipanggil
@@ -201,12 +201,12 @@ class PublisherController extends AuthorizationController
             ];
 
             if (!$publisher) {
-                return $this->respondWithNotFound('Publisher not found.');
+                return $this->respondWithNotFound('Publiser tidak di temukan.');
             }
 
-            return $this->respondWithSuccess('Publisher found.', $result);
+            return $this->respondWithSuccess('Publisher di temukan.', $result);
         } catch (DatabaseException $e) {
-            return $this->respondWithError('Failed to retrieve publisher: ' . $e->getMessage());
+            return $this->respondWithError('Terdapat kesalahan di sisi server:: ' . $e->getMessage());
         }
     }
 
@@ -230,7 +230,7 @@ class PublisherController extends AuthorizationController
         ];
 
         if (!$this->validate($rules)) {
-            return $this->respondWithValidationError('Validation errors', $this->validator->getErrors());
+            return $this->respondWithValidationError('Validasi error', $this->validator->getErrors());
         }
 
         // Cek apakah penerbit dengan ID tersebut ada
@@ -238,7 +238,7 @@ class PublisherController extends AuthorizationController
         $exists = $db->query($query, [$id])->getRow()->count;
 
         if ($exists == 0) {
-            return $this->respondWithError('Failed to update publisher: Publisher not found.', null, 404);
+            return $this->respondWithError('Publiser tidak di temukan.', null, 404);
         }
 
         $data = [
@@ -258,16 +258,17 @@ class PublisherController extends AuthorizationController
 
             $db->query($query, array_merge(array_values($data), [$id]));
 
-            return $this->respondWithSuccess('Publisher updated successfully.');
+            return $this->respondWithSuccess('Berhasil mengupdate data publiser');
         } catch (DatabaseException $e) {
-            return $this->respondWithError('Failed to update publisher: ' . $e->getMessage());
+            return $this->respondWithError('Terdapat kesalahan di sisi server:: ' . $e->getMessage());
         }
     }
 
     // Fungsi untuk menghapus penerbit (Delete)
-    public function delete($id = null)
+    public function delete_publiser()
     {
         $db = \Config\Database::connect();
+        $id = $this->request->getVar(index: 'id'); // Default limit = 10
 
 
         $tokenValidation = $this->validateToken('superadmin'); // Fungsi helper dipanggil
@@ -296,9 +297,9 @@ class PublisherController extends AuthorizationController
             $query = "DELETE FROM publisher WHERE publisher_id = ?";
             $db->query($query, [$id]);
 
-            return $this->respondWithSuccess('Publisher deleted successfully.');
+            return $this->respondWithSuccess('Berhasil menghapus data publiser');
         } catch (DatabaseException $e) {
-            return $this->respondWithError('Failed to delete publisher: ' . $e->getMessage());
+            return $this->respondWithError('Terdapat kesalahan di sisi server: ' . $e->getMessage());
         }
     }
 }

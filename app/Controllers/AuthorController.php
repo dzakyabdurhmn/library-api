@@ -30,7 +30,7 @@ class AuthorController extends AuthorizationController
         ];
 
         if (!$this->validate($rules)) {
-            return $this->respondWithValidationError('Validation errors', $this->validator->getErrors());
+            return $this->respondWithValidationError('Validasi error', $this->validator->getErrors());
         }
 
         // Ambil data dari request
@@ -44,9 +44,9 @@ class AuthorController extends AuthorizationController
             $query = "INSERT INTO author (author_name, author_biography) VALUES (?, ?)";
             $db->query($query, array_values($data));
 
-            return $this->respondWithSuccess('Author successfully added successfully.');
+            return $this->respondWithSuccess('Berhasil menambahkan data author.');
         } catch (\Exception $e) {
-            return $this->respondWithError('Failed to add author: ' . $e->getMessage());
+            return $this->respondWithError('Terdapat kesalahan di sisi server:: ' . $e->getMessage());
         }
     }
 
@@ -156,13 +156,13 @@ class AuthorController extends AuthorizationController
             }
 
             // Return response
-            return $this->respondWithSuccess('Authors retrieved successfully.', [
+            return $this->respondWithSuccess('Berhasil mendapatkan data author.', [
                 'data' => $result,
                 'pagination' => $pagination
             ]);
 
         } catch (DatabaseException $e) {
-            return $this->respondWithError('Failed to retrieve authors: ' . $e->getMessage());
+            return $this->respondWithError('Terdapat kesalahan di sisi server:: ' . $e->getMessage());
         }
     }
 
@@ -177,7 +177,7 @@ class AuthorController extends AuthorizationController
 
 
         if (!$id) {
-            return $this->respondWithValidationError('Parameter ID is required.', );
+            return $this->respondWithValidationError('Membutuhkan parameter ID.', );
         }
 
         $tokenValidation = $this->validateToken('superadmin,warehouse,frontliner'); // Call the helper function
@@ -191,7 +191,7 @@ class AuthorController extends AuthorizationController
             $author = $db->query($query, [$id])->getRowArray();
 
             if (!$author) {
-                return $this->respondWithNotFound('Author not found.');
+                return $this->respondWithNotFound('Author tidak di temukan.');
             }
 
             $data = [
@@ -202,9 +202,9 @@ class AuthorController extends AuthorizationController
                 ],
             ];
 
-            return $this->respondWithSuccess('Author found.', $data);
+            return $this->respondWithSuccess('Berhasil mendapatkan detail author.', $data);
         } catch (\CodeIgniter\Database\Exceptions\DatabaseException $e) {
-            return $this->respondWithError('Failed to retrieve author: ' . $e->getMessage());
+            return $this->respondWithError('Terdapat kesalahan di sisi server:: ' . $e->getMessage());
         }
     }
 
@@ -228,7 +228,7 @@ class AuthorController extends AuthorizationController
 
 
         if (!$this->validate($rules)) {
-            return $this->respondWithValidationError('Validation errors', $this->validator->getErrors());
+            return $this->respondWithValidationError('Validasi error', $this->validator->getErrors());
         }
 
         // Cek apakah penulis dengan ID tersebut ada
@@ -236,7 +236,7 @@ class AuthorController extends AuthorizationController
         $exists = $db->query($query, [$id])->getRow()->count;
 
         if ($exists == 0) {
-            return $this->respondWithError('Failed to update author: Author not found.', null, 404);
+            return $this->respondWithError('Auhor tidak di temukan.', null, 404);
         }
 
         $data = [
@@ -252,16 +252,18 @@ class AuthorController extends AuthorizationController
 
             $db->query($query, array_merge(array_values($data), [$id]));
 
-            return $this->respondWithSuccess('Author updated successfully.');
+            return $this->respondWithSuccess('Berhasil mengupdate data author.');
         } catch (DatabaseException $e) {
-            return $this->respondWithError('Failed to update author: ' . $e->getMessage());
+            return $this->respondWithError('Terdapat kesalahan di sisi server: ' . $e->getMessage());
         }
     }
 
     // Fungsi untuk menghapus penulis (Delete)
-    public function delete($id = null)
+    public function delete_author()
     {
         $db = \Config\Database::connect();
+        $id = $this->request->getVar(index: 'id'); // Default limit = 10
+
 
         $tokenValidation = $this->validateToken('superadmin'); // Fungsi helper dipanggil
 
@@ -278,23 +280,23 @@ class AuthorController extends AuthorizationController
             $exists = $db->query($query, [$id])->getRow()->count;
 
             if ($exists == 0) {
-                return $this->respondWithError('Failed to delete author: Author not found.', null, 404);
+                return $this->respondWithError('Author tidak di temukan.', null, 404);
             }
 
             // Cek apakah penulis sedang digunakan di tabel buku
             $bookCount = $db->query("SELECT COUNT(*) as count FROM books WHERE books_author_id = ?", [$id])->getRow()->count;
 
             if ($bookCount > 0) {
-                return $this->respondWithError('Failed to delete author: This author is currently associated with books and cannot be deleted.', null, 400);
+                return $this->respondWithError('Gagal menghapus penulis: Penulis ini saat ini terkait dengan buku dan tidak dapat dihapus.', null, 400);
             }
 
             // Lakukan penghapusan data
             $query = "DELETE FROM author WHERE author_id = ?";
             $db->query($query, [$id]);
 
-            return $this->respondWithSuccess('Author deleted successfully.');
+            return $this->respondWithSuccess('Berhasil menghapus data author.');
         } catch (DatabaseException $e) {
-            return $this->respondWithError('Failed to delete author: ' . $e->getMessage());
+            return $this->respondWithError('Terdapat kesalahan di sisi server: ' . $e->getMessage());
         }
     }
 

@@ -15,7 +15,7 @@ $routes->group('', ['filter' => 'authToken'], function ($routes) {
 
     $routes->post('auth/login', 'AuthController::login');
     $routes->post('auth/logout', 'AuthController::logout');
-    $routes->delete('auth/delete_account/(:num)', 'AuthController::delete_account/$1');
+    $routes->delete('auth/delete_account', 'AuthController::delete_account');
     $routes->put('auth/edit_account/(:num)', 'AuthController::edit_account/$1');
     $routes->get('auth/', 'AuthController::get_all_users'); // Mendapatkan semua pengguna
     $routes->get('auth/detail', 'AuthController::get_user_by_id'); // Mendapatkan pengguna berdasarkan ID
@@ -30,7 +30,7 @@ $routes->group('', ['filter' => 'authToken'], function ($routes) {
         $routes->get('detail', 'MemberController::get_detail'); // Mendapatkan detail member berdasarkan ID
         $routes->post('/', 'MemberController::create'); // Menambahkan member baru
         $routes->put('(:num)', 'MemberController::update/$1'); // Memperbarui member berdasarkan ID
-        $routes->delete('(:num)', 'MemberController::delete/$1'); // Menghapus member berdasarkan ID
+        $routes->delete('', 'MemberController::delete_member'); // Menghapus member berdasarkan ID
     });
 
 
@@ -39,7 +39,7 @@ $routes->group('', ['filter' => 'authToken'], function ($routes) {
         $routes->get('detail', 'BookController::get_detail'); // Mendapatkan buku berdasarkan ID
         $routes->post('/', 'BookController::create'); // Menambahkan buku baru
         $routes->put('(:num)', 'BookController::update/$1'); // Memperbarui buku berdasarkan ID
-        $routes->delete('(:num)', 'BookController::delete/$1'); // Menghapus buku berdasarkan ID
+        $routes->delete('', 'BookController::delete_book'); // Menghapus buku berdasarkan ID
     });
 
     $routes->get('authors/detail', 'AuthorController::get_detail'); // Mendapatkan penulis berdasarkan ID
@@ -49,7 +49,7 @@ $routes->group('', ['filter' => 'authToken'], function ($routes) {
         $routes->get('/detail', 'AuthorController::get_detail'); // Mendapatkan penulis berdasarkan ID
         $routes->post('/', 'AuthorController::create'); // Menambahkan penulis baru
         $routes->put('(:num)', 'AuthorController::update/$1'); // Memperbarui penulis berdasarkan ID
-        $routes->delete('(:num)', 'AuthorController::delete/$1'); // Menghapus penulis berdasarkan ID
+        $routes->delete('', 'AuthorController::delete_author'); // Menghapus penulis berdasarkan ID
     });
 
     $routes->group('publishers/', function ($routes) {
@@ -57,7 +57,7 @@ $routes->group('', ['filter' => 'authToken'], function ($routes) {
         $routes->get('detail', 'PublisherController::get_detail'); // Mendapatkan penerbit berdasarkan ID
         $routes->post('/', 'PublisherController::create'); // Menambahkan penerbit baru
         $routes->put('(:num)', 'PublisherController::update/$1'); // Memperbarui penerbit berdasarkan ID
-        $routes->delete('(:num)', 'PublisherController::delete/$1'); // Menghapus penerbit berdasarkan ID
+        $routes->delete('', 'PublisherController::delete_publiser'); // Menghapus penerbit berdasarkan ID
     });
 
 

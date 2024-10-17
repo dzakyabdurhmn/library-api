@@ -195,7 +195,7 @@ class BookController extends AuthorizationController
                 // Prepare pagination details
                 $detail = range(max(1, $page - 2), min($jumlah_page, $page + 2));
 
-                return $this->respondWithSuccess('Books retrieved successfully.', [
+                return $this->respondWithSuccess('Berhasil mendapatkan data buku.', [
                     'data' => $result,
                     'pagination' => [
                         'total_data' => (int) $total,
@@ -210,10 +210,10 @@ class BookController extends AuthorizationController
                 ]);
             } else {
                 // Jika pagination dinonaktifkan, hanya kembalikan data tanpa pagination
-                return $this->respondWithSuccess('Books retrieved successfully.', ['data' => $result]);
+                return $this->respondWithSuccess('Berhasil mendapatkan data buku.', ['data' => $result]);
             }
         } catch (DatabaseException $e) {
-            return $this->respondWithError('Failed to retrieve books: ' . $e->getMessage());
+            return $this->respondWithError('Terdapat kesalahan di sisi server: ' . $e->getMessage());
         }
     }
 
@@ -344,9 +344,11 @@ class BookController extends AuthorizationController
 
 
     // Fungsi untuk menghapus buku (Delete)
-    public function delete($id = null)
+    public function delete_book()
     {
         $db = \Config\Database::connect();
+        $id = $this->request->getVar(index: 'id'); // Default limit = 10
+
 
         $tokenValidation = $this->validateToken('superadmin,warehouse'); // Fungsi helper dipanggil
 

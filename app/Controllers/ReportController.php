@@ -146,7 +146,7 @@ class ReportController extends AuthorizationController
             ];
         }
 
-        return $this->respondWithSuccess('Most borrowed books retrieved.', [
+        return $this->respondWithSuccess('Behasil mengembalikan data report.', [
             'data' => $borrowedBooks,
             'pagination' => $paginate ? $paginationResponse : (object) [],
         ]);
@@ -323,7 +323,7 @@ class ReportController extends AuthorizationController
             ];
         }
 
-        return $this->respondWithSuccess('Least borrowed books retrieved.', [
+        return $this->respondWithSuccess('Behasil mengembalikan data report', [
             'data' => $borrowedBooks,
             'pagination' => $paginate ? $paginationResponse : (object) [],
         ]);
@@ -500,7 +500,7 @@ class ReportController extends AuthorizationController
             ];
         }
 
-        return $this->respondWithSuccess('Broken and missing books retrieved.', [
+        return $this->respondWithSuccess('Behasil mengembalikan data report.', [
             'data' => $brokenMissingBooks,
             'pagination' => $paginate ? $paginationResponse : (object) [],
         ]);
@@ -624,7 +624,7 @@ class ReportController extends AuthorizationController
             'end' => $paginate ? min($page * $limit, $total) : count($result),
         ];
 
-        return $this->respondWithSuccess('Most active users retrieved.', [
+        return $this->respondWithSuccess('Behasil mengembalikan data report.', [
             'data' => $result,
             'pagination' => $paginate ? $paginationResponse : (object) [],
         ]);
@@ -730,7 +730,7 @@ class ReportController extends AuthorizationController
             'end' => $paginate ? min($page * $limit, $total) : count($result),
         ];
 
-        return $this->respondWithSuccess('Inactive users retrieved.', [
+        return $this->respondWithSuccess('Behasil mengembalikan data report.', [
             'data' => $result,
             'pagination' => $paginate ? $paginationResponse : (object) [],
         ]);
@@ -865,7 +865,7 @@ class ReportController extends AuthorizationController
             'end' => $paginate ? min($page * $limit, $total) : count($detailedMembers),
         ];
 
-        return $this->respondWithSuccess('Detailed member activity retrieved.', [
+        return $this->respondWithSuccess('Behasil mengembalikan data report.', [
             'data' => $detailedMembers,
             'pagination' => $paginate ? $paginationResponse : (object) [],
         ]);
@@ -943,7 +943,7 @@ class ReportController extends AuthorizationController
             ]
         ];
 
-        return $this->respondWithSuccess('Library statistics retrieved successfully.', $result);
+        return $this->respondWithSuccess('Behasil mengembalikan data statistik', $result);
     }
 
 }

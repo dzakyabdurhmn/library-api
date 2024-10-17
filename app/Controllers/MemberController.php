@@ -29,7 +29,7 @@ class MemberController extends AuthorizationController
         ];
 
         if (!$this->validate($rules)) {
-            return $this->respondWithValidationError('Validation errors', $this->validator->getErrors());
+            return $this->respondWithValidationError('Validasi error', $this->validator->getErrors());
         }
 
         $data = [
@@ -61,9 +61,9 @@ class MemberController extends AuthorizationController
                 $data['member_gender']
             ]);
 
-            return $this->respondWithSuccess('Member added successfully.');
+            return $this->respondWithSuccess('Behasil menambahkan data member.');
         } catch (DatabaseException $e) {
-            return $this->respondWithError('Failed to add member: ' . $e->getMessage());
+            return $this->respondWithError('Terdapat kesalahan di sisi server: ' . $e->getMessage());
         }
     }
 
@@ -76,7 +76,7 @@ class MemberController extends AuthorizationController
 
 
         if (!$id) {
-            return $this->respondWithValidationError('Parameter ID is required.', );
+            return $this->respondWithValidationError('Parameter id di perlukan', );
         }
 
 
@@ -95,7 +95,7 @@ class MemberController extends AuthorizationController
 
 
             if (!$member) {
-                return $this->respondWithNotFound('Member not found.');
+                return $this->respondWithNotFound('Member di temukan');
             }
 
             $response = [
@@ -114,9 +114,9 @@ class MemberController extends AuthorizationController
             ];
 
 
-            return $this->respondWithSuccess('Member found.', $response);
+            return $this->respondWithSuccess('Member di temukan', $response);
         } catch (DatabaseException $e) {
-            return $this->respondWithError('Failed to retrieve member: ' . $e->getMessage());
+            return $this->respondWithError('Terdapat kesalahan di sisi server: ' . $e->getMessage());
         }
     }
 
@@ -172,12 +172,12 @@ class MemberController extends AuthorizationController
 
         // If no fields are provided, return an error response
         if (empty($data)) {
-            return $this->respondWithError('No data provided to update.');
+            return $this->respondWithError('Tidak ada data yang diberikan untuk diperbarui.');
         }
 
         // Validate only the fields that are present in the request
         if (!$this->validate(array_intersect_key($validationRules, $validationData))) {
-            return $this->respondWithValidationError('Validation errors', $this->validator->getErrors());
+            return $this->respondWithValidationError('Validasi error', $this->validator->getErrors());
         }
 
         try {
@@ -219,49 +219,64 @@ class MemberController extends AuthorizationController
             ];
 
             // Return success response with updated member data
-            return $this->respondWithSuccess('Member updated successfully.', $response);
+            return $this->respondWithSuccess('Berhasil mengupdate data member', $response);
 
         } catch (DatabaseException $e) {
             // Return error response if there's a database error
-            return $this->respondWithError('Failed to update member: ' . $e->getMessage());
+            return $this->respondWithError('Terdapat kesalahan di sisi server: ' . $e->getMessage());
         }
     }
 
 
 
     // Fungsi untuk menghapus member berdasarkan member_id (Delete)
-    public function delete($id = null)
+    public function delete_member()
     {
         $db = \Config\Database::connect();
+        $id = $this->request->getVar('id');
 
-        $tokenValidation = $this->validateToken('superadmin,frontliner'); // Fungsi helper dipanggil
-
+        // Validate token
+        $tokenValidation = $this->validateToken('superadmin,frontliner');
         if ($tokenValidation !== true) {
             return $this->respond($tokenValidation, $tokenValidation['status']);
         }
 
-
         try {
-            // Raw query untuk menghapus data member berdasarkan member_id
-            $query = "DELETE FROM member WHERE member_id = ?";
+            // Check if member exists
+            $query = "SELECT COUNT(*) as count FROM member WHERE member_id = ?";
+            $exists = $db->query($query, [$id])->getRow()->count;
 
+            if ($exists == 0) {
+                return $this->respondWithError('Member tidak ditemukan.', null, 404);
+            }
 
-            $db->query($query, [$id]);
+            // Check if the member has any active loans
+            $loanQuery = "
+            SELECT COUNT(*) as loan_count
+            FROM loan l
+            JOIN loan_detail ld ON l.loan_transaction_code = ld.loan_detail_loan_transaction_code
+            WHERE l.loan_member_id = ? AND ld.loan_detail_status = 'Borrowed'
+        ";
+            $loanCount = $db->query($loanQuery, [$id])->getRow()->loan_count;
 
+            if ($loanCount > 0) {
+                return $this->respondWithError('Member ini sedang meminjam buku dan tidak bisa dihapus.', null, 400);
+            }
 
+            // Proceed to delete the member
+            $deleteQuery = "DELETE FROM member WHERE member_id = ?";
+            $db->query($deleteQuery, [$id]);
 
-            return $this->respondWithSuccess('Member deleted successfully.');
+            return $this->respondWithSuccess('berhasil menghapus member.');
         } catch (DatabaseException $e) {
-            return $this->respondWithError('Failed to delete member: ' . $e->getMessage());
+            return $this->respondWithError('Terjadi kesalahan di sisi server: ' . $e->getMessage());
         }
     }
 
+
+
     // Fungsi untuk mendapatkan semua member (List)
-
-
     // Fungsi untuk mendapatkan semua member dengan pagination, search, dan filter
-
-
     public function index()
     {
         $db = \Config\Database::connect();
