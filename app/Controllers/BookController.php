@@ -20,19 +20,67 @@ class BookController extends AuthorizationController
 
 
         $rules = [
-            'publisher_id' => 'required|integer',
-            'author_id' => 'required|integer',
-            'title' => 'required|min_length[1]',
-            'publication_year' => 'integer',
-            'isbn' => 'required|integer', // Validasi jika ada
-            'stock_quantity' => 'required|integer',
-            'price' => 'required|decimal',
-            'barcode' => 'required|min_length[1]'
+            'publisher_id' => [
+                'rules' => 'required|is_natural_no_zero',
+                'errors' => [
+                    'required' => 'ID penerbit wajib diisi.',
+                    'is_natural_no_zero' => 'ID penerbit harus berupa angka positif.'
+                ]
+            ],
+            'author_id' => [
+                'rules' => 'required|is_natural_no_zero',
+                'errors' => [
+                    'required' => 'ID penulis wajib diisi.',
+                    'is_natural_no_zero' => 'ID penulis harus berupa angka positif.'
+                ]
+            ],
+            'title' => [
+                'rules' => 'required|min_length[1]',
+                'errors' => [
+                    'required' => 'Judul buku wajib diisi.',
+                    'min_length' => 'Judul buku harus minimal 1 karakter.'
+                ]
+            ],
+            'publication_year' => [
+                'rules' => 'integer',
+                'errors' => [
+                    'integer' => 'Tahun terbit harus berupa angka.'
+                ]
+            ],
+            'isbn' => [
+                'rules' => 'required|integer',
+                'errors' => [
+                    'required' => 'ISBN wajib diisi.',
+                    'integer' => 'ISBN harus berupa angka.'
+                ]
+            ],
+            'stock_quantity' => [
+                'rules' => 'required|integer',
+                'errors' => [
+                    'required' => 'Jumlah stok wajib diisi.',
+                    'integer' => 'Jumlah stok harus berupa angka.'
+                ]
+            ],
+            'price' => [
+                'rules' => 'required|decimal',
+                'errors' => [
+                    'required' => 'Harga wajib diisi.',
+                    'decimal' => 'Harga harus berupa angka desimal.'
+                ]
+            ],
+            'barcode' => [
+                'rules' => 'required|min_length[1]',
+                'errors' => [
+                    'required' => 'Barcode wajib diisi.',
+                    'min_length' => 'Barcode harus minimal 1 karakter.'
+                ]
+            ]
         ];
 
         if (!$this->validate($rules)) {
-            return $this->respondWithValidationError('Validation errors', $this->validator->getErrors());
+            return $this->respondWithValidationError('Validasi error', $this->validator->getErrors());
         }
+
 
         $data = [
             'books_publisher_id' => $this->request->getVar('publisher_id'),
@@ -76,41 +124,38 @@ class BookController extends AuthorizationController
     {
         $db = \Config\Database::connect();
 
-        $tokenValidation = $this->validateToken('superadmin,warehouse,frontliner'); // Fungsi helper dipanggil
+        $tokenValidation = $this->validateToken('superadmin,warehouse'); // Fungsi helper dipanggil
 
         if ($tokenValidation !== true) {
             return $this->respond($tokenValidation, $tokenValidation['status']);
         }
 
-        // Ambil parameter dari query string
-        $limit = $this->request->getVar('limit') ?? 10; // Default limit
-        $page = $this->request->getVar('page') ?? 1; // Default page
+        $limit = $this->request->getVar('limit') ?? 10;
+        $page = $this->request->getVar('page') ?? 1;
         $search = $this->request->getVar('search');
-        $filters = $this->request->getVar('filter') ?? []; // Get all filters
+        $filters = $this->request->getVar('filter') ?? [];
         $enablePagination = filter_var($this->request->getVar('pagination'), FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE) ?? true;
+        $sort = $this->request->getVar('sort') ?? '';
 
-        // Hitung offset untuk pagination
+
         $offset = ($page - 1) * $limit;
 
-        // Start building the query with JOIN to publisher and author tables
         $query = "SELECT books.book_id, books.books_publisher_id, books.books_author_id, books.books_title, books.books_publication_year, books.books_isbn, books.books_stock_quantity, books.books_price, books.books_barcode,
-              publisher.publisher_name, publisher.publisher_address, publisher.publisher_phone, publisher.publisher_email,
-              author.author_name, author.author_biography
-              FROM books
-              JOIN publisher ON books.books_publisher_id = publisher.publisher_id
-              JOIN author ON books.books_author_id = author.author_id";
+          publisher.publisher_name, publisher.publisher_address, publisher.publisher_phone, publisher.publisher_email,
+          author.author_name, author.author_biography
+          FROM books
+          JOIN publisher ON books.books_publisher_id = publisher.publisher_id
+          JOIN author ON books.books_author_id = author.author_id";
         $conditions = [];
         $params = [];
 
-        // Handle search condition (mencakup semua kolom yang relevan, termasuk author dan publisher)
         if ($search) {
             $conditions[] = "(books.books_title LIKE ? OR books.books_isbn LIKE ? OR books.books_barcode LIKE ? 
-                        OR publisher.publisher_name LIKE ? OR author.author_name LIKE ?)";
+                    OR publisher.publisher_name LIKE ? OR author.author_name LIKE ?)";
             $searchTerm = "%" . $search . "%";
-            $params = array_fill(0, 5, $searchTerm); // Isi parameter search untuk semua kolom yang diinginkan
+            $params = array_fill(0, 5, $searchTerm);
         }
 
-        // Define the mapping of filter keys to database columns, including publisher and author fields
         $filterMapping = [
             'publisher_name' => 'publisher.publisher_name',
             'publisher_address' => 'publisher.publisher_address',
@@ -126,7 +171,6 @@ class BookController extends AuthorizationController
             'barcode' => 'books.books_barcode'
         ];
 
-        // Handle additional filters, including publisher and author filters
         foreach ($filters as $key => $value) {
             if (!empty($value) && array_key_exists($key, $filterMapping)) {
                 $conditions[] = "{$filterMapping[$key]} = ?";
@@ -134,12 +178,19 @@ class BookController extends AuthorizationController
             }
         }
 
-        // Add conditions to the query
         if (count($conditions) > 0) {
             $query .= ' WHERE ' . implode(' AND ', $conditions);
         }
 
-        // Add limit and offset for pagination (hanya jika pagination diaktifkan)
+
+        if (!empty($sort)) {
+            $sortField = ltrim($sort, '-');
+            $sortDirection = $sort[0] === '-' ? 'DESC' : 'ASC';
+            if (array_key_exists($sortField, $filterMapping)) {
+                $query .= " ORDER BY {$filterMapping[$sortField]} $sortDirection";
+            }
+        }
+
         if ($enablePagination) {
             $query .= " LIMIT ? OFFSET ?";
             $params[] = (int) $limit;
@@ -147,7 +198,6 @@ class BookController extends AuthorizationController
         }
 
         try {
-            // Execute query to get book data with publisher and author details
             $books = $db->query($query, $params)->getResultArray();
 
             $result = [];
@@ -171,55 +221,38 @@ class BookController extends AuthorizationController
                 ];
             }
 
+            $pagination = new \stdClass();
             if ($enablePagination) {
-                // Query total books for pagination
                 $totalQuery = "SELECT COUNT(*) as total FROM books
-                           JOIN publisher ON books.books_publisher_id = publisher.publisher_id
-                           JOIN author ON books.books_author_id = author.author_id";
+                       JOIN publisher ON books.books_publisher_id = publisher.publisher_id
+                       JOIN author ON books.books_author_id = author.author_id";
                 if (count($conditions) > 0) {
                     $totalQuery .= ' WHERE ' . implode(' AND ', $conditions);
                 }
-                $total = $db->query($totalQuery, array_slice($params, 0, count($params) - 2))->getRow()->total; // Exclude LIMIT and OFFSET params
+                $total = $db->query($totalQuery, array_slice($params, 0, count($params) - 2))->getRow()->total;
 
-                // Calculate total pages
                 $jumlah_page = ceil($total / $limit);
-
-                // Calculate previous and next pages
-                $prev = ($page > 1) ? $page - 1 : null;
-                $next = ($page < $jumlah_page) ? $page + 1 : null;
-
-                // Calculate start and end positions for pagination
-                $start = ($page - 1) * $limit + 1;
-                $end = min($page * $limit, $total);
-
-                // Prepare pagination details
-                $detail = range(max(1, $page - 2), min($jumlah_page, $page + 2));
-
-                return $this->respondWithSuccess('Berhasil mendapatkan data buku.', [
-                    'data' => $result,
-                    'pagination' => [
-                        'total_data' => (int) $total,
-                        'jumlah_page' => (int) $jumlah_page,
-                        'prev' => $prev,
-                        'page' => (int) $page,
-                        'next' => $next,
-                        'detail' => $detail,
-                        'start' => $start,
-                        'end' => $end,
-                    ]
-                ]);
-            } else {
-                // Jika pagination dinonaktifkan, hanya kembalikan data tanpa pagination
-                return $this->respondWithSuccess('Berhasil mendapatkan data buku.', ['data' => $result]);
+                $pagination = [
+                    'total_data' => (int) $total,
+                    'jumlah_page' => (int) $jumlah_page,
+                    'prev' => ($page > 1) ? $page - 1 : null,
+                    'page' => (int) $page,
+                    'next' => ($page < $jumlah_page) ? $page + 1 : null,
+                    'start' => ($page - 1) * $limit + 1,
+                    'end' => min($page * $limit, $total),
+                    'detail' => range(max(1, $page - 2), min($jumlah_page, $page + 2)),
+                ];
             }
+
+            return $this->respondWithSuccess('Berhasil mendapatkan data buku.', [
+                'data' => $result,
+                'pagination' => $pagination
+            ]);
+
         } catch (DatabaseException $e) {
             return $this->respondWithError('Terdapat kesalahan di sisi server: ' . $e->getMessage());
         }
     }
-
-
-
-
 
     // Fungsi untuk mendapatkan buku berdasarkan ID (Read)
     public function get_detail()
@@ -243,8 +276,12 @@ class BookController extends AuthorizationController
             $query = "SELECT * FROM books WHERE book_id = ?";
             $book = $db->query($query, [$id])->getRowArray();
 
+            $data = [
+
+            ];
+
             if (!$book) {
-                return $this->respondWithNotFound('Book not found.');
+                return $this->respondWithSuccess('Data tidak tersedia.', $data);
             }
 
 
@@ -263,7 +300,7 @@ class BookController extends AuthorizationController
                 ]
             ];
 
-            return $this->respondWithSuccess('Book found.', $result);
+            return $this->respondWithSuccess('buku di temukan.', $result);
         } catch (DatabaseException $e) {
             return $this->respondWithError('Failed to retrieve book: ' . $e->getMessage());
         }
@@ -282,18 +319,66 @@ class BookController extends AuthorizationController
 
         // Aturan validasi data yang akan diubah
         $rules = [
-            'publisher_id' => 'permit_empty|integer',
-            'author_id' => 'permit_empty|integer',
-            'title' => 'permit_empty|min_length[1]',
-            'publication_year' => 'permit_empty|integer',
-            'isbn' => 'permit_empty|integer',
-            'stock_quantity' => 'permit_empty|integer',
-            'price' => 'permit_empty|decimal',
-            'barcode' => 'permit_empty|min_length[1]'
+            'publisher_id' => [
+                'rules' => 'required|integer',
+                'errors' => [
+                    'required' => 'ID penerbit wajib diisi.',
+                    'integer' => 'ID penerbit harus berupa angka.'
+                ]
+            ],
+            'author_id' => [
+                'rules' => 'required|integer',
+                'errors' => [
+                    'required' => 'ID penulis wajib diisi.',
+                    'integer' => 'ID penulis harus berupa angka.'
+                ]
+            ],
+            'title' => [
+                'rules' => 'required|min_length[1]',
+                'errors' => [
+                    'required' => 'Judul buku wajib diisi.',
+                    'min_length' => 'Judul buku harus minimal 1 karakter.'
+                ]
+            ],
+            'publication_year' => [
+                'rules' => 'required|integer',
+                'errors' => [
+                    'required' => 'Tahun terbit wajib diisi.',
+                    'integer' => 'Tahun terbit harus berupa angka.'
+                ]
+            ],
+            'isbn' => [
+                'rules' => 'required|integer',
+                'errors' => [
+                    'required' => 'ISBN wajib diisi.',
+                    'integer' => 'ISBN harus berupa angka.'
+                ]
+            ],
+            'stock_quantity' => [
+                'rules' => 'required|integer',
+                'errors' => [
+                    'required' => 'Jumlah stok wajib diisi.',
+                    'integer' => 'Jumlah stok harus berupa angka.'
+                ]
+            ],
+            'price' => [
+                'rules' => 'required|decimal',
+                'errors' => [
+                    'required' => 'Harga wajib diisi.',
+                    'decimal' => 'Harga harus berupa angka desimal.'
+                ]
+            ],
+            'barcode' => [
+                'rules' => 'required|min_length[1]',
+                'errors' => [
+                    'required' => 'Barcode wajib diisi.',
+                    'min_length' => 'Barcode harus minimal 1 karakter.'
+                ]
+            ]
         ];
 
         if (!$this->validate($rules)) {
-            return $this->respondWithValidationError('Validation errors', $this->validator->getErrors());
+            return $this->respondWithValidationError('Kesalahan validasi', $this->validator->getErrors());
         }
 
         // Cek apakah buku dengan ID tersebut ada
@@ -374,5 +459,88 @@ class BookController extends AuthorizationController
             return $this->respondWithError('Failed to delete book: ' . $e->getMessage());
         }
     }
+
+
+    public function stock()
+    {
+        $db = \Config\Database::connect();
+        $id = $this->request->getVar('id');
+        $additional_stock = $this->request->getVar('stock');
+
+        // Validasi token (hanya warehouse yang bisa update stock)
+        $tokenValidation = $this->validateToken('warehouse,superadmin');
+        if ($tokenValidation !== true) {
+            return $this->respond($tokenValidation, $tokenValidation['status']);
+        }
+
+        // Validasi input untuk memastikan 'id' dan 'stock' valid
+        $validation = \Config\Services::validation();
+        $validation->setRules([
+            'id' => [
+                'label' => 'ID Buku',
+                'rules' => 'required|integer',
+                'errors' => [
+                    'required' => 'ID buku wajib diisi.',
+                    'integer' => 'ID buku harus berupa angka.'
+                ]
+            ],
+            'stock' => [
+                'label' => 'Stock',
+                'rules' => 'required|integer|greater_than_equal_to[0]',
+                'errors' => [
+                    'required' => 'Stock wajib diisi.',
+                    'integer' => 'Stock harus berupa angka.',
+                    'greater_than_equal_to' => 'Stock harus lebih besar atau sama dengan 0.'
+                ]
+            ]
+        ]);
+
+        if (!$validation->withRequest($this->request)->run()) {
+            return $this->respond([
+                'status' => 412,
+                'message' => 'Validasi error',
+                'errors' => $validation->getErrors()
+            ], 412);
+        }
+
+        try {
+            // Cek apakah buku dengan ID tersebut ada
+            $query = "SELECT * FROM books WHERE book_id = ?";
+            $book = $db->query($query, [$id])->getRow();
+
+            if (!$book) {
+                return $this->respondWithError('Failed to update stock: Book not found.', null, 404);
+            }
+
+            // Hitung stock baru
+            $new_stock = (int) $book->books_stock_quantity + (int) $additional_stock;
+
+            // Lakukan update stock
+            $query = "UPDATE books SET books_stock_quantity = ? WHERE book_id = ?";
+            $db->query($query, [$new_stock, $id]);
+
+            // Kembalikan respons lengkap
+            return $this->respond([
+                'status' => 200,
+                'message' => 'Stock updated successfully.',
+                'result' => [
+                    'data' => [
+                        'id' => $book->book_id,
+                        'title' => $book->books_title,
+                        'author_id' => $book->books_author_id,
+                        'publisher_id' => $book->books_publisher_id,
+                        'publication_year' => $book->books_publication_year,
+                        'isbn' => $book->books_isbn,
+                        'stock_quantity' => $new_stock,
+                        'price' => $book->books_price,
+                        'barcode' => $book->books_barcode
+                    ]
+                ]
+            ], 200);
+        } catch (\Exception $e) {
+            return $this->respondWithError('Failed to update stock: ' . $e->getMessage());
+        }
+    }
+
 
 }

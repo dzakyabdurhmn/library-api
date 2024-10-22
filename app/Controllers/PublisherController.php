@@ -17,22 +17,48 @@ class PublisherController extends AuthorizationController
             return $this->respond($tokenValidation, $tokenValidation['status']);
         }
 
+
         $rules = [
-            'publisher_name' => 'required|min_length[1]',
-            'publisher_address' => 'permit_empty|min_length[1]',
-            'publisher_phone' => 'permit_empty|min_length[1]',
-            'publisher_email' => 'permit_empty|valid_email'
+            'name' => [
+                'rules' => 'required|min_length[1]',
+                'errors' => [
+                    'required' => 'Nama wajib diisi.',
+                    'min_length' => 'Nama harus minimal 1 karakter.'
+                ]
+            ],
+            'address' => [
+                'rules' => 'required|min_length[1]',
+                'errors' => [
+                    'required' => 'Alamat wajib diisi.',
+                    'min_length' => 'Alamat harus minimal 1 karakter.'
+                ]
+            ],
+            'phone' => [
+                'rules' => 'required|min_length[1]',
+                'errors' => [
+                    'required' => 'Nomor telepon wajib diisi.',
+                    'min_length' => 'Nomor telepon harus minimal 1 karakter.'
+                ]
+            ],
+            'email' => [
+                'rules' => 'required|valid_email',
+                'errors' => [
+                    'required' => 'Email wajib diisi.',
+                    'valid_email' => 'Format email tidak valid.'
+                ]
+            ]
         ];
 
         if (!$this->validate($rules)) {
             return $this->respondWithValidationError('Validasi error', $this->validator->getErrors());
         }
 
+
         $data = [
-            'publisher_name' => $this->request->getVar('publisher_name'),
-            'publisher_address' => $this->request->getVar('publisher_address'),
-            'publisher_phone' => $this->request->getVar('publisher_phone'),
-            'publisher_email' => $this->request->getVar('publisher_email')
+            'publisher_name' => $this->request->getVar('name'),
+            'publisher_address' => $this->request->getVar('address'),
+            'publisher_phone' => $this->request->getVar('phone'),
+            'publisher_email' => $this->request->getVar('email')
         ];
 
         try {
@@ -51,74 +77,74 @@ class PublisherController extends AuthorizationController
     {
         $db = \Config\Database::connect();
 
-        $tokenValidation = $this->validateToken('superadmin,warehouse,frontliner'); // Fungsi helper dipanggil
+        $tokenValidation = $this->validateToken('superadmin,warehouse,frontliner');
 
         if ($tokenValidation !== true) {
             return $this->respond($tokenValidation, $tokenValidation['status']);
         }
 
-        // Get parameters from query string
         $limit = $this->request->getVar('limit') ?? 10;
         $page = $this->request->getVar('page') ?? 1;
         $search = $this->request->getVar('search');
-        $filters = $this->request->getVar('filter') ?? []; // Filter array
+        $filters = $this->request->getVar('filter') ?? [];
+        $enablePagination = filter_var($this->request->getVar('pagination'), FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE) ?? true;
+        $sort = $this->request->getVar('sort') ?? ''; // New sorting parameter
 
-        // Calculate offset for pagination
         $offset = ($page - 1) * $limit;
 
         try {
-            // Start building the query
             $query = "SELECT publisher_id, publisher_name, publisher_address, publisher_phone, publisher_email FROM publisher";
             $conditions = [];
             $params = [];
 
-            // Handle search across multiple fields
             if ($search) {
                 $conditions[] = "(publisher_name LIKE ? OR publisher_address LIKE ? OR publisher_phone LIKE ? OR publisher_email LIKE ?)";
-                $params[] = "%$search%";
-                $params[] = "%$search%";
-                $params[] = "%$search%";
-                $params[] = "%$search%";
+                $searchTerm = "%$search%";
+                $params = array_fill(0, 4, $searchTerm);
             }
 
-            // Map filter from client to database field names
             $filterMapping = [
+                'id' => 'publisher_id',
                 'name' => 'publisher_name',
                 'address' => 'publisher_address',
                 'phone' => 'publisher_phone',
                 'email' => 'publisher_email',
             ];
 
-            // Handle filtering based on the filter array
             foreach ($filters as $key => $value) {
                 if (array_key_exists($key, $filterMapping)) {
-                    $dbField = $filterMapping[$key];  // Get the corresponding field name in the database
+                    $dbField = $filterMapping[$key];
                     if (is_array($value)) {
-                        // If value is an array (e.g., range or multiple values)
                         $conditions[] = "$dbField IN (" . implode(',', array_fill(0, count($value), '?')) . ")";
                         $params = array_merge($params, $value);
                     } else {
-                        // If single value
                         $conditions[] = "$dbField = ?";
                         $params[] = $value;
                     }
                 }
             }
 
-            // If there are conditions, add WHERE to the query
             if (count($conditions) > 0) {
                 $query .= ' WHERE ' . implode(' AND ', $conditions);
             }
 
-            // Add LIMIT and OFFSET to the query
-            $query .= " LIMIT ? OFFSET ?";
-            $params[] = (int) $limit;
-            $params[] = (int) $offset;
+            // Handle sorting
+            if (!empty($sort)) {
+                $sortField = ltrim($sort, '-');
+                $sortDirection = $sort[0] === '-' ? 'DESC' : 'ASC';
+                if (array_key_exists($sortField, $filterMapping)) {
+                    $query .= " ORDER BY {$filterMapping[$sortField]} $sortDirection";
+                }
+            }
 
-            // Execute the query and get results
+            if ($enablePagination) {
+                $query .= " LIMIT ? OFFSET ?";
+                $params[] = (int) $limit;
+                $params[] = (int) $offset;
+            }
+
             $publishers = $db->query($query, $params)->getResultArray();
 
-            // Format the result
             $result = [];
             foreach ($publishers as $publisher) {
                 $result[] = [
@@ -130,39 +156,34 @@ class PublisherController extends AuthorizationController
                 ];
             }
 
-            // Query total publishers for pagination
-            $totalQuery = "SELECT COUNT(*) as total FROM publisher";
-            if (count($conditions) > 0) {
-                $totalQuery .= ' WHERE ' . implode(' AND ', $conditions);
-            }
+            $pagination = new \stdClass();
+            if ($enablePagination) {
+                $totalQuery = "SELECT COUNT(*) as total FROM publisher";
+                if (count($conditions) > 0) {
+                    $totalQuery .= ' WHERE ' . implode(' AND ', $conditions);
+                }
+                $total = $db->query($totalQuery, array_slice($params, 0, count($params) - 2))->getRow()->total;
 
-            // Calculate total without limit and offset
-            $total = $db->query($totalQuery, array_slice($params, 0, count($params) - 2))->getRow()->total;
-
-            // Calculate pagination details
-            $jumlah_page = ceil($total / $limit);
-            $prev = ($page > 1) ? $page - 1 : null;
-            $next = ($page < $jumlah_page) ? $page + 1 : null;
-            $start = ($page - 1) * $limit + 1;
-            $end = min($page * $limit, $total);
-            $detail = range(max(1, $page - 2), min($jumlah_page, $page + 2));
-
-            // Return response
-            return $this->respondWithSuccess('Berhasil mendapatkan data publisher.', [
-                'data' => $result,
-                'pagination' => [
+                $jumlah_page = ceil($total / $limit);
+                $pagination = [
                     'total_data' => (int) $total,
                     'jumlah_page' => (int) $jumlah_page,
-                    'prev' => $prev,
+                    'prev' => ($page > 1) ? $page - 1 : null,
                     'page' => (int) $page,
-                    'next' => $next,
-                    'detail' => $detail,
-                    'start' => $start,
-                    'end' => $end,
-                ]
+                    'next' => ($page < $jumlah_page) ? $page + 1 : null,
+                    'start' => ($page - 1) * $limit + 1,
+                    'end' => min($page * $limit, $total),
+                    'detail' => range(max(1, $page - 2), min($jumlah_page, $page + 2)),
+                ];
+            }
+
+            return $this->respondWithSuccess('Berhasil mendapatkan data publisher.', [
+                'data' => $result,
+                'pagination' => $pagination
             ]);
+
         } catch (DatabaseException $e) {
-            return $this->respondWithError('Terdapat kesalahan di sisi server:: ' . $e->getMessage());
+            return $this->respondWithError('Terdapat kesalahan di sisi server: ' . $e->getMessage());
         }
     }
 
@@ -190,6 +211,16 @@ class PublisherController extends AuthorizationController
             $query = "SELECT * FROM publisher WHERE publisher_id = ?";
             $publisher = $db->query($query, [$id])->getRowArray();
 
+
+
+            $data = [
+
+            ];
+
+            if (!$publisher) {
+                return $this->respondWithSuccess('Data tidak tersedia.', $data);
+            }
+
             $result = [
                 'data' => [
                     'id' => $publisher['publisher_id'],
@@ -211,9 +242,12 @@ class PublisherController extends AuthorizationController
     }
 
     // Fungsi untuk memperbarui data penerbit (Update)
-    public function update($id = null)
+    public function update_publiser()
     {
         $db = \Config\Database::connect();
+
+        $id = $this->request->getVar('id'); // Get ID from query parameter
+
 
 
         $tokenValidation = $this->validateToken('superadmin'); // Fungsi helper dipanggil
@@ -223,15 +257,49 @@ class PublisherController extends AuthorizationController
         }
 
         $rules = [
-            'publisher_name' => 'permit_empty|min_length[1]',
-            'publisher_address' => 'permit_empty|min_length[1]',
-            'publisher_phone' => 'permit_empty|min_length[1]',
-            'publisher_email' => 'permit_empty|valid_email'
+            'id' => [
+                'rules' => 'required|is_natural_no_zero',
+                'errors' => [
+                    'required' => 'ID wajib diisi.',
+                    'is_natural_no_zero' => 'ID harus berupa angka positif yang valid.'
+                ]
+            ],
+            'name' => [
+                'rules' => 'required|min_length[1]',
+                'errors' => [
+                    'required' => 'Nama wajib diisi.',
+                    'min_length' => 'Nama harus minimal 1 karakter.'
+                ]
+            ],
+            'address' => [
+                'rules' => 'required|min_length[1]',
+                'errors' => [
+                    'required' => 'Alamat wajib diisi.',
+                    'min_length' => 'Alamat harus minimal 1 karakter.'
+                ]
+            ],
+            'phone' => [
+                'rules' => 'required|min_length[1]',
+                'errors' => [
+                    'required' => 'Nomor telepon wajib diisi.',
+                    'min_length' => 'Nomor telepon harus minimal 1 karakter.'
+                ]
+            ],
+            'email' => [
+                'rules' => 'required|valid_email',
+                'errors' => [
+                    'required' => 'Email wajib diisi.',
+                    'valid_email' => 'Format email tidak valid.'
+                ]
+            ]
         ];
 
         if (!$this->validate($rules)) {
             return $this->respondWithValidationError('Validasi error', $this->validator->getErrors());
         }
+
+
+
 
         // Cek apakah penerbit dengan ID tersebut ada
         $query = "SELECT COUNT(*) as count FROM publisher WHERE publisher_id = ?";
@@ -242,10 +310,10 @@ class PublisherController extends AuthorizationController
         }
 
         $data = [
-            'publisher_name' => $this->request->getVar('publisher_name'),
-            'publisher_address' => $this->request->getVar('publisher_address'),
-            'publisher_phone' => $this->request->getVar('publisher_phone'),
-            'publisher_email' => $this->request->getVar('publisher_email')
+            'publisher_name' => $this->request->getVar('name'),
+            'publisher_address' => $this->request->getVar('address'),
+            'publisher_phone' => $this->request->getVar('phone'),
+            'publisher_email' => $this->request->getVar('email')
         ];
 
         try {

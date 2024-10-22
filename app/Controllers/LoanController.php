@@ -14,7 +14,7 @@ class LoanController extends AuthorizationController
     {
         $request = $this->request->getJSON(true);
 
-        $tokenValidation = $this->validateToken('frontliner'); // Fungsi helper dipanggil
+        $tokenValidation = $this->validateToken('frontliner,superadmin'); // Fungsi helper dipanggil
 
         if ($tokenValidation !== true) {
             return $this->respond($tokenValidation, $tokenValidation['status']);
@@ -89,33 +89,10 @@ class LoanController extends AuthorizationController
             WHERE b.book_id = ?", [$bookId]);
             $bookData = $bookQuery->getRow();
 
-            if ($bookData->books_stock_quantity <= 0) {
-                $db->transRollback();
-                return $this->respondWithError("Book ID $bookId is out of stock.", null, 400);
-            }
+
 
             // Insert detail peminjaman dengan detail buku dan publisher
-            $db->query("
-            INSERT INTO loan_detail 
-            (loan_detail_book_id, loan_detail_book_title, loan_detail_book_publisher_name, loan_detail_book_publisher_address, 
-             loan_detail_book_publisher_phone, loan_detail_book_publisher_email, loan_detail_book_publication_year, 
-             loan_detail_book_isbn, loan_detail_book_author_name, loan_detail_book_author_biography, 
-             loan_detail_borrow_date, loan_detail_status, loan_detail_period, loan_detail_loan_transaction_code) 
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), 'Borrowed', 0, ?)",
-                [
-                    $bookId,
-                    $bookData->books_title,
-                    $bookData->publisher_name,
-                    $bookData->publisher_address,
-                    $bookData->publisher_phone,
-                    $bookData->publisher_email,
-                    $bookData->books_publication_year,
-                    $bookData->books_isbn,
-                    $bookData->author_name,
-                    $bookData->author_biography,
-                    $transactionCode
-                ]
-            );
+
 
             // Kurangi stok buku
             $db->query("UPDATE books SET books_stock_quantity = books_stock_quantity - 1 WHERE book_id = ?", [$bookId]);
@@ -265,6 +242,7 @@ class LoanController extends AuthorizationController
         $limit = $this->request->getVar('limit') ?? 10; // Default limit
         $page = $this->request->getVar('page') ?? 1; // Default page
         $search = $this->request->getVar('search');
+        $sort = $this->request->getVar('sort');
         $filters = $this->request->getVar('filter') ?? []; // Get all filters
         $enablePagination = $this->request->getVar('pagination') !== 'false'; // Enable pagination by default
 
@@ -292,6 +270,16 @@ class LoanController extends AuthorizationController
             'email' => 'loan_member_email',
             'address' => 'loan_member_address',
         ];
+
+
+        if (!empty($sort)) {
+            $sortField = ltrim($sort, '-');
+            $sortDirection = $sort[0] === '-' ? 'DESC' : 'ASC';
+            if (array_key_exists($sortField, $filterMapping)) {
+                $query .= " ORDER BY {$filterMapping[$sortField]} $sortDirection";
+            }
+        }
+
 
         // Handle additional filters
         foreach ($filters as $key => $value) {
@@ -445,8 +433,14 @@ class LoanController extends AuthorizationController
             // Eksekusi query dan ambil hasilnya
             $loanDetail = $db->query($query, $params)->getResultArray();
 
+
+            $data = [
+
+            ];
+
+
             if (empty($loanDetail)) {
-                return $this->respondWithNotFound('Loan or book not found.');
+                return $this->respondWithSuccess('Data tidak tersedia.', $data);
             }
 
             // Format data yang akan dikembalikan

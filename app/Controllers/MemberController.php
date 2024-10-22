@@ -16,21 +16,72 @@ class MemberController extends AuthorizationController
         if ($tokenValidation !== true) {
             return $this->respond($tokenValidation, $tokenValidation['status']);
         }
+
         $rules = [
-            'username' => 'required|min_length[5]',
-            'email' => 'required|valid_email',
-            'full_name' => 'required',
-            'address' => 'required',
-            'job' => 'required',
-            'status' => 'required',
-            'religion' => 'required',
-            'barcode' => 'required',
-            'gender' => 'required|in_list[MEN,WOMEN]'
+            'username' => [
+                'rules' => 'required|min_length[5]',
+                'errors' => [
+                    'required' => 'Username wajib diisi.',
+                    'min_length' => 'Username harus minimal 5 karakter.'
+                ]
+            ],
+            'email' => [
+                'rules' => 'required|valid_email',
+                'errors' => [
+                    'required' => 'Email wajib diisi.',
+                    'valid_email' => 'Format email tidak valid.'
+                ]
+            ],
+            'full_name' => [
+                'rules' => 'required',
+                'errors' => [
+                    'required' => 'Nama lengkap wajib diisi.'
+                ]
+            ],
+            'address' => [
+                'rules' => 'required',
+                'errors' => [
+                    'required' => 'Alamat wajib diisi.'
+                ]
+            ],
+            'job' => [
+                'rules' => 'required',
+                'errors' => [
+                    'required' => 'Pekerjaan wajib diisi.'
+                ]
+            ],
+            'status' => [
+                'rules' => 'required',
+                'errors' => [
+                    'required' => 'Status wajib diisi.'
+                ]
+            ],
+            'religion' => [
+                'rules' => 'required',
+                'errors' => [
+                    'required' => 'Agama wajib diisi.'
+                ]
+            ],
+            'barcode' => [
+                'rules' => 'required',
+                'errors' => [
+                    'required' => 'Barcode wajib diisi.'
+                ]
+            ],
+            'gender' => [
+                'rules' => 'required|in_list[MEN,WOMEN]',
+                'errors' => [
+                    'required' => 'Jenis kelamin wajib diisi.',
+                    'in_list' => 'Jenis kelamin harus salah satu dari: MEN atau WOMEN.'
+                ]
+            ]
         ];
 
         if (!$this->validate($rules)) {
             return $this->respondWithValidationError('Validasi error', $this->validator->getErrors());
         }
+
+
 
         $data = [
             'member_username' => $this->request->getVar('username'),
@@ -94,9 +145,14 @@ class MemberController extends AuthorizationController
 
 
 
+            $data = [
+
+            ];
+
             if (!$member) {
-                return $this->respondWithNotFound('Member di temukan');
+                return $this->respondWithSuccess('Data tidak tersedia.', $data);
             }
+
 
             $response = [
                 'data' => [
@@ -122,10 +178,12 @@ class MemberController extends AuthorizationController
 
     // Fungsi untuk memperbarui data member (Update)
 
-    public function update($id = null)
+
+    public function update_member()
     {
         $db = \Config\Database::connect();
 
+        $id = $this->request->getVar('id'); // Get ID from query parameter
 
         $tokenValidation = $this->validateToken('superadmin,frontliner'); // Fungsi helper dipanggil
 
@@ -133,100 +191,118 @@ class MemberController extends AuthorizationController
             return $this->respond($tokenValidation, $tokenValidation['status']);
         }
 
-        // Define validation rules for all fields
-        $validationRules = [
-            'username' => 'min_length[5]',
-            'email' => 'valid_email',
-            'full_name' => 'min_length[3]',
-            'address' => 'min_length[3]',
-            'job' => 'min_length[3]',
-            'status' => 'in_list[active,inactive]', // Example values, adjust as needed
-            'religion' => 'min_length[3]',
-            'barcode' => 'min_length[3]',
-            'gender' => 'in_list[MEN,WOMEN]',
+        $rules = [
+            'id' => [
+                'rules' => 'required|is_natural_no_zero',
+                'errors' => [
+                    'required' => 'ID wajib diisi.',
+                    'is_natural_no_zero' => 'ID harus berupa angka positif yang valid.'
+                ]
+            ],
+            'username' => [
+                'rules' => 'min_length[5]',
+                'errors' => [
+                    'min_length' => 'Username harus minimal 5 karakter.'
+                ]
+            ],
+            'email' => [
+                'rules' => 'valid_email',
+                'errors' => [
+                    'valid_email' => 'Format email tidak valid.'
+                ]
+            ],
+            'full_name' => [
+                'rules' => 'min_length[3]',
+                'errors' => [
+                    'min_length' => 'Nama lengkap harus minimal 3 karakter.'
+                ]
+            ],
+            'address' => [
+                'rules' => 'min_length[3]',
+                'errors' => [
+                    'min_length' => 'Alamat harus minimal 3 karakter.'
+                ]
+            ],
+            'job' => [
+                'rules' => 'min_length[3]',
+                'errors' => [
+                    'min_length' => 'Pekerjaan harus minimal 3 karakter.'
+                ]
+            ],
+            'status' => [
+                'rules' => 'in_list[active,inactive]',
+                'errors' => [
+                    'in_list' => 'Status harus salah satu dari: active, inactive.'
+                ]
+            ],
+            'religion' => [
+                'rules' => 'min_length[3]',
+                'errors' => [
+                    'min_length' => 'Agama harus minimal 3 karakter.'
+                ]
+            ],
+            'barcode' => [
+                'rules' => 'min_length[3]',
+                'errors' => [
+                    'min_length' => 'Barcode harus minimal 3 karakter.'
+                ]
+            ],
+            'gender' => [
+                'rules' => 'in_list[MEN,WOMEN]',
+                'errors' => [
+                    'in_list' => 'Jenis kelamin harus salah satu dari: MEN atau WOMEN.'
+                ]
+            ],
         ];
 
-        // Prepare an array of possible fields and the corresponding database columns
-        $fields = [
-            'username' => 'member_username',
-            'email' => 'member_email',
-            'full_name' => 'member_full_name',
-            'address' => 'member_address',
-            'job' => 'member_job',
-            'status' => 'member_status',
-            'religion' => 'member_religion',
-            'barcode' => 'member_barcode',
-            'gender' => 'member_gender',
-        ];
-
-        // Collect the data to update (only fields present in the request)
-        $data = [];
-        $validationData = [];
-        foreach ($fields as $key => $dbField) {
-            $value = $this->request->getVar($key);
-            if ($value !== null) {
-                $data[$dbField] = $value;
-                $validationData[$key] = $value; // Prepare the data for validation
-            }
-        }
-
-        // If no fields are provided, return an error response
-        if (empty($data)) {
-            return $this->respondWithError('Tidak ada data yang diberikan untuk diperbarui.');
-        }
-
-        // Validate only the fields that are present in the request
-        if (!$this->validate(array_intersect_key($validationRules, $validationData))) {
+        if (!$this->validate($rules)) {
             return $this->respondWithValidationError('Validasi error', $this->validator->getErrors());
         }
 
+        // Cek apakah member dengan ID tersebut ada
+        $query = "SELECT COUNT(*) as count FROM member WHERE member_id = ?";
+        $exists = $db->query($query, [$id])->getRow()->count;
+
+        if ($exists == 0) {
+            return $this->respondWithError('Member tidak ditemukan.', null, 404);
+        }
+
+        $data = [
+            'member_username' => $this->request->getVar('username'),
+            'member_email' => $this->request->getVar('email'),
+            'member_full_name' => $this->request->getVar('full_name'),
+            'member_address' => $this->request->getVar('address'),
+            'member_job' => $this->request->getVar('job'),
+            'member_status' => $this->request->getVar('status'),
+            'member_religion' => $this->request->getVar('religion'),
+            'member_barcode' => $this->request->getVar('barcode'),
+            'member_gender' => $this->request->getVar('gender')
+        ];
+
         try {
-            // Dynamically build the SQL query based on the fields provided
             $setClauses = [];
             $params = [];
-            foreach ($data as $dbField => $value) {
-                $setClauses[] = "$dbField = ?";
-                $params[] = $value;
+            foreach ($data as $field => $value) {
+                if ($value !== null) {
+                    $setClauses[] = "$field = COALESCE(?, $field)";
+                    $params[] = $value;
+                }
             }
-            $params[] = $id; // Add the ID for the WHERE clause
+            $params[] = $id;
 
-            // Create the update query
+            if (empty($setClauses)) {
+                return $this->respondWithError('Tidak ada data yang diberikan untuk diperbarui.');
+            }
+
             $query = "UPDATE member SET " . implode(', ', $setClauses) . " WHERE member_id = ?";
 
-            // Execute the update query
             $db->query($query, $params);
 
-            // Fetch the updated member information
-            $updatedMember = $db->query("SELECT * FROM member WHERE member_id = ?", [$id])->getRowArray();
-
-            // Check if the member exists before accessing the array
-            if (!$updatedMember) {
-                return $this->respondWithError("Member with ID $id not found.");
-            }
-
-            // Prepare the response with updated data
-            $response = [
-                'id' => $updatedMember['member_id'],
-                'username' => $updatedMember['member_username'],
-                'email' => $updatedMember['member_email'],
-                'full_name' => $updatedMember['member_full_name'],
-                'address' => $updatedMember['member_address'],
-                'job' => $updatedMember['member_job'],
-                'status' => $updatedMember['member_status'],
-                'religion' => $updatedMember['member_religion'],
-                'barcode' => $updatedMember['member_barcode'],
-                'gender' => $updatedMember['member_gender'],
-            ];
-
-            // Return success response with updated member data
-            return $this->respondWithSuccess('Berhasil mengupdate data member', $response);
-
+            return $this->respondWithSuccess('Berhasil mengupdate data member');
         } catch (DatabaseException $e) {
-            // Return error response if there's a database error
             return $this->respondWithError('Terdapat kesalahan di sisi server: ' . $e->getMessage());
         }
     }
-
 
 
     // Fungsi untuk menghapus member berdasarkan member_id (Delete)
@@ -256,7 +332,7 @@ class MemberController extends AuthorizationController
             FROM loan l
             JOIN loan_detail ld ON l.loan_transaction_code = ld.loan_detail_loan_transaction_code
             WHERE l.loan_member_id = ? AND ld.loan_detail_status = 'Borrowed'
-        ";
+            ";
             $loanCount = $db->query($loanQuery, [$id])->getRow()->loan_count;
 
             if ($loanCount > 0) {
@@ -290,6 +366,7 @@ class MemberController extends AuthorizationController
         $limit = $this->request->getVar('limit') ?? 10;
         $page = $this->request->getVar('page') ?? 1;
         $search = $this->request->getVar('search');
+        $sort = $this->request->getVar('sort');
         $filters = $this->request->getVar('filter') ?? [];
         $enablePagination = $this->request->getVar('pagination') !== 'false'; // Enable pagination if not 'false'
 
@@ -322,6 +399,16 @@ class MemberController extends AuthorizationController
                 'barcode' => 'member_barcode',
                 'gender' => 'member_gender',
             ];
+
+
+            if (!empty($sort)) {
+                $sortField = ltrim($sort, '-');
+                $sortDirection = $sort[0] === '-' ? 'DESC' : 'ASC';
+                if (array_key_exists($sortField, $filterMapping)) {
+                    $query .= " ORDER BY {$filterMapping[$sortField]} $sortDirection";
+                }
+            }
+
 
             // Apply filters
             foreach ($filters as $key => $value) {

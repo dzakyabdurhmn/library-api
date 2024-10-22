@@ -15,9 +15,9 @@ class CoreController extends ResourceController
             'message' => $message,
         ];
 
-        if (!is_null($result) && !empty($result)) {
-            $response['result'] = $result;
-        }
+        $response['result'] = $result == null ? (object) ['data' => (object) []] : $result;
+
+
 
         return $this->respond($response, $code);
     }
@@ -27,6 +27,7 @@ class CoreController extends ResourceController
         $response = [
             'status' => $code,
             'message' => $message,
+            'error' => 'error_validation'
         ];
 
         if (!empty($errors)) {

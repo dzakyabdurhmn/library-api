@@ -18,7 +18,7 @@ class Authorization implements FilterInterface
         $token = $request->getHeaderLine('Authorization');
         if (!$token) {
             return Services::response()
-                ->setJSON(['status' => 401, 'message' => 'Token is required'])
+                ->setJSON(['status' => 401, 'message' => 'Bearer token is required'])
                 ->setStatusCode(401);
         }
 

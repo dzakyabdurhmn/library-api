@@ -25,18 +25,31 @@ class AuthorController extends AuthorizationController
 
         // Validasi input
         $rules = [
-            'author_name' => 'required|min_length[1]|max_length[255]',
-            'author_biography' => 'required'
+            'name' => [
+                'rules' => 'required|min_length[1]|max_length[255]',
+                'errors' => [
+                    'required' => 'Nama wajib diisi.',
+                    'min_length' => 'Nama harus minimal 1 karakter.',
+                    'max_length' => 'Nama tidak boleh lebih dari 255 karakter.'
+                ]
+            ],
+            'biography' => [
+                'rules' => 'required',
+                'errors' => [
+                    'required' => 'Biografi wajib diisi.'
+                ]
+            ]
         ];
 
         if (!$this->validate($rules)) {
             return $this->respondWithValidationError('Validasi error', $this->validator->getErrors());
         }
 
+
         // Ambil data dari request
         $data = [
-            'author_name' => $this->request->getVar('author_name'),
-            'author_biography' => $this->request->getVar('author_biography')
+            'author_name' => $this->request->getVar('name'),
+            'author_biography' => $this->request->getVar('biography')
         ];
 
         try {
@@ -65,6 +78,7 @@ class AuthorController extends AuthorizationController
         $limit = $this->request->getVar('limit') ?? 10;
         $page = $this->request->getVar('page') ?? 1;
         $search = $this->request->getVar('search');
+        $sort = $this->request->getVar('sort');
         $filters = $this->request->getVar('filter') ?? [];
         $enablePagination = $this->request->getVar('pagination') ?? 'true'; // Enable or disable pagination
 
@@ -77,7 +91,7 @@ class AuthorController extends AuthorizationController
             $conditions = [];
             $params = [];
 
-            // Handle search across all columns (for example purposes: author_name and author_biography)
+            // Handle search across all columns (e.g., author_name and author_biography)
             if ($search) {
                 $conditions[] = "(author_name LIKE ? OR author_biography LIKE ?)";
                 $params[] = "%$search%";
@@ -88,8 +102,6 @@ class AuthorController extends AuthorizationController
             $filterMapping = [
                 'name' => 'author_name',
                 'biography' => 'author_biography',
-
-                // Add other mappings as necessary
             ];
 
             // Handle additional filters
@@ -103,6 +115,15 @@ class AuthorController extends AuthorizationController
             // Add conditions to the query
             if (count($conditions) > 0) {
                 $query .= ' WHERE ' . implode(' AND ', $conditions);
+            }
+
+            // Handle sorting
+            if (!empty($sort)) {
+                $sortField = ltrim($sort, '-');
+                $sortDirection = $sort[0] === '-' ? 'DESC' : 'ASC';
+                if (array_key_exists($sortField, $filterMapping)) {
+                    $query .= " ORDER BY {$filterMapping[$sortField]} $sortDirection";
+                }
             }
 
             // Handle pagination
@@ -127,15 +148,18 @@ class AuthorController extends AuthorizationController
             }
 
             // If pagination is enabled, calculate pagination details
-            $pagination = [];
+            $pagination = new \stdClass();
             if ($enablePagination === 'true') {
                 // Query total authors for pagination
                 $totalQuery = "SELECT COUNT(*) as total FROM author";
                 if (count($conditions) > 0) {
                     $totalQuery .= ' WHERE ' . implode(' AND ', $conditions);
                 }
-                $total = $db->query($totalQuery, array_slice($params, 0, count($params) - 2))->getRow()->total;
+                // Exclude the LIMIT and OFFSET parameters from total count
+                $totalParams = array_slice($params, 0, count($params) - 2);
+                $total = $db->query($totalQuery, $totalParams)->getRow()->total;
 
+                // Calculate pagination details
                 $jumlah_page = ceil($total / $limit);
                 $prev = ($page > 1) ? $page - 1 : null;
                 $next = ($page < $jumlah_page) ? $page + 1 : null;
@@ -162,9 +186,10 @@ class AuthorController extends AuthorizationController
             ]);
 
         } catch (DatabaseException $e) {
-            return $this->respondWithError('Terdapat kesalahan di sisi server:: ' . $e->getMessage());
+            return $this->respondWithError('Terdapat kesalahan di sisi server: ' . $e->getMessage());
         }
     }
+
 
 
 
@@ -190,9 +215,14 @@ class AuthorController extends AuthorizationController
             $query = "SELECT * FROM author WHERE author_id = ?";
             $author = $db->query($query, [$id])->getRowArray();
 
+            $data = [
+
+            ];
+
             if (!$author) {
-                return $this->respondWithNotFound('Author tidak di temukan.');
+                return $this->respondWithSuccess('Data tidak tersedia.', $data);
             }
+
 
             $data = [
                 'data' => [
@@ -210,26 +240,44 @@ class AuthorController extends AuthorizationController
 
 
     // Fungsi untuk memperbarui data penulis (Update)
-    public function update($id = null)
+    public function update_author()
     {
         $db = \Config\Database::connect();
 
         $tokenValidation = $this->validateToken('superadmin'); // Fungsi helper dipanggil
+        $id = $this->request->getVar('id');
 
         if ($tokenValidation !== true) {
             return $this->respond($tokenValidation, $tokenValidation['status']);
         }
-
         $rules = [
-            'id' => 'required',
-            'author_name' => 'required|min_length[1]|max_length[255]',
-            'author_biography' => 'required'
+            'id' => [
+                'rules' => 'required',
+                'errors' => [
+                    'required' => 'ID wajib diisi.'
+                ]
+            ],
+            'name' => [
+                'rules' => 'required|min_length[1]|max_length[255]',
+                'errors' => [
+                    'required' => 'Nama wajib diisi.',
+                    'min_length' => 'Nama harus minimal 1 karakter.',
+                    'max_length' => 'Nama tidak boleh lebih dari 255 karakter.'
+                ]
+            ],
+            'biography' => [
+                'rules' => 'required',
+                'errors' => [
+                    'required' => 'Biografi wajib diisi.'
+                ]
+            ]
         ];
-
 
         if (!$this->validate($rules)) {
             return $this->respondWithValidationError('Validasi error', $this->validator->getErrors());
         }
+
+
 
         // Cek apakah penulis dengan ID tersebut ada
         $query = "SELECT COUNT(*) as count FROM author WHERE author_id = ?";
@@ -240,8 +288,8 @@ class AuthorController extends AuthorizationController
         }
 
         $data = [
-            'author_name' => $this->request->getVar('author_name'),
-            'author_biography' => $this->request->getVar('author_biography')
+            'author_name' => $this->request->getVar('name'),
+            'author_biography' => $this->request->getVar('biography')
         ];
 
         try {
@@ -252,7 +300,21 @@ class AuthorController extends AuthorizationController
 
             $db->query($query, array_merge(array_values($data), [$id]));
 
-            return $this->respondWithSuccess('Berhasil mengupdate data author.');
+
+            $query = "SELECT * FROM author WHERE author_id = ?";
+            $params = [$id]; // Menyediakan parameter untuk menggantikan tanda tanya
+            $result = $db->query($query, $params)->getRow(); // Mengambil hasil query
+
+            $data = [
+                'data' => [
+                    'id' => $result->author_id,
+                    'name' => $result->author_name,
+                    'biography' => $result->author_biography
+
+                ]
+            ];
+
+            return $this->respondWithSuccess('Berhasil mengupdate data author.', $data);
         } catch (DatabaseException $e) {
             return $this->respondWithError('Terdapat kesalahan di sisi server: ' . $e->getMessage());
         }

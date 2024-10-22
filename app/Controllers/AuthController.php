@@ -17,44 +17,35 @@ class AuthController extends AuthorizationController
 {
   protected $format = 'json';
 
-
-
-
-
-
   public function get_all_users()
   {
     $db = \Config\Database::connect();
 
-    $tokenValidation = $this->validateToken('superadmin'); // Fungsi helper dipanggil
+    $tokenValidation = $this->validateToken('superadmin');
 
     if ($tokenValidation !== true) {
       return $this->respond($tokenValidation, $tokenValidation['status']);
     }
 
-    // Ambil parameter dari query string
-    $limit = $this->request->getVar('limit') ?? 10; // Default limit = 10
-    $page = $this->request->getVar('page') ?? 1; // Default page = 1
-    $search = $this->request->getVar('search');
-    $filters = $this->request->getVar('filter') ?? []; // Ambil semua filter
+    $limit = $this->request->getVar('limit') ?? 10;
+    $page = $this->request->getVar('page') ?? 1;
+    $search = $this->request->getVar(index: 'search');
+    $sort = $this->request->getVar(index: 'sort') ?? '';
+    $filters = $this->request->getVar('filter') ?? [];
     $enablePagination = filter_var($this->request->getVar('pagination'), FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE) ?? true;
 
-    // Hitung offset untuk pagination
     $offset = ($page - 1) * $limit;
 
-    // Start building the query
     $query = "SELECT admin_id, admin_username, admin_email, admin_full_name, admin_nik, admin_role, admin_phone, admin_gender, admin_address FROM admin";
     $conditions = [];
     $params = [];
 
-    // Handle search condition
     if ($search) {
       $conditions[] = "(admin_username LIKE ? OR admin_full_name LIKE ? OR admin_email LIKE ? OR admin_nik LIKE ? OR admin_phone LIKE ? OR admin_address LIKE ? OR admin_gender LIKE ?)";
-      $searchTerm = "%" . $search . "%"; // Prepare the search term
-      $params = array_fill(0, 7, $searchTerm); // Fill the parameter array for all seven columns
+      $searchTerm = "%" . $search . "%";
+      $params = array_fill(0, 7, $searchTerm);
     }
 
-    // Define the mapping of filter keys to database columns
     $filterMapping = [
       'username' => 'admin_username',
       'full_name' => 'admin_full_name',
@@ -66,7 +57,14 @@ class AuthController extends AuthorizationController
       'address' => 'admin_address'
     ];
 
-    // Handle additional filters
+    if (!empty($sort)) {
+      $sortField = ltrim($sort, '-');
+      $sortDirection = $sort[0] === '-' ? 'DESC' : 'ASC';
+      if (array_key_exists($sortField, $filterMapping)) {
+        $query .= " ORDER BY {$filterMapping[$sortField]} $sortDirection";
+      }
+    }
+
     foreach ($filters as $key => $value) {
       if (!empty($value) && array_key_exists($key, $filterMapping)) {
         $conditions[] = "{$filterMapping[$key]} = ?";
@@ -74,20 +72,17 @@ class AuthController extends AuthorizationController
       }
     }
 
-    // Add conditions to the query
     if (count($conditions) > 0) {
       $query .= ' WHERE ' . implode(' AND ', $conditions);
     }
 
     if ($enablePagination) {
-      // Add limit and offset for pagination
       $query .= " LIMIT ? OFFSET ?";
       $params[] = (int) $limit;
       $params[] = (int) $offset;
     }
 
     try {
-      // Execute query to get user data
       $users = $db->query($query, $params)->getResultArray();
 
       $result = [];
@@ -104,51 +99,12 @@ class AuthController extends AuthorizationController
           'address' => $user['admin_address'],
         ];
       }
-      //     if ($enablePagination) {
-      //         // Query total users for pagination
-      //         $totalQuery = "SELECT COUNT(*) as total FROM admin";
-      //         if (count($conditions) > 0) {
-      //             $totalQuery .= ' WHERE ' . implode(' AND ', $conditions);
-      //         }
-      //         $total = $db->query($totalQuery, array_slice($params, 0, count($params) - 2))->getRow()->total; // Exclude LIMIT and OFFSET params
-
-      //         // Calculate total pages
-      //         $jumlah_page = ceil($total / $limit);
-
-      //         // Calculate previous and next pages
-      //         $prev = ($page > 1) ? $page - 1 : null;
-      //         $next = ($page < $jumlah_page) ? $page + 1 : null;
-
-      //         // Calculate start and end positions for pagination
-      //         $start = ($page - 1) * $limit + 1;
-      //         $end = min($page * $limit, $total);
-
-      //         // Prepare pagination details
-      //         $detail = range(max(1, $page - 2), min($jumlah_page, $page + 2));
-
-      //         return $this->respondWithSuccess('Employee data successfully retrieved', [
-      //             'data' => $result,
-      //             'pagination' => [
-      //                 'total_data' => (int) $total,
-      //                 'jumlah_page' => (int) $jumlah_page,
-      //                 'prev' => $prev,
-      //                 'page' => (int) $page,
-      //                 'next' => $next,
-      //                 'detail' => $detail,
-      //                 'start' => $start,
-      //                 'end' => $end,
-      //             ]
-      //         ]);
-      //     } else {
-      //         // Return data without pagination
-      //         return $this->respondWithSuccess('Employee data successfully retrieved', ['data' => $result]);
-      //     }
-      // } catch (DatabaseException $e) {
-      //     return $this->respondWithError('Failed to retrieve users: ' . $e->getMessage());
-      // }
 
 
-      $pagination = [];
+
+
+
+      $pagination = new \stdClass();
       if ($enablePagination) {
         $totalQuery = "SELECT COUNT(*) as total FROM admin";
         if (!empty($conditions)) {
@@ -169,7 +125,6 @@ class AuthController extends AuthorizationController
         ];
       }
 
-      // Return response
       return $this->respondWithSuccess('Berhasil mendapatkan data karyawan', [
         'data' => $result,
         'pagination' => $pagination
@@ -179,8 +134,6 @@ class AuthController extends AuthorizationController
       return $this->respondWithError('Terdapat kesalahan di server: ' . $e->getMessage());
     }
   }
-
-
 
   public function get_user_by_id()
   {
@@ -198,8 +151,13 @@ class AuthController extends AuthorizationController
       $query = "SELECT admin_id, admin_username, admin_email, admin_full_name, admin_nik, admin_role, admin_phone, admin_gender, admin_address  FROM admin WHERE admin_id = ?";
       $user = $db->query($query, [$admin_id])->getRowArray();
 
+
+      $data = [
+
+      ];
+
       if (!$user) {
-        return $this->respondWithNotFound('Data karyawan tidak di temukan..');
+        return $this->respondWithSuccess('Data tidak tersedia.', $data);
       }
 
 
@@ -225,8 +183,6 @@ class AuthController extends AuthorizationController
       return $this->respondWithError('Terdapat kesalahan di sisi server: ' . $e->getMessage());
     }
   }
-
-
 
   public function delete_account()
   {
@@ -264,21 +220,85 @@ class AuthController extends AuthorizationController
 
     // Aturan validasi data yang akan diubah
     $rules = [
-      'id' => 'required',
-      'username' => 'required|min_length[5]|max_length[50]|unique',
-      'password' => 'required|min_length[8]',
-      'email' => 'required|valid_email|unique',
-      'full_name' => 'required|max_length[100]',
-      'nik' => 'required|min_length[16]|max_length[30]',
-      'role' => 'required|in_list[warehouse,frontliner]', // Validasi role, fix typo
-      'phone' => 'required|max_length[20]',
-      'gender' => 'required|in_list[male,female]',
-      'address' => 'required|max_length[255]'
+      'id' => [
+        'rules' => 'required',
+        'errors' => [
+          'required' => 'ID harus diisi.'
+        ]
+      ],
+      'username' => [
+        'rules' => 'required|min_length[5]|max_length[50]|is_unique[admin.admin_username]',
+        'errors' => [
+          'required' => 'Username wajib diisi.',
+          'min_length' => 'Username minimal harus 5 karakter.',
+          'max_length' => 'Username maksimal 50 karakter.',
+          'is_unique' => 'Username sudah digunakan, silakan pilih yang lain.'
+        ]
+      ],
+      'password' => [
+        'rules' => 'required|min_length[8]',
+        'errors' => [
+          'required' => 'Password wajib diisi.',
+          'min_length' => 'Password minimal harus 8 karakter.'
+        ]
+      ],
+      'email' => [
+        'rules' => 'required|valid_email|is_unique[admin.admin_email]',
+        'errors' => [
+          'required' => 'Email wajib diisi.',
+          'valid_email' => 'Email tidak valid.',
+          'is_unique' => 'Email sudah terdaftar, gunakan email lain.'
+        ]
+      ],
+      'full_name' => [
+        'rules' => 'required|max_length[100]',
+        'errors' => [
+          'required' => 'Nama lengkap wajib diisi.',
+          'max_length' => 'Nama lengkap maksimal 100 karakter.'
+        ]
+      ],
+      'nik' => [
+        'rules' => 'required|min_length[16]|max_length[30]',
+        'errors' => [
+          'required' => 'NIK wajib diisi.',
+          'min_length' => 'NIK minimal harus 16 karakter.',
+          'max_length' => 'NIK maksimal 30 karakter.'
+        ]
+      ],
+      'role' => [
+        'rules' => 'required|in_list[warehouse,frontliner]',
+        'errors' => [
+          'required' => 'Peran wajib dipilih.',
+          'in_list' => 'Peran harus salah satu dari: warehouse atau frontliner.'
+        ]
+      ],
+      'phone' => [
+        'rules' => 'required|max_length[20]',
+        'errors' => [
+          'required' => 'Nomor telepon wajib diisi.',
+          'max_length' => 'Nomor telepon maksimal 20 karakter.'
+        ]
+      ],
+      'gender' => [
+        'rules' => 'required|in_list[male,female]',
+        'errors' => [
+          'required' => 'Jenis kelamin wajib dipilih.',
+          'in_list' => 'Jenis kelamin harus salah satu dari: male atau female.'
+        ]
+      ],
+      'address' => [
+        'rules' => 'required|max_length[255]',
+        'errors' => [
+          'required' => 'Alamat wajib diisi.',
+          'max_length' => 'Alamat maksimal 255 karakter.'
+        ]
+      ]
     ];
 
     if (!$this->validate($rules)) {
       return $this->respondWithValidationError('Validasi error', $this->validator->getErrors());
     }
+
 
     $data = [
       'admin_username' => $this->request->getVar('username'),
@@ -314,11 +334,13 @@ class AuthController extends AuthorizationController
 
 
       $result = [
-        'username' => $data['admin_username'],
-        'email' => $data['admin_email'],
-        'full_name' => $data['admin_full_name'],
-        'phone' => $data['admin_phone'],
-        'address' => $data['admin_address']
+        'data' => [
+          'username' => $data['admin_username'],
+          'email' => $data['admin_email'],
+          'full_name' => $data['admin_full_name'],
+          'phone' => $data['admin_phone'],
+          'address' => $data['admin_address']
+        ]
       ];
 
       return $this->respondWithSuccess('Berhasil mengupdate data karywan.', $result);
@@ -334,15 +356,73 @@ class AuthController extends AuthorizationController
 
     // Validasi input
     $rules = [
-      'username' => 'required|min_length[5]|max_length[50]|unique',
-      'password' => 'required|min_length[8]',
-      'email' => 'required|valid_email|unique',
-      'full_name' => 'required|max_length[100]',
-      'nik' => 'required|min_length[16]|max_length[30]',
-      'role' => 'required|in_list[warehouse,frontliner]', // Validasi role, fix typo
-      'phone' => 'required|max_length[20]',
-      'gender' => 'required|in_list[male,female]',
-      'address' => 'required|max_length[255]'
+      'username' => [
+        'rules' => 'required|min_length[5]|max_length[50]|is_unique[admin.admin_username]',
+        'errors' => [
+          'required' => 'Username wajib diisi.',
+          'min_length' => 'Username minimal harus 5 karakter.',
+          'max_length' => 'Username maksimal 50 karakter.',
+          'is_unique' => 'Username sudah terdaftar, gunakan username lain.'
+        ]
+      ],
+      'password' => [
+        'rules' => 'required|min_length[8]',
+        'errors' => [
+          'required' => 'Password wajib diisi.',
+          'min_length' => 'Password minimal harus 8 karakter.'
+        ]
+      ],
+      'email' => [
+        'rules' => 'required|valid_email|is_unique[admin.admin_email]',
+        'errors' => [
+          'required' => 'Email wajib diisi.',
+          'valid_email' => 'Format email tidak valid.',
+          'is_unique' => 'Email sudah terdaftar, gunakan email lain.'
+        ]
+      ],
+      'full_name' => [
+        'rules' => 'required|max_length[100]',
+        'errors' => [
+          'required' => 'Nama lengkap wajib diisi.',
+          'max_length' => 'Nama lengkap maksimal 100 karakter.'
+        ]
+      ],
+      'nik' => [
+        'rules' => 'required|min_length[16]|max_length[30]',
+        'errors' => [
+          'required' => 'NIK wajib diisi.',
+          'min_length' => 'NIK minimal harus 16 karakter.',
+          'max_length' => 'NIK maksimal 30 karakter.'
+        ]
+      ],
+      'role' => [
+        'rules' => 'required|in_list[warehouse,frontliner]',
+        'errors' => [
+          'required' => 'Peran wajib dipilih.',
+          'in_list' => 'Peran harus salah satu dari: warehouse atau frontliner.'
+        ]
+      ],
+      'phone' => [
+        'rules' => 'required|max_length[20]',
+        'errors' => [
+          'required' => 'Nomor telepon wajib diisi.',
+          'max_length' => 'Nomor telepon maksimal 20 karakter.'
+        ]
+      ],
+      'gender' => [
+        'rules' => 'required|in_list[Laki-Laki,Perempuan]',
+        'errors' => [
+          'required' => 'Jenis kelamin wajib dipilih.',
+          'in_list' => 'Jenis kelamin harus salah satu dari: Laki-Laki atau Perempuan.'
+        ]
+      ],
+      'address' => [
+        'rules' => 'required|max_length[255]',
+        'errors' => [
+          'required' => 'Alamat wajib diisi.',
+          'max_length' => 'Alamat maksimal 255 karakter.'
+        ]
+      ]
     ];
 
     // Validasi input berdasarkan rules
@@ -384,13 +464,11 @@ class AuthController extends AuthorizationController
         $data['admin_address']
       ]);
 
-      return $this->respondWithSuccess('Berhasil Registrasi.');
+      return $this->respondWithSuccess('Berhasil Registrasi.', );
     } catch (DatabaseException $e) {
       return $this->respondWithError('Terdapat kesalahan di sisi server: ' . $e->getMessage());
     }
   }
-
-
 
   public function login()
   {
@@ -422,7 +500,7 @@ class AuthController extends AuthorizationController
         $db->query($query, [
           $user['admin_id'],
           $token,
-          date('Y-m-d H:i:s', strtotime('+1 hour'))
+          date('Y-m-d H:i:s', strtotime(datetime: '+1 hour'))
         ]);
 
         // Format respons
@@ -456,8 +534,8 @@ class AuthController extends AuthorizationController
     $db = \Config\Database::connect();
 
     // Ambil token dari request header (Bearer Token)
+    $token = $this->request->getHeaderLine('token');
 
-    $token = $this->request->getVar('token');
 
     // $authHeader = $this->request->getHeader(name: 'Token');
 
@@ -498,7 +576,7 @@ class AuthController extends AuthorizationController
 
     // Cek apakah email terdaftar
     $query = "SELECT * FROM admin WHERE admin_email = ?";
-    $user = $db->query($query, [$email])->getRowArray();
+    $user = $db->query($query, binds: [$email])->getRowArray();
 
     if (!$user) {
       return $this->respondWithError('Email tidak ditemukan.');
@@ -506,7 +584,9 @@ class AuthController extends AuthorizationController
 
     // Buat token reset password
     $otp = generateOTP();// Random string sebagai token
-    $expiresAt = date('Y-m-d H:i:s', timestamp: strtotime('10:09') + 60 * 60 * 2);
+    $expiresAt = date('Y-m-d H:i:s', strtotime(datetime: '+1 hour'));
+
+
 
     // Simpan token ke tabel admin_token
     try {
