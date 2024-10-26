@@ -9,6 +9,10 @@ class AuthorizationController extends CoreController
 {
     protected $format = 'json';
 
+    
+
+
+
 
 
     function validateToken($role)

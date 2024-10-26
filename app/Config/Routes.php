@@ -15,11 +15,11 @@ $routes->group('', ['filter' => 'authToken'], function ($routes) {
 
     $routes->post('auth/login', 'AuthController::login');
     $routes->post('auth/logout', 'AuthController::logout');
-    $routes->delete('auth/delete_account', 'AuthController::delete_account');
-    $routes->put('auth/edit_account/(:num)', 'AuthController::edit_account/$1');
+    $routes->delete('admin/delete_account', 'AuthController::delete_account');
+    $routes->put('/admin/edit-employee', 'AuthController::edit_account');
 
-    $routes->get('auth/', 'AuthController::get_all_users'); // Mendapatkan semua pengguna
-    $routes->get('auth/detail', 'AuthController::get_user_by_id'); // Mendapatkan pengguna berdasarkan ID
+    $routes->get('admin/get-allemployee', 'AuthController::get_all_users'); // Mendapatkan semua pengguna
+    $routes->get('admin/get-detailemployee', 'AuthController::get_user_by_id'); // Mendapatkan pengguna berdasarkan ID
 
     $routes->post('forgot-password', 'AuthController::sendResetPassword');
     $routes->post('reset-password', 'AuthController::resetPassword');

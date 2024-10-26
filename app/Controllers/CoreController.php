@@ -31,8 +31,11 @@ class CoreController extends ResourceController
         ];
 
         if (!empty($errors)) {
-            $response['errors'] = $errors;
+            $response['result'] = [
+                'data' => (object) $errors // Mengubah $errors menjadi objek
+            ];
         }
+
 
         return $this->respond($response, $code);
     }
@@ -66,7 +69,6 @@ class CoreController extends ResourceController
         return $this->respond([
             'status' => 'error',
             'message' => $message,
-            'data' => $data
         ], $statusCode);
     }
 

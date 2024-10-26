@@ -214,9 +214,11 @@ class AuthController extends AuthorizationController
   }
 
   // Fungsi untuk edit account (hanya warehouse dan frontliner)
-  public function edit_account($admin_id)
+  public function edit_account()
   {
     $db = \Config\Database::connect();
+
+    $admin_id = $this->request->getVar(index: 'id');
 
     // Aturan validasi data yang akan diubah
     $rules = [
@@ -233,13 +235,6 @@ class AuthController extends AuthorizationController
           'min_length' => 'Username minimal harus 5 karakter.',
           'max_length' => 'Username maksimal 50 karakter.',
           'is_unique' => 'Username sudah digunakan, silakan pilih yang lain.'
-        ]
-      ],
-      'password' => [
-        'rules' => 'required|min_length[8]',
-        'errors' => [
-          'required' => 'Password wajib diisi.',
-          'min_length' => 'Password minimal harus 8 karakter.'
         ]
       ],
       'email' => [
@@ -280,10 +275,10 @@ class AuthController extends AuthorizationController
         ]
       ],
       'gender' => [
-        'rules' => 'required|in_list[male,female]',
+        'rules' => 'required|in_list[Laki-Laki,Perempuan]',
         'errors' => [
           'required' => 'Jenis kelamin wajib dipilih.',
-          'in_list' => 'Jenis kelamin harus salah satu dari: male atau female.'
+          'in_list' => 'Jenis kelamin harus salah satu dari: Laki-Laki atau Perempuan.'
         ]
       ],
       'address' => [
@@ -306,31 +301,53 @@ class AuthController extends AuthorizationController
       'admin_full_name' => $this->request->getVar('full_name'),
       'admin_phone' => $this->request->getVar('phone'),
       'admin_address' => $this->request->getVar('address'),
+      'admin_gender' => $this->request->getVar(index: 'gender'),
+      'admin_nik' => $this->request->getVar(index: 'nik'),
+
+
     ];
+
+
 
     try {
       // Cek apakah user dengan admin_id tersebut adalah warehouse atau frontliner
       $query = "SELECT admin_role FROM admin WHERE admin_id = ?";
-      $user = $db->query($query, [$admin_id])->getRowArray();
+      $user = $db->query($query, [3])->getRowArray();
+
 
       if (!$user) {
         return $this->respondWithError('User tidak di temukan.');
       }
 
-      if ($user['admin_role'] !== 'warehouse' && $user['admin_role'] !== 'frontliner') {
+      if ($user['admin_role'] == 'superadmin') {
         return $this->respondWithUnauthorized('Hanya wearhouse dan frontliner yang dapat diedit');
       }
 
+
+
+
+
+
       // Lakukan update data
-      $updateQuery = "UPDATE admin SET admin_username = ?, admin_email = ?, admin_full_name = ?, admin_phone = ?, admin_address = ? WHERE admin_id = ?";
+      $updateQuery = "UPDATE admin SET admin_username = ?, admin_email = ?, admin_full_name = ?, admin_phone = ?, admin_address = ?, admin_nik = ?, admin_phone = ?, admin_gender = ? WHERE admin_id = ?";
+
+
       $db->query($updateQuery, [
         $data['admin_username'],
         $data['admin_email'],
         $data['admin_full_name'],
         $data['admin_phone'],
         $data['admin_address'],
+        $data['admin_nik'],
+        $data['admin_phone'],
+        $data['admin_gender'],
         $admin_id
       ]);
+
+
+
+
+
 
 
       $result = [
@@ -339,7 +356,8 @@ class AuthController extends AuthorizationController
           'email' => $data['admin_email'],
           'full_name' => $data['admin_full_name'],
           'phone' => $data['admin_phone'],
-          'address' => $data['admin_address']
+          'address' => $data['admin_address'],
+          'gender' => $data['admin_gender']
         ]
       ];
 
@@ -538,8 +556,6 @@ class AuthController extends AuthorizationController
 
 
     // $authHeader = $this->request->getHeader(name: 'Token');
-
-
 
     if (!$token) {
       return $this->respondWithValidationError('Mungkin anda belum memasukan token.');

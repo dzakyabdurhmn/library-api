@@ -248,9 +248,9 @@ class MemberController extends AuthorizationController
                 ]
             ],
             'gender' => [
-                'rules' => 'in_list[MEN,WOMEN]',
+                'rules' => 'in_list[Laki-Laki,Perempuan]',
                 'errors' => [
-                    'in_list' => 'Jenis kelamin harus salah satu dari: MEN atau WOMEN.'
+                    'in_list' => 'Jenis kelamin harus salah satu dari: Laki-Laki atau Perempuan.'
                 ]
             ],
         ];

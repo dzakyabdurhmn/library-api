@@ -307,7 +307,7 @@ class BookController extends AuthorizationController
     }
 
     // Fungsi untuk memperbarui data buku (Update)
-    public function update($id = null)
+    public function update_book($id = null)
     {
         $db = \Config\Database::connect();
 
