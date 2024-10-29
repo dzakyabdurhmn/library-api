@@ -2,7 +2,7 @@
 
 namespace App\Controllers;
 
-Social Experiment Bolehkah Sekali Saja Kumenangis use Config\Database;
+use Config\Database;
 
 class ReportController extends AuthorizationController
 {
@@ -13,10 +13,14 @@ class ReportController extends AuthorizationController
         $this->db = Database::connect();
     }
 
+
+
     public function most_borrowed_books()
     {
-        $limit = $this->request->getVar('limit') ?? 10;
-        $page = $this->request->getVar('page') ?? 1;
+        $db = \Config\Database::connect();
+
+        $limit = (int) ($this->request->getVar('limit') ?? 10);
+        $page = (int) ($this->request->getVar('page') ?? 1);
         $search = $this->request->getVar('search');
         $sort = $this->request->getVar('sort') ?? '';
         $filters = $this->request->getVar('filter') ?? [];
@@ -24,231 +28,670 @@ class ReportController extends AuthorizationController
         $offset = ($page - 1) * $limit;
 
         // Count query for total data
-        $countQuery = "SELECT COUNT(DISTINCT loan_detail_book_title) as total FROM loan_detail";
-        $totalData = $this->db->query($countQuery)->getRow()->total;
+        $countQuery = "SELECT COUNT(DISTINCT loan_detail_book_id) as total FROM loan_detail";
+        $totalData = $db->query($countQuery)->getRow()->total;
 
         // Main query
         $baseQuery = "SELECT 
-            loan_detail_book_id as id,
-            loan_detail_book_title as title,
-            loan_detail_book_publisher_name as publisher_name,
-            loan_detail_book_publisher_address as publisher_address,
-            loan_detail_book_publisher_phone as publisher_phone,
-            loan_detail_book_publisher_email as publisher_email,
-            loan_detail_book_publication_year as publication_year,
-            loan_detail_book_isbn as isbn,
-            loan_detail_book_author_name as author_name,
-            loan_detail_book_author_biography as author_biography,
-            COUNT(*) as borrow_count
-            FROM loan_detail
-            GROUP BY loan_detail_book_id
-            ORDER BY borrow_count DESC";
+        loan_detail_book_id as id,
+        loan_detail_book_title as title,
+        loan_detail_book_publisher_name as publisher_name,
+        loan_detail_book_publisher_address as publisher_address,
+        loan_detail_book_publisher_phone as publisher_phone,
+        loan_detail_book_publisher_email as publisher_email,
+        loan_detail_book_publication_year as publication_year,
+        loan_detail_book_isbn as isbn,
+        loan_detail_book_author_name as author_name,
+        loan_detail_book_author_biography as author_biography,
+        COUNT(*) as borrow_count
+        FROM loan_detail";
 
-        if ($enablePagination) {
-            $baseQuery .= " LIMIT $offset, $limit";
+        // Filtering
+        $conditions = [];
+        $params = [];
+
+        if ($search) {
+            $conditions[] = "(loan_detail_book_title LIKE ? OR loan_detail_book_isbn LIKE ?)";
+            $searchTerm = "%" . $search . "%";
+            $params[] = $searchTerm;
+            $params[] = $searchTerm;
         }
 
-        $books = $this->db->query($baseQuery)->getResult();
+        // Filter mapping
+        $filterMapping = [
+            'publisher_name' => 'loan_detail_book_publisher_name',
+            'publisher_address' => 'loan_detail_book_publisher_address',
+            'publisher_phone' => 'loan_detail_book_publisher_phone',
+            'publisher_email' => 'loan_detail_book_publisher_email',
+            'author_name' => 'loan_detail_book_author_name',
+            'author_biography' => 'loan_detail_book_author_biography',
+            'isbn' => 'loan_detail_book_isbn',
+            'title' => 'loan_detail_book_title',
+            'year' => 'loan_detail_book_publication_year',
+        ];
 
-        // Calculate pagination
-        $totalPages = ceil($totalData / $limit);
-        $pagination = $this->generatePagination($page, $totalPages, $totalData);
+        foreach ($filters as $key => $value) {
+            if (!empty($value) && array_key_exists($key, $filterMapping)) {
+                $conditions[] = "{$filterMapping[$key]} = ?";
+                $params[] = $value;
+            }
+        }
 
-        return $this->response->setJSON([
-            'status' => 200,
-            'message' => 'Berhasil mendapatkan data buku yang paling sering dipinjam.',
-            'result' => [
+        if (count($conditions) > 0) {
+            $baseQuery .= ' WHERE ' . implode(' AND ', $conditions);
+        }
+
+        $baseQuery .= " GROUP BY loan_detail_book_id";
+
+        // Sorting
+        if (!empty($sort)) {
+            $sortDirection = $sort[0] === '-' ? 'DESC' : 'ASC';
+            $sortField = ltrim($sort, '-');
+            $baseQuery .= " ORDER BY $sortField $sortDirection";
+        } else {
+            $baseQuery .= " ORDER BY borrow_count DESC";
+        }
+
+        // Pagination
+        if ($enablePagination) {
+            $baseQuery .= " LIMIT ? OFFSET ?";
+            $params[] = $limit;
+            $params[] = $offset;
+        }
+
+        // Execute query
+        try {
+            $books = $db->query($baseQuery, $params)->getResult();
+
+            // Calculate pagination
+            $pagination = new \stdClass();
+            if ($enablePagination) {
+                $totalPages = ceil($totalData / $limit);
+                $pagination = [
+                    'total_data' => (int) $totalData,
+                    'jumlah_page' => (int) $totalPages,
+                    'prev' => ($page > 1) ? $page - 1 : null,
+                    'page' => (int) $page,
+                    'next' => ($page < $totalPages) ? $page + 1 : null,
+                    'start' => ($page - 1) * $limit + 1,
+                    'end' => min($page * $limit, $totalData),
+                    'detail' => range(max(1, $page - 2), min($totalPages, $page + 2)),
+                ];
+            }
+
+            return $this->respondWithSuccess('Berhasil mendapatkan data buku yang paling sering dipinjam.', [
                 'data' => $books,
                 'pagination' => $pagination
-            ]
-        ]);
+            ]);
+        } catch (DatabaseException $e) {
+            return $this->respondWithError('Terdapat kesalahan di sisi server: ' . $e->getMessage());
+        }
     }
 
     public function least_borrowed_books()
     {
-        $limit = $this->request->getVar('limit') ?? 10;
-        $page = $this->request->getVar('page') ?? 1;
+        $db = \Config\Database::connect();
+
+        $limit = (int) ($this->request->getVar('limit') ?? 10);
+        $page = (int) ($this->request->getVar('page') ?? 1);
+        $search = $this->request->getVar('search');
+        $sort = $this->request->getVar('sort') ?? '';
+        $filters = $this->request->getVar('filter') ?? [];
+        $enablePagination = filter_var($this->request->getVar('pagination'), FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE) ?? true;
         $offset = ($page - 1) * $limit;
 
-        $countQuery = "SELECT COUNT(DISTINCT loan_detail_book_title) as total FROM loan_detail";
-        $totalData = $this->db->query($countQuery)->getRow()->total;
+        // Count query for total data
+        $countQuery = "SELECT COUNT(DISTINCT loan_detail_book_id) as total FROM loan_detail";
+        $totalData = $db->query($countQuery)->getRow()->total;
 
+        // Main query
         $baseQuery = "SELECT 
-            loan_detail_book_id as id,
-            loan_detail_book_title as title,
-            loan_detail_book_publisher_name as publisher_name,
-            loan_detail_book_publisher_address as publisher_address,
-            loan_detail_book_publisher_phone as publisher_phone,
-            loan_detail_book_publisher_email as publisher_email,
-            loan_detail_book_publication_year as publication_year,
-            loan_detail_book_isbn as isbn,
-            loan_detail_book_author_name as author_name,
-            loan_detail_book_author_biography as author_biography,
-            COUNT(*) as borrow_count
-            FROM loan_detail
-            GROUP BY loan_detail_book_id
-            ORDER BY borrow_count ASC
-            LIMIT $offset, $limit";
+        loan_detail_book_id as id,
+        loan_detail_book_title as title,
+        loan_detail_book_publisher_name as publisher_name,
+        loan_detail_book_publisher_address as publisher_address,
+        loan_detail_book_publisher_phone as publisher_phone,
+        loan_detail_book_publisher_email as publisher_email,
+        loan_detail_book_publication_year as publication_year,
+        loan_detail_book_isbn as isbn,
+        loan_detail_book_author_name as author_name,
+        loan_detail_book_author_biography as author_biography,
+        COUNT(*) as borrow_count
+        FROM loan_detail";
 
-        $books = $this->db->query($baseQuery)->getResult();
+        // Filtering
+        $conditions = [];
+        $params = [];
 
-        $totalPages = ceil($totalData / $limit);
-        $pagination = $this->generatePagination($page, $totalPages, $totalData);
+        if ($search) {
+            $conditions[] = "(loan_detail_book_title LIKE ? OR loan_detail_book_isbn LIKE ?)";
+            $searchTerm = "%" . $search . "%";
+            $params[] = $searchTerm;
+            $params[] = $searchTerm;
+        }
 
-        return $this->response->setJSON([
-            'status' => 200,
-            'message' => 'Berhasil mendapatkan data buku yang paling jarang dipinjam.',
-            'result' => [
-                'data' => $books,
-                'pagination' => $pagination
-            ]
-        ]);
+        // Filter mapping
+        $filterMapping = [
+            'publisher_name' => 'loan_detail_book_publisher_name',
+            'publisher_address' => 'loan_detail_book_publisher_address',
+            'publisher_phone' => 'loan_detail_book_publisher_phone',
+            'publisher_email' => 'loan_detail_book_publisher_email',
+            'author_name' => 'loan_detail_book_author_name',
+            'author_biography' => 'loan_detail_book_author_biography',
+            'isbn' => 'loan_detail_book_isbn',
+            'title' => 'loan_detail_book_title',
+            'year' => 'loan_detail_book_publication_year',
+        ];
+
+        foreach ($filters as $key => $value) {
+            if (!empty($value) && array_key_exists($key, $filterMapping)) {
+                $conditions[] = "{$filterMapping[$key]} = ?";
+                $params[] = $value;
+            }
+        }
+
+        if (count($conditions) > 0) {
+            $baseQuery .= ' WHERE ' . implode(' AND ', $conditions);
+        }
+
+        $baseQuery .= " GROUP BY loan_detail_book_id";
+
+        // Sorting
+        if (!empty($sort)) {
+            $sortDirection = $sort[0] === '-' ? 'DESC' : 'ASC';
+            $sortField = ltrim($sort, '-');
+            $baseQuery .= " ORDER BY $sortField $sortDirection";
+        } else {
+            $baseQuery .= " ORDER BY borrow_count ASC";
+        }
+
+        // Pagination
+        if ($enablePagination) {
+            $baseQuery .= " LIMIT ? OFFSET ?";
+            $params[] = $limit;
+            $params[] = $offset;
+        }
+
+        // Execute query
+        try {
+            $books = $db->query($baseQuery, $params)->getResult();
+
+            // Calculate pagination
+            $pagination = new \stdClass();
+            if ($enablePagination) {
+                $totalPages = ceil($totalData / $limit);
+                $pagination = [
+                    'total_data' => (int) $totalData,
+                    'jumlah_page' => (int) $totalPages,
+                    'prev' => ($page > 1) ? $page - 1 : null,
+                    'page' => (int) $page,
+                    'next' => ($page < $totalPages) ? $page + 1 : null,
+                    'start' => ($page - 1) * $limit + 1,
+                    'end' => min($page * $limit, $totalData),
+                    'detail' => range(max(1, $page - 2), min($totalPages, $page + 2)),
+                ];
+            }
+
+            return $this->response->setJSON([
+                'status' => 200,
+                'message' => 'Berhasil mendapatkan data buku yang paling jarang dipinjam.',
+                'result' => [
+                    'data' => $books,
+                    'pagination' => $pagination,
+                ]
+            ]);
+        } catch (\Exception $e) {
+            return $this->response->setJSON([
+                'status' => 500,
+                'message' => 'Gagal mendapatkan data buku yang paling jarang dipinjam.',
+                'error' => $e->getMessage(),
+            ]);
+        }
     }
 
     public function inactive_users()
     {
-        $limit = $this->request->getVar('limit') ?? 10;
-        $page = $this->request->getVar('page') ?? 1;
+        $db = \Config\Database::connect();
+
+        $limit = (int) ($this->request->getVar('limit') ?? 10);
+        $page = (int) ($this->request->getVar('page') ?? 1);
+        $search = $this->request->getVar('search');
+        $sort = $this->request->getVar('sort') ?? '';
+        $filters = $this->request->getVar('filter') ?? [];
+        $enablePagination = filter_var($this->request->getVar('pagination'), FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE) ?? true;
         $offset = ($page - 1) * $limit;
 
+        // Count query for total data
         $countQuery = "SELECT COUNT(DISTINCT loan_member_id) as total FROM loan";
-        $totalData = $this->db->query($countQuery)->getRow()->total;
+        $totalData = $db->query($countQuery)->getRow()->total;
 
+        // Main query
         $baseQuery = "SELECT 
-            loan_member_id as id,
-            loan_member_username as username,
-            loan_member_email as email,
-            loan_member_full_name as full_name,
-            loan_member_address as address,
-            COUNT(*) as loan_count
-            FROM loan
-            GROUP BY loan_member_id
-            ORDER BY loan_count ASC
-            LIMIT $offset, $limit";
+        loan_member_id as id,
+        loan_member_username as username,
+        loan_member_email as email,
+        loan_member_full_name as full_name,
+        loan_member_address as address,
+        COUNT(*) as loan_count
+        FROM loan";
 
-        $users = $this->db->query($baseQuery)->getResult();
+        // Filtering
+        $conditions = [];
+        $params = [];
 
-        $totalPages = ceil($totalData / $limit);
-        $pagination = $this->generatePagination($page, $totalPages, $totalData);
+        if ($search) {
+            $conditions[] = "(loan_member_username LIKE ? OR loan_member_email LIKE ? OR loan_member_full_name LIKE ?)";
+            $searchTerm = "%" . $search . "%";
+            $params[] = $searchTerm;
+            $params[] = $searchTerm;
+            $params[] = $searchTerm;
+        }
 
-        return $this->response->setJSON([
-            'status' => 200,
-            'message' => 'Berhasil mendapatkan data pengguna tidak aktif.',
-            'result' => [
-                'data' => $users,
-                'pagination' => $pagination
-            ]
-        ]);
+        // Filter mapping
+        $filterMapping = [
+            'username' => 'loan_member_username',
+            'email' => 'loan_member_email',
+            'full_name' => 'loan_member_full_name',
+            'address' => 'loan_member_address',
+        ];
+
+        foreach ($filters as $key => $value) {
+            if (!empty($value) && array_key_exists($key, $filterMapping)) {
+                $conditions[] = "{$filterMapping[$key]} = ?";
+                $params[] = $value;
+            }
+        }
+
+        if (count($conditions) > 0) {
+            $baseQuery .= ' WHERE ' . implode(' AND ', $conditions);
+        }
+
+        $baseQuery .= " GROUP BY loan_member_id";
+
+        // Sorting
+        if (!empty($sort)) {
+            $sortDirection = $sort[0] === '-' ? 'DESC' : 'ASC';
+            $sortField = ltrim($sort, '-');
+            $baseQuery .= " ORDER BY $sortField $sortDirection";
+        } else {
+            $baseQuery .= " ORDER BY loan_count ASC";
+        }
+
+        // Pagination
+        if ($enablePagination) {
+            $baseQuery .= " LIMIT ? OFFSET ?";
+            $params[] = $limit;
+            $params[] = $offset;
+        }
+
+        // Execute query
+        try {
+            $users = $db->query($baseQuery, $params)->getResult();
+
+            // Calculate pagination
+            $pagination = new \stdClass();
+            if ($enablePagination) {
+                $totalPages = ceil($totalData / $limit);
+                $pagination = [
+                    'total_data' => (int) $totalData,
+                    'jumlah_page' => (int) $totalPages,
+                    'prev' => ($page > 1) ? $page - 1 : null,
+                    'page' => (int) $page,
+                    'next' => ($page < $totalPages) ? $page + 1 : null,
+                    'start' => ($page - 1) * $limit + 1,
+                    'end' => min($page * $limit, $totalData),
+                    'detail' => range(max(1, $page - 2), min($totalPages, $page + 2)),
+                ];
+            }
+
+            return $this->response->setJSON([
+                'status' => 200,
+                'message' => 'Berhasil mendapatkan data pengguna tidak aktif.',
+                'result' => [
+                    'data' => $users,
+                    'pagination' => $pagination,
+                ]
+            ]);
+        } catch (\Exception $e) {
+            return $this->response->setJSON([
+                'status' => 500,
+                'message' => 'Gagal mendapatkan data pengguna tidak aktif.',
+                'error' => $e->getMessage(),
+            ]);
+        }
     }
+    // public function most_active_users()
+    // {
+    //     $db = \Config\Database::connect();
 
-    public function most_active_users()
-    {
-        $limit = $this->request->getVar('limit') ?? 10;
-        $page = $this->request->getVar('page') ?? 1;
-        $offset = ($page - 1) * $limit;
+    //     $limit = (int) ($this->request->getVar('limit') ?? 10);
+    //     $page = (int) ($this->request->getVar('page') ?? 1);
+    //     $search = $this->request->getVar('search');
+    //     $sort = $this->request->getVar('sort') ?? '';
+    //     $filters = $this->request->getVar('filter') ?? [];
+    //     $enablePagination = filter_var($this->request->getVar('pagination'), FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE) ?? true;
+    //     $offset = ($page - 1) * $limit;
 
-        $countQuery = "SELECT COUNT(DISTINCT loan_member_id) as total FROM loan";
-        $totalData = $this->db->query($countQuery)->getRow()->total;
+    //     // Count query for total data
+    //     $countQuery = "SELECT COUNT(DISTINCT loan_member_id) as total FROM loan";
+    //     $totalData = $db->query($countQuery)->getRow()->total;
 
-        $baseQuery = "SELECT 
-            loan_member_id as id,
-            loan_member_username as username,
-            loan_member_email as email,
-            loan_member_full_name as full_name,
-            loan_member_address as address,
-            COUNT(*) as loan_count
-            FROM loan
-            GROUP BY loan_member_id
-            ORDER BY loan_count DESC
-            LIMIT $offset, $limit";
+    //     // Main query
+    //     $baseQuery = "SELECT 
+    //     loan_member_id as id,
+    //     loan_member_username as username,
+    //     loan_member_email as email,
+    //     loan_member_full_name as full_name,
+    //     loan_member_address as address,
+    //     COUNT(*) as loan_count
+    //     FROM loan";
 
-        $users = $this->db->query($baseQuery)->getResult();
+    //     // Filtering
+    //     $conditions = [];
+    //     $params = [];
 
-        $totalPages = ceil($totalData / $limit);
-        $pagination = $this->generatePagination($page, $totalPages, $totalData);
+    //     if ($search) {
+    //         $conditions[] = "(loan_member_username LIKE ? OR loan_member_email LIKE ? OR loan_member_full_name LIKE ?)";
+    //         $searchTerm = "%" . $search . "%";
+    //         $params[] = $searchTerm;
+    //         $params[] = $searchTerm;
+    //         $params[] = $searchTerm;
+    //     }
 
-        return $this->response->setJSON([
-            'status' => 200,
-            'message' => 'Berhasil mendapatkan data pengguna paling aktif.',
-            'result' => [
-                'data' => $users,
-                'pagination' => $pagination
-            ]
-        ]);
-    }
+    //     // Filter mapping
+    //     $filterMapping = [
+    //         'username' => 'loan_member_username',
+    //         'email' => 'loan_member_email',
+    //         'full_name' => 'loan_member_full_name',
+    //         'address' => 'loan_member_address',
+    //     ];
+
+    //     foreach ($filters as $key => $value) {
+    //         if (!empty($value) && array_key_exists($key, $filterMapping)) {
+    //             $conditions[] = "{$filterMapping[$key]} = ?";
+    //             $params[] = $value;
+    //         }
+    //     }
+
+    //     if (count($conditions) > 0) {
+    //         $baseQuery .= ' WHERE ' . implode(' AND ', $conditions);
+    //     }
+
+    //     $baseQuery .= " GROUP BY loan_member_id";
+
+    //     // Sorting
+    //     if (!empty($sort)) {
+    //         $sortDirection = $sort[0] === '-' ? 'DESC' : 'ASC';
+    //         $sortField = ltrim($sort, '-');
+    //         $baseQuery .= " ORDER BY $sortField $sortDirection";
+    //     } else {
+    //         $baseQuery .= " ORDER BY loan_count DESC";
+    //     }
+
+    //     // Pagination
+    //     if ($enablePagination) {
+    //         $baseQuery .= " LIMIT ? OFFSET ?";
+    //         $params[] = $limit;
+    //         $params[] = $offset;
+    //     }
+
+    //     // Execute query
+    //     try {
+    //         $users = $db->query($baseQuery, $params)->getResult();
+
+    //         // Calculate pagination
+    //         $pagination = new \stdClass();
+    //         if ($enablePagination) {
+    //             $totalPages = ceil($totalData / $limit);
+    //             $pagination = [
+    //                 'total_data' => (int) $totalData,
+    //                 'jumlah_page' => (int) $totalPages,
+    //                 'prev' => ($page > 1) ? $page - 1 : null,
+    //                 'page' => (int) $page,
+    //                 'next' => ($page < $totalPages) ? $page + 1 : null,
+    //                 'start' => ($page - 1) * $limit + 1,
+    //                 'end' => min($page * $limit, $totalData),
+    //                 'detail' => range(max(1, $page - 2), min($totalPages, $page + 2)),
+    //             ];
+    //         }
+
+    //         return $this->response->setJSON([
+    //             'status' => 200,
+    //             'message' => 'Berhasil mendapatkan data pengguna paling aktif.',
+    //             'result' => [
+    //                 'data' => $users,
+    //                 'pagination' => $pagination,
+    //             ]
+    //         ]);
+    //     } catch (\Exception $e) {
+    //         return $this->response->setJSON([
+    //             'status' => 500,
+    //             'message' => 'Gagal mendapatkan data pengguna paling aktif.',
+    //             'error' => $e->getMessage(),
+    //         ]);
+    //     }
+    // }
 
     public function broken_missing_books()
     {
-        $limit = $this->request->getVar('limit') ?? 10;
-        $page = $this->request->getVar('page') ?? 1;
+        $db = \Config\Database::connect();
+
+        $limit = (int) ($this->request->getVar('limit') ?? 10);
+        $page = (int) ($this->request->getVar('page') ?? 1);
+        $search = $this->request->getVar('search');
+        $sort = $this->request->getVar('sort') ?? '';
+        $filters = $this->request->getVar('filter') ?? [];
+        $enablePagination = filter_var($this->request->getVar('pagination'), FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE) ?? true;
         $offset = ($page - 1) * $limit;
 
+        // Count query for total data
         $countQuery = "SELECT COUNT(*) as total FROM loan_detail WHERE loan_detail_status IN ('Broken', 'Missing')";
-        $totalData = $this->db->query($countQuery)->getRow()->total;
+        $totalData = $db->query($countQuery)->getRow()->total;
 
+        // Main query
         $baseQuery = "SELECT 
-            loan_detail_book_id as id,
-            loan_detail_book_title as title,
-            loan_detail_book_publisher_name as publisher_name,
-            loan_detail_status as status,
-            loan_detail_borrow_date as borrow_date,
-            loan_detail_return_date as return_date
-            FROM loan_detail
-            WHERE loan_detail_status IN ('Broken', 'Missing')
-            ORDER BY loan_detail_borrow_date DESC
-            LIMIT $offset, $limit";
+        loan_detail_book_id as id,
+        loan_detail_book_title as title,
+        loan_detail_book_publisher_name as publisher_name,
+        loan_detail_status as status,
+        loan_detail_borrow_date as borrow_date,
+        loan_detail_return_date as return_date
+        FROM loan_detail
+        WHERE loan_detail_status IN ('Broken', 'Missing')";
 
-        $books = $this->db->query($baseQuery)->getResult();
+        // Filtering
+        $conditions = [];
+        $params = [];
 
-        $totalPages = ceil($totalData / $limit);
-        $pagination = $this->generatePagination($page, $totalPages, $totalData);
+        if ($search) {
+            $conditions[] = "(loan_detail_book_title LIKE ? OR loan_detail_book_publisher_name LIKE ?)";
+            $searchTerm = "%" . $search . "%";
+            $params[] = $searchTerm;
+            $params[] = $searchTerm;
+        }
 
-        return $this->response->setJSON([
-            'status' => 200,
-            'message' => 'Berhasil mendapatkan data buku rusak dan hilang.',
-            'result' => [
-                'data' => $books,
-                'pagination' => $pagination
-            ]
-        ]);
+        // Filter mapping
+        $filterMapping = [
+            'title' => 'loan_detail_book_title',
+            'publisher_name' => 'loan_detail_book_publisher_name',
+            'status' => 'loan_detail_status',
+        ];
+
+        foreach ($filters as $key => $value) {
+            if (!empty($value) && array_key_exists($key, $filterMapping)) {
+                $conditions[] = "{$filterMapping[$key]} = ?";
+                $params[] = $value;
+            }
+        }
+
+        if (count($conditions) > 0) {
+            $baseQuery .= ' AND ' . implode(' AND ', $conditions);
+        }
+
+        // Sorting
+        if (!empty($sort)) {
+            $sortDirection = $sort[0] === '-' ? 'DESC' : 'ASC';
+            $sortField = ltrim($sort, '-');
+            $baseQuery .= " ORDER BY $sortField $sortDirection";
+        } else {
+            $baseQuery .= " ORDER BY loan_detail_borrow_date DESC";
+        }
+
+        // Pagination
+        if ($enablePagination) {
+            $baseQuery .= " LIMIT ? OFFSET ?";
+            $params[] = $limit;
+            $params[] = $offset;
+        }
+
+        // Execute query
+        try {
+            $books = $db->query($baseQuery, $params)->getResult();
+
+            // Calculate pagination
+            $pagination = new \stdClass();
+            if ($enablePagination) {
+                $totalPages = ceil($totalData / $limit);
+                $pagination = [
+                    'total_data' => (int) $totalData,
+                    'jumlah_page' => (int) $totalPages,
+                    'prev' => ($page > 1) ? $page - 1 : null,
+                    'page' => (int) $page,
+                    'next' => ($page < $totalPages) ? $page + 1 : null,
+                    'start' => ($page - 1) * $limit + 1,
+                    'end' => min($page * $limit, $totalData),
+                    'detail' => range(max(1, $page - 2), min($totalPages, $page + 2)),
+                ];
+            }
+
+            return $this->response->setJSON([
+                'status' => 200,
+                'message' => 'Berhasil mendapatkan data buku rusak dan hilang.',
+                'result' => [
+                    'data' => $books,
+                    'pagination' => $pagination,
+                ]
+            ]);
+        } catch (\Exception $e) {
+            return $this->response->setJSON([
+                'status' => 500,
+                'message' => 'Gagal mendapatkan data buku rusak dan hilang.',
+                'error' => $e->getMessage(),
+            ]);
+        }
     }
 
     public function detailed_member_activity()
     {
-        $limit = $this->request->getVar('limit') ?? 10;
-        $page = $this->request->getVar('page') ?? 1;
-        $offset = ($page - 1) * $limit;
+    $db = \Config\Database::connect();
 
-        $countQuery = "SELECT COUNT(*) as total FROM loan";
-        $totalData = $this->db->query($countQuery)->getRow()->total;
+    $limit = (int) ($this->request->getVar('limit') ?? 10);
+    $page = (int) ($this->request->getVar('page') ?? 1);
+    $search = $this->request->getVar('search');
+    $sort = $this->request->getVar('sort') ?? '';
+    $filters = $this->request->getVar('filter') ?? [];
+    $enablePagination = filter_var($this->request->getVar('pagination'), FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE) ?? true;
+    $offset = ($page - 1) * $limit;
 
-        $baseQuery = "SELECT 
-            l.loan_member_id as member_id,
-            l.loan_member_username as username,
-            l.loan_member_full_name as full_name,
-            l.loan_date as loan_date,
-            COUNT(ld.loan_detail_book_id) as total_books,
-            SUM(CASE WHEN ld.loan_detail_status IN ('Broken', 'Missing') THEN 1 ELSE 0 END) as damaged_books
-            FROM loan l, loan_detail ld
-            WHERE l.loan_transaction_code = ld.loan_detail_loan_transaction_code
-            GROUP BY l.loan_transaction_code
-            ORDER BY l.loan_date DESC
-            LIMIT $offset, $limit";
+    // Count query for total data
+    $countQuery = "SELECT COUNT(DISTINCT l.loan_member_id) as total FROM loan l JOIN loan_detail ld ON l.loan_transaction_code = ld.loan_detail_loan_transaction_code";
+    $totalData = $db->query($countQuery)->getRow()->total;
 
-        $activities = $this->db->query($baseQuery)->getResult();
+    // Main query
+    $baseQuery = "SELECT 
+        l.loan_member_id as member_id,
+        l.loan_member_username as username,
+        l.loan_member_full_name as full_name,
+        l.loan_date as loan_date,
+        COUNT(ld.loan_detail_book_id) as total_books,
+        SUM(CASE WHEN ld.loan_detail_status IN ('Broken', 'Missing') THEN 1 ELSE 0 END) as damaged_books
+        FROM loan l
+        JOIN loan_detail ld ON l.loan_transaction_code = ld.loan_detail_loan_transaction_code";
 
-        $totalPages = ceil($totalData / $limit);
-        $pagination = $this->generatePagination($page, $totalPages, $totalData);
+    // Filtering
+    $conditions = [];
+    $params = [];
+
+    if ($search) {
+        $conditions[] = "(l.loan_member_username LIKE ? OR l.loan_member_full_name LIKE ?)";
+        $searchTerm = "%" . $search . "%";
+        $params[] = $searchTerm;
+        $params[] = $searchTerm;
+    }
+
+    // Filter mapping
+    $filterMapping = [
+        'member_id' => 'l.loan_member_id',
+        'username' => 'l.loan_member_username',
+        'full_name' => 'l.loan_member_full_name',
+    ];
+
+    foreach ($filters as $key => $value) {
+        if (!empty($value) && array_key_exists($key, $filterMapping)) {
+            $conditions[] = "{$filterMapping[$key]} = ?";
+            $params[] = $value;
+        }
+    }
+
+    if (count($conditions) > 0) {
+        $baseQuery .= ' WHERE ' . implode(' AND ', $conditions);
+    }
+
+    // Grouping and ordering
+    $baseQuery .= " GROUP BY l.loan_member_id";
+
+    // Sorting
+    if (!empty($sort)) {
+        $sortDirection = $sort[0] === '-' ? 'DESC' : 'ASC';
+        $sortField = ltrim($sort, '-');
+        $baseQuery .= " ORDER BY $sortField $sortDirection";
+    } else {
+        $baseQuery .= " ORDER BY l.loan_date DESC";
+    }
+
+    // Pagination
+    if ($enablePagination) {
+        $baseQuery .= " LIMIT ? OFFSET ?";
+        $params[] = $limit;
+        $params[] = $offset;
+    }
+
+    // Execute query
+    try {
+        $activities = $db->query($baseQuery, $params)->getResult();
+
+        // Calculate pagination
+        $pagination = new \stdClass();
+        if ($enablePagination) {
+            $totalPages = ceil($totalData / $limit);
+            $pagination = [
+                'total_data' => (int) $totalData,
+                'jumlah_page' => (int) $totalPages,
+                'prev' => ($page > 1) ? $page - 1 : null,
+                'page' => (int) $page,
+                'next' => ($page < $totalPages) ? $page + 1 : null,
+                'start' => ($page - 1) * $limit + 1,
+                'end' => min($page * $limit, $totalData),
+                'detail' => range(max(1, $page - 2), min($totalPages, $page + 2)),
+            ];
+        }
 
         return $this->response->setJSON([
             'status' => 200,
             'message' => 'Berhasil mendapatkan data aktivitas detail anggota.',
             'result' => [
                 'data' => $activities,
-                'pagination' => $pagination
+                'pagination' => $pagination,
             ]
         ]);
+    } catch (\Exception $e) {
+        return $this->response->setJSON([
+            'status' => 500,
+ 'message' => 'Gagal mendapatkan data aktivitas detail anggota.',
+            'error' => $e->getMessage(),
+        ]);
     }
+}
 
     public function count_books_status()
     {
@@ -327,27 +770,5 @@ class ReportController extends AuthorizationController
         return $this->respondWithSuccess('Behasil mengembalikan data statistik', $result);
     }
 
-    private function generatePagination($currentPage, $totalPages, $totalData)
-    {
-        $pagination = [
-            'total_data' => (int) $totalData,
-            'jumlah_page' => (int) $totalPages,
-            'prev' => $currentPage > 1 ? $currentPage - 1 : null,
-            'page' => (int) $currentPage,
-            'next' => $currentPage < $totalPages ? $currentPage + 1 : null,
-            'start' => (int) $currentPage,
-            'end' => (int) $currentPage,
-            'detail' => []
-        ];
 
-        // Generate detail pages array
-        $start = max(1, $currentPage - 1);
-        $end = min($totalPages, $currentPage + 1);
-
-        for ($i = $start; $i <= $end; $i++) {
-            $pagination['detail'][] = $i;
-        }
-
-        return $pagination;
-    }
 }

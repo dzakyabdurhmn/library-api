@@ -104,7 +104,7 @@ class LoanController extends AuthorizationController
             return $this->respondWithError("Terdapat kesalahan di sisi server:", null, 500);
         }
 
-        return $this->respondWithSuccess("Behasil meminjam data buku");
+        return $this->respondWithSuccess("Behasil meminjam  buku");
     }
 
 
@@ -133,7 +133,7 @@ class LoanController extends AuthorizationController
         $member = $memberQuery->getRow();
 
         if (!$member) {
-            return $this->respondWithNotFound("Member not found.");
+            return $this->respondWithSuccess("Member not found.");
         }
 
         // Definisikan status yang valid
@@ -155,7 +155,7 @@ class LoanController extends AuthorizationController
             $bookData = $bookQuery->getRow();
 
             if (!$bookData) {
-                return $this->respondWithNotFound("Book with ID $bookId not found.");
+                return $this->respondWithSuccess("Book with ID $bookId not found.");
             }
 
             // Cek apakah member telah meminjam buku ini
