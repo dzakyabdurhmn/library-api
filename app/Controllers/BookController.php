@@ -157,18 +157,21 @@ class BookController extends AuthorizationController
         }
 
         $filterMapping = [
+            'id' => 'books.book_id',
+            'publisher_id' => 'publisher.publisher_id',
+            'author_id' => 'author.author_id',
+            'title' => 'books.books_title',
+            'publication_year' => 'books.books_publication_year',
+            'isbn' => 'books.books_isbn',
+            'stock_quantitiy' => 'book.books_stock_quantity',
+            'price' => 'books.books_price',
+            'barcode' => 'books.books_barcode',
             'publisher_name' => 'publisher.publisher_name',
             'publisher_address' => 'publisher.publisher_address',
             'publisher_phone' => 'publisher.publisher_phone',
             'publisher_email' => 'publisher.publisher_email',
             'author_name' => 'author.author_name',
             'author_biography' => 'author.author_biography',
-            'isbn' => 'books.books_isbn',
-            'title' => 'books.books_title',
-            'year' => 'books.books_publication_year',
-            'stock_quantity' => 'books.books_stock_quantity',
-            'price' => 'books.books_price',
-            'barcode' => 'books.books_barcode'
         ];
 
         foreach ($filters as $key => $value) {
@@ -289,14 +292,14 @@ class BookController extends AuthorizationController
                 'data' => [
                     'id' => (int) $book['book_id'],
                     'publisher_id' => (int) $book['books_publisher_id'],
-                    'title' => $book['books_author_id'],
-                    'publication_year' => $book['books_title'],
-                    'isbn' => $book['books_publication_year'],
+                    'author' => $book['books_author_id'],
+                    'title' => $book['books_title'],
+                    'publication_year' => $book['books_publication_year'],
                     'stock_quantity' => (int) $book['books_stock_quantity'],
                     'author_id' => (int) $book['books_stock_quantity'],
                     'price' => (int) $book['books_price'],
-                    'author' => (int) $book['books_barcode']
-
+                    'barcode' => (int) $book['books_barcode'],
+                    'isbn' => $book['books_isbn']
                 ]
             ];
 
@@ -307,7 +310,7 @@ class BookController extends AuthorizationController
     }
 
     // Fungsi untuk memperbarui data buku (Update)
-    public function update_book($id = null)
+    public function update_book()
     {
         $db = \Config\Database::connect();
 
@@ -348,10 +351,9 @@ class BookController extends AuthorizationController
                 ]
             ],
             'isbn' => [
-                'rules' => 'required|integer',
+                'rules' => 'required',
                 'errors' => [
                     'required' => 'ISBN wajib diisi.',
-                    'integer' => 'ISBN harus berupa angka.'
                 ]
             ],
             'stock_quantity' => [
@@ -380,6 +382,9 @@ class BookController extends AuthorizationController
         if (!$this->validate($rules)) {
             return $this->respondWithValidationError('Kesalahan validasi', $this->validator->getErrors());
         }
+        ;
+
+        $id = $this->request->getVar('id');
 
         // Cek apakah buku dengan ID tersebut ada
         $query = "SELECT * FROM books WHERE book_id = ?";
@@ -420,6 +425,24 @@ class BookController extends AuthorizationController
                   WHERE book_id = ?";
 
             $db->query($query, array_merge(array_values($data), [$id]));
+
+            $query = "SELECT * FROM books WHERE book_id = ?";
+            $book = $db->query($query, [$id])->getRowArray();
+
+
+            $data = [
+                'data' => [
+                    'id' => $book['book_id'],
+                    'publisher_id' => $book['books_publisher_id'],
+                    'author_id' => $book['books_author_id'],
+                    'title' => $book['books_title'],
+                    'publication_year' => $book['books_publication_year'],
+                    'isbn' => $book['books_isbn'],
+                    'stock_quantity' => $book['books_stock_quantity'],
+                    'price' => $book['books_price'],
+                    'barcode' => $book['books_barcode']
+                ]
+            ];
 
             return $this->respondWithSuccess('Book updated successfully.', $data);
         } catch (DatabaseException $e) {
@@ -466,6 +489,7 @@ class BookController extends AuthorizationController
         $db = \Config\Database::connect();
         $id = $this->request->getVar('id');
         $additional_stock = $this->request->getVar('stock');
+        $type = $this->request->getVar('type');
 
         // Validasi token (hanya warehouse yang bisa update stock)
         $tokenValidation = $this->validateToken('warehouse,superadmin');
@@ -473,7 +497,7 @@ class BookController extends AuthorizationController
             return $this->respond($tokenValidation, $tokenValidation['status']);
         }
 
-        // Validasi input untuk memastikan 'id' dan 'stock' valid
+        // Validasi input untuk memastikan 'id', 'stock', dan 'type' valid
         $validation = \Config\Services::validation();
         $validation->setRules([
             'id' => [
@@ -491,6 +515,14 @@ class BookController extends AuthorizationController
                     'required' => 'Stock wajib diisi.',
                     'integer' => 'Stock harus berupa angka.',
                     'greater_than_equal_to' => 'Stock harus lebih besar atau sama dengan 0.'
+                ]
+            ],
+            'type' => [
+                'label' => 'Type',
+                'rules' => 'required|in_list[masuk,keluar]',
+                'errors' => [
+                    'required' => 'Type wajib diisi.',
+                    'in_list' => 'Type harus salah satu dari: masuk, keluar.'
                 ]
             ]
         ]);
@@ -512,8 +544,22 @@ class BookController extends AuthorizationController
                 return $this->respondWithError('Failed to update stock: Book not found.', null, 404);
             }
 
-            // Hitung stock baru
-            $new_stock = (int) $book->books_stock_quantity + (int) $additional_stock;
+            // Debugging: Log the initial stock and additional stock
+            log_message('debug', 'Initial stock: ' . $book->books_stock_quantity);
+            log_message('debug', 'Additional stock: ' . $additional_stock);
+
+            // Hitung stock baru berdasarkan type
+            if ($type === 'masuk') {
+                // Untuk 'masuk', tambahkan stock
+                $new_stock = (int) $book->books_stock_quantity + (int) $additional_stock;
+            } else {
+                // Untuk 'keluar', kurangi stock
+                $new_stock = (int) $book->books_stock_quantity - (int) $additional_stock;
+                // Pastikan stock tidak menjadi negatif
+                if ($new_stock < 0) {
+                    return $this->respondWithError('Stock tidak bisa kurang dari 0.', null, 400);
+                }
+            }
 
             // Lakukan update stock
             $query = "UPDATE books SET books_stock_quantity = ? WHERE book_id = ?";

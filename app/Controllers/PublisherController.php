@@ -326,7 +326,24 @@ class PublisherController extends AuthorizationController
 
             $db->query($query, array_merge(array_values($data), [$id]));
 
-            return $this->respondWithSuccess('Berhasil mengupdate data publiser');
+
+            $query = "SELECT * FROM publisher WHERE publisher_id = ?";
+            $publisher = $db->query($query, [$id])->getRowArray();
+
+            $data = [
+                'data' => [
+                    'id' => $publisher['publisher_id'],
+                    'name' => $publisher['publisher_name'],
+                    'address' => $publisher['publisher_address'],
+                    'phone' => $publisher['publisher_phone'],
+                    'email' => $publisher['publisher_email']
+                ]
+            ];
+
+
+
+
+            return $this->respondWithSuccess('Berhasil mengupdate data publiser', $data);
         } catch (DatabaseException $e) {
             return $this->respondWithError('Terdapat kesalahan di sisi server:: ' . $e->getMessage());
         }

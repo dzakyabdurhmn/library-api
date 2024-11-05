@@ -100,6 +100,7 @@ class AuthorController extends AuthorizationController
 
             // Define mapping for additional filters
             $filterMapping = [
+                'id' => 'author_id',
                 'name' => 'author_name',
                 'biography' => 'author_biography',
             ];
@@ -226,7 +227,7 @@ class AuthorController extends AuthorizationController
 
             $data = [
                 'data' => [
-                    'id' => $author['author_id'],
+                    'id' => (int) $author['author_id'],
                     'name' => $author['author_name'],
                     'biography' => $author['author_biography'] // Access biography correctly
                 ],

@@ -47,11 +47,12 @@ class AuthController extends AuthorizationController
     }
 
     $filterMapping = [
+      'id' => 'admin_id',
       'username' => 'admin_username',
-      'full_name' => 'admin_full_name',
       'email' => 'admin_email',
-      'role' => 'admin_role',
+      'full_name' => 'admin_full_name',
       'nik' => 'admin_nik',
+      'role' => 'admin_role',
       'phone' => 'admin_phone',
       'gender' => 'admin_gender',
       'address' => 'admin_address'
@@ -217,8 +218,20 @@ class AuthController extends AuthorizationController
   public function edit_account()
   {
     $db = \Config\Database::connect();
+    $admin_id = $this->request->getVar('id');
 
-    $admin_id = $this->request->getVar(index: 'id');
+    // Ambil data admin yang akan diedit
+    $currentAdmin = $db->query("SELECT * FROM admin WHERE admin_id = ?", [$admin_id])->getRowArray();
+
+    // Cek apakah username berubah
+    $usernameRule = ($this->request->getVar('username') !== $currentAdmin['admin_username'])
+      ? 'required|min_length[5]|max_length[50]|is_unique[admin.admin_username]'
+      : 'required|min_length[5]|max_length[50]';
+
+    // Cek apakah email berubah    
+    $emailRule = ($this->request->getVar('email') !== $currentAdmin['admin_email'])
+      ? 'required|valid_email|is_unique[admin.admin_email]'
+      : 'required|valid_email';
 
     // Aturan validasi data yang akan diubah
     $rules = [
@@ -229,7 +242,7 @@ class AuthController extends AuthorizationController
         ]
       ],
       'username' => [
-        'rules' => 'required|min_length[5]|max_length[50]|is_unique[admin.admin_username]',
+        'rules' => $usernameRule,
         'errors' => [
           'required' => 'Username wajib diisi.',
           'min_length' => 'Username minimal harus 5 karakter.',
@@ -238,7 +251,7 @@ class AuthController extends AuthorizationController
         ]
       ],
       'email' => [
-        'rules' => 'required|valid_email|is_unique[admin.admin_email]',
+        'rules' => $emailRule,
         'errors' => [
           'required' => 'Email wajib diisi.',
           'valid_email' => 'Email tidak valid.',
@@ -253,7 +266,7 @@ class AuthController extends AuthorizationController
         ]
       ],
       'nik' => [
-        'rules' => 'required|min_length[16]|max_length[30]',
+        'rules' => 'required|min_length[13]|max_length[30]',
         'errors' => [
           'required' => 'NIK wajib diisi.',
           'min_length' => 'NIK minimal harus 16 karakter.',
@@ -294,43 +307,39 @@ class AuthController extends AuthorizationController
       return $this->respondWithValidationError('Validasi error', $this->validator->getErrors());
     }
 
-
     $data = [
       'admin_username' => $this->request->getVar('username'),
       'admin_email' => $this->request->getVar('email'),
       'admin_full_name' => $this->request->getVar('full_name'),
       'admin_phone' => $this->request->getVar('phone'),
       'admin_address' => $this->request->getVar('address'),
-      'admin_gender' => $this->request->getVar(index: 'gender'),
-      'admin_nik' => $this->request->getVar(index: 'nik'),
-
-
+      'admin_gender' => $this->request->getVar('gender'),
+      'admin_nik' => $this->request->getVar('nik'),
     ];
-
-
 
     try {
       // Cek apakah user dengan admin_id tersebut adalah warehouse atau frontliner
       $query = "SELECT admin_role FROM admin WHERE admin_id = ?";
-      $user = $db->query($query, [3])->getRowArray();
-
+      $user = $db->query($query, [$admin_id])->getRowArray();
 
       if (!$user) {
         return $this->respondWithError('User tidak di temukan.');
       }
 
       if ($user['admin_role'] == 'superadmin') {
-        return $this->respondWithUnauthorized('Hanya wearhouse dan frontliner yang dapat diedit');
+        return $this->respondWithUnauthorized('Hanya warehouse dan frontliner yang dapat diedit');
       }
 
-
-
-
-
-
       // Lakukan update data
-      $updateQuery = "UPDATE admin SET admin_username = ?, admin_email = ?, admin_full_name = ?, admin_phone = ?, admin_address = ?, admin_nik = ?, admin_phone = ?, admin_gender = ? WHERE admin_id = ?";
-
+      $updateQuery = "UPDATE admin SET 
+            admin_username = ?, 
+            admin_email = ?, 
+            admin_full_name = ?, 
+            admin_phone = ?, 
+            admin_address = ?, 
+            admin_nik = ?, 
+            admin_gender = ? 
+            WHERE admin_id = ?";
 
       $db->query($updateQuery, [
         $data['admin_username'],
@@ -339,34 +348,27 @@ class AuthController extends AuthorizationController
         $data['admin_phone'],
         $data['admin_address'],
         $data['admin_nik'],
-        $data['admin_phone'],
         $data['admin_gender'],
         $admin_id
       ]);
-
-
-
-
-
-
 
       $result = [
         'data' => [
           'username' => $data['admin_username'],
           'email' => $data['admin_email'],
           'full_name' => $data['admin_full_name'],
+          'nik' => $data['admin_nik'],
           'phone' => $data['admin_phone'],
+          'gender' => $data['admin_gender'],
           'address' => $data['admin_address'],
-          'gender' => $data['admin_gender']
         ]
       ];
 
-      return $this->respondWithSuccess('Berhasil mengupdate data karywan.', $result);
+      return $this->respondWithSuccess('Berhasil mengupdate data karyawan.', $result);
     } catch (DatabaseException $e) {
       return $this->respondWithError('Terjadi kesalahan di sisi server: ' . $e->getMessage());
     }
   }
-
   // Fungsi untuk mendaftarkan pengguna (hanya warehouse dan frontliner)
   public function register()
   {
@@ -514,7 +516,7 @@ class AuthController extends AuthorizationController
         $token = bin2hex(random_bytes(32));  // Random string sebagai token
 
         // Simpan token ke database
-        $query = "INSERT INTO admin_token (admin_id, token, expires_at) VALUES (?, ?, ?)";
+        $query = "INSERT INTO admin_token (admin_token_admin_id, admin_token_token, admin_token_expires_at) VALUES (?, ?, ?)";
         $db->query($query, [
           $user['admin_id'],
           $token,
@@ -606,8 +608,8 @@ class AuthController extends AuthorizationController
 
     // Simpan token ke tabel admin_token
     try {
-      $query = "INSERT INTO admin_otp (admin_id, admin_otp_otp, expires_at) VALUES (?, ?, ?)";
-      $db->query($query, [$user['admin_id'], $otp, $expiresAt]);
+      $query = "INSERT INTO admin_otp (admin_otp_email, admin_otp_otp, admin_otp_expires_at) VALUES (?, ?, ?)";
+      $db->query($query, [$user['admin_email'], $otp, $expiresAt]);
     } catch (\Exception $e) {
       return $this->respondWithError('Gagal menyimpan token: ' . $e->getMessage());
     }
@@ -860,13 +862,15 @@ class AuthController extends AuthorizationController
   public function resetPassword()
   {
     $db = \Config\Database::connect();
-    $otp = $this->request->getVar('otp');
+    $otp = $this->request->getVar('otp'); // OTP entered by the user
+    $email = $this->request->getVar('email'); // Email associated with the OTP
     $newPassword = $this->request->getVar('new_password');
 
     // Validasi input
     $rules = [
       'otp' => 'required',
-      'new_password' => 'required|min_length[8]'
+      'email' => 'required|valid_email', // Validate email
+      'new_password' => 'required|min_length[8]',
     ];
 
     if (!$this->validate($rules)) {
@@ -874,11 +878,11 @@ class AuthController extends AuthorizationController
     }
 
     // Cari token di database dan cek masa berlaku
-    $query = "SELECT * FROM admin_otp WHERE admin_otp_otp = ? AND expires_at > NOW()";
-    $tokenData = $db->query($query, [$otp])->getRowArray();
+    $query = "SELECT * FROM admin_otp WHERE admin_otp_email = ? AND admin_otp_otp = ? AND admin_otp_expires_at > NOW()";
+    $tokenData = $db->query($query, [$email, $otp])->getRowArray();
 
     if (!$tokenData) {
-      return $this->respondWithUnauthorized('OTP salah atau sudah kedaurasa.');
+      return $this->respondWithUnauthorized('OTP salah atau sudah kedaluwarsa.');
     }
 
     // Hash password baru
@@ -887,21 +891,22 @@ class AuthController extends AuthorizationController
     // Update password di tabel admin
     try {
       $query = "UPDATE admin SET admin_password = ? WHERE admin_id = ?";
-      $db->query($query, [$hashedPassword, $tokenData['admin_id']]);
+      $db->query($query, [$hashedPassword, $tokenData['admin_otp_email']]);
     } catch (\Exception $e) {
       return $this->respondWithError('Gagal memperbarui password: ' . $e->getMessage());
     }
 
     // Hapus token setelah digunakan
     try {
-      $query = "DELETE FROM admin_otp WHERE admin_otp_otp = ?";
-      $db->query($query, [$otp]);
+      $query = "DELETE FROM admin_otp WHERE admin_otp_email = ? AND admin_otp_otp = ?";
+      $db->query($query, [$email, $otp]);
     } catch (\Exception $e) {
       return $this->respondWithError('Gagal menghapus token: ' . $e->getMessage());
     }
 
-    return $this->respondWithSuccess('Password berhasil di reset.');
+    return $this->respondWithSuccess('Password berhasil direset.');
   }
+
 
 }
 

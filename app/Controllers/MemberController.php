@@ -51,9 +51,9 @@ class MemberController extends AuthorizationController
                 ]
             ],
             'status' => [
-                'rules' => 'required',
+                'rules' => 'in_list[active,inactive]',
                 'errors' => [
-                    'required' => 'Status wajib diisi.'
+                    'in_list' => 'Status harus salah satu dari: active, inactive.'
                 ]
             ],
             'religion' => [
@@ -69,10 +69,10 @@ class MemberController extends AuthorizationController
                 ]
             ],
             'gender' => [
-                'rules' => 'required|in_list[MEN,WOMEN]',
+                'rules' => 'required|in_list[PRIA,WANITA]',
                 'errors' => [
                     'required' => 'Jenis kelamin wajib diisi.',
-                    'in_list' => 'Jenis kelamin harus salah satu dari: MEN atau WOMEN.'
+                    'in_list' => 'Jenis kelamin harus salah satu dari: PRIA atau WANITA.'
                 ]
             ]
         ];
@@ -248,9 +248,9 @@ class MemberController extends AuthorizationController
                 ]
             ],
             'gender' => [
-                'rules' => 'in_list[Laki-Laki,Perempuan]',
+                'rules' => 'in_list[PRIA,WANITA]',
                 'errors' => [
-                    'in_list' => 'Jenis kelamin harus salah satu dari: Laki-Laki atau Perempuan.'
+                    'in_list' => 'Jenis kelamin harus salah satu dari: PRIA atau WANITA.'
                 ]
             ],
         ];
@@ -298,7 +298,25 @@ class MemberController extends AuthorizationController
 
             $db->query($query, $params);
 
-            return $this->respondWithSuccess('Berhasil mengupdate data member');
+            $query = "SELECT * FROM member WHERE member_id = ?";
+            $member = $db->query($query, [$id])->getRowArray();
+
+            $data = [
+                'data' => [
+                    'id' => $member['member_id'],
+                    'username' => $member['member_username'],
+                    'email' => $member['member_email'],
+                    'full_name' => $member['member_full_name'],
+                    'address' => $member['member_address'],
+                    'job' => $member['member_job'],
+                    'status' => $member['member_status'],
+                    'religion' => $member['member_religion'],
+                    'barcode' => $member['member_barcode'],
+                    'gender' => $member['member_gender']
+                ]
+            ];
+
+            return $this->respondWithSuccess('Berhasil mengupdate data member', $data);
         } catch (DatabaseException $e) {
             return $this->respondWithError('Terdapat kesalahan di sisi server: ' . $e->getMessage());
         }
@@ -382,7 +400,7 @@ class MemberController extends AuthorizationController
             // Handle search across all fields
             if ($search) {
                 $conditions[] = "(member_id = ? OR member_username LIKE ? OR member_full_name LIKE ? OR member_email LIKE ? OR member_address LIKE ? OR member_job LIKE ? OR member_status LIKE ? OR member_religion LIKE ? OR member_barcode LIKE ? OR member_gender LIKE ?)";
-                $params[] = (int) $search; // Mencari berdasarkan ID
+                $params[] = $search; // Mencari berdasarkan ID
                 $params = array_merge($params, array_fill(0, 9, "%$search%")); // Mencari di kolom lainnya
             }
 
@@ -481,11 +499,16 @@ class MemberController extends AuthorizationController
             return $this->respondWithError('Failed to retrieve members: ' . $e->getMessage());
         }
     }
-
-
-
-
-
 }
 
 
+
+
+
+// semua field bisa di sort termasuk id
+// kalo berhasil error tetep ada tapi string kosong
+// is unique ketika update kalo ga berubah ga usah pakai
+// di api add stock di kasi tipe keluar / masuk
+// harusnya yang detail bisa di copy di update
+// pas reset juga kasih email
+// rapiin db transaksi

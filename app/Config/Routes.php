@@ -40,7 +40,7 @@ $routes->group('', ['filter' => 'authToken'], function ($routes) {
         $routes->put('stock', 'BookController::stock'); // Mendapatkan semua buku dengan pagination, search, dan filter
         $routes->get('detail', 'BookController::get_detail'); // Mendapatkan buku berdasarkan ID
         $routes->post('/', 'BookController::create'); // Menambahkan buku baru
-        $routes->put('(:num)', 'BookController::update/$1'); // Memperbarui buku berdasarkan ID
+        $routes->put('', 'BookController::update_book'); // Memperbarui buku berdasarkan ID
         $routes->delete('', 'BookController::delete_book'); // Menghapus buku berdasarkan ID
     });
 
