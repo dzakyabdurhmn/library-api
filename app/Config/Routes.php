@@ -81,7 +81,8 @@ $routes->group('', ['filter' => 'authToken'], function ($routes) {
         $routes->get('detailed-member-activity', 'ReportController::detailed_member_activity');
         $routes->get('detailed-borrowed-books', 'ReportController::detailed_borrowed_books');
         $routes->get('count-books-status', 'ReportController::count_books_status');
-
+        $routes->get('detail-stock-history', 'ReportController::getStockHistoryByBookId');
+        $routes->get('stock-history', 'ReportController::getAllStockHistory');
     });
 
 

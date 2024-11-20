@@ -18,11 +18,11 @@ class MemberController extends AuthorizationController
         }
 
         $rules = [
-            'username' => [
+            'institution' => [
                 'rules' => 'required|min_length[5]',
                 'errors' => [
-                    'required' => 'Username wajib diisi.',
-                    'min_length' => 'Username harus minimal 5 karakter.'
+                    'required' => 'Institution wajib diisi.',
+                    'min_length' => 'Institution harus minimal 5 karakter.'
                 ]
             ],
             'email' => [
@@ -84,7 +84,7 @@ class MemberController extends AuthorizationController
 
 
         $data = [
-            'member_username' => $this->request->getVar('username'),
+            'member_institution' => $this->request->getVar('institution'),
             'member_email' => $this->request->getVar('email'),
             'member_full_name' => $this->request->getVar('full_name'),
             'member_address' => $this->request->getVar('address'),
@@ -97,11 +97,11 @@ class MemberController extends AuthorizationController
 
         try {
             // Raw query untuk insert data member
-            $query = "INSERT INTO member (member_username, member_email, member_full_name, member_address, member_job, member_status, member_religion, member_barcode, member_gender) 
+            $query = "INSERT INTO member (member_institution, member_email, member_full_name, member_address, member_job, member_status, member_religion, member_barcode, member_gender) 
                       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
             $db->query($query, [
-                $data['member_username'],
+                $data['member_institution'],
                 $data['member_email'],
                 $data['member_full_name'],
                 $data['member_address'],
@@ -157,7 +157,7 @@ class MemberController extends AuthorizationController
             $response = [
                 'data' => [
                     'id' => $member['member_id'],
-                    'username' => $member['member_username'],
+                    'institution' => $member['member_institution'],
                     'email' => $member['member_email'],
                     'full_name' => $member['member_full_name'],
                     'address' => $member['member_address'],
@@ -199,10 +199,10 @@ class MemberController extends AuthorizationController
                     'is_natural_no_zero' => 'ID harus berupa angka positif yang valid.'
                 ]
             ],
-            'username' => [
+            'institution' => [
                 'rules' => 'min_length[5]',
                 'errors' => [
-                    'min_length' => 'Username harus minimal 5 karakter.'
+                    'min_length' => 'institution harus minimal 5 karakter.'
                 ]
             ],
             'email' => [
@@ -268,7 +268,7 @@ class MemberController extends AuthorizationController
         }
 
         $data = [
-            'member_username' => $this->request->getVar('username'),
+            'member_institution' => $this->request->getVar('institution'),
             'member_email' => $this->request->getVar('email'),
             'member_full_name' => $this->request->getVar('full_name'),
             'member_address' => $this->request->getVar('address'),
@@ -304,7 +304,7 @@ class MemberController extends AuthorizationController
             $data = [
                 'data' => [
                     'id' => $member['member_id'],
-                    'username' => $member['member_username'],
+                    'institution' => $member['member_institution'],
                     'email' => $member['member_email'],
                     'full_name' => $member['member_full_name'],
                     'address' => $member['member_address'],
@@ -393,13 +393,13 @@ class MemberController extends AuthorizationController
 
         try {
             // Base query
-            $query = "SELECT member_id, member_username, member_email, member_full_name, member_address, member_job, member_status, member_religion, member_barcode, member_gender FROM member";
+            $query = "SELECT member_id, member_institution, member_email, member_full_name, member_address, member_job, member_status, member_religion, member_barcode, member_gender FROM member";
             $conditions = [];
             $params = [];
 
             // Handle search across all fields
             if ($search) {
-                $conditions[] = "(member_id = ? OR member_username LIKE ? OR member_full_name LIKE ? OR member_email LIKE ? OR member_address LIKE ? OR member_job LIKE ? OR member_status LIKE ? OR member_religion LIKE ? OR member_barcode LIKE ? OR member_gender LIKE ?)";
+                $conditions[] = "(member_id = ? OR member_institution LIKE ? OR member_full_name LIKE ? OR member_email LIKE ? OR member_address LIKE ? OR member_job LIKE ? OR member_status LIKE ? OR member_religion LIKE ? OR member_barcode LIKE ? OR member_gender LIKE ?)";
                 $params[] = $search; // Mencari berdasarkan ID
                 $params = array_merge($params, array_fill(0, 9, "%$search%")); // Mencari di kolom lainnya
             }
@@ -407,7 +407,7 @@ class MemberController extends AuthorizationController
             // Map filter keys to database columns
             $filterMapping = [
                 'id' => 'member_id',
-                'username' => 'member_username',
+                'institution' => 'member_institution',
                 'email' => 'member_email',
                 'full_name' => 'member_full_name',
                 'address' => 'member_address',
@@ -455,7 +455,7 @@ class MemberController extends AuthorizationController
             $response = array_map(function ($member) {
                 return [
                     'id' => (int) $member['member_id'],
-                    'username' => $member['member_username'],
+                    'institution' => $member['member_institution'],
                     'email' => $member['member_email'],
                     'full_name' => $member['member_full_name'],
                     'address' => $member['member_address'],

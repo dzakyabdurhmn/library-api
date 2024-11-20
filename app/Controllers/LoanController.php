@@ -12,108 +12,165 @@ class LoanController extends AuthorizationController
 
     public function borrow_book()
     {
-        $request = $this->request->getJSON(true);
+        try {
+            $request = $this->request->getJSON(true);
 
-        $tokenValidation = $this->validateToken('frontliner,superadmin'); // Fungsi helper dipanggil
+            $tokenValidation = $this->validateToken('frontliner,superadmin');
 
-        if ($tokenValidation !== true) {
-            return $this->respond($tokenValidation, $tokenValidation['status']);
+            if ($tokenValidation !== true) {
+                return $this->respond($tokenValidation, $tokenValidation['status']);
+            }
+
+            if (empty($request['member_id']) || empty($request['borrow_book'])) {
+                return $this->respondWithError("Member ID dan daftar buku diperlukan.", null, 400);
+            }
+
+            $memberId = $request['member_id'];
+            $borrowBooks = $request['borrow_book'];
+
+            $db = Database::connect();
+
+            // Ambil detail member
+            $memberQuery = $db->query("SELECT member_institution, member_email, member_full_name, member_address FROM member WHERE member_id = ?", [$memberId]);
+            $member = $memberQuery->getRow();
+
+            if (!$member) {
+                return $this->respondWithError("Member tidak ditemukan.", null, 404);
+            }
+
+            // Cek total buku yang sedang dipinjam
+            $currentLoansQuery = $db->query("
+            SELECT COUNT(*) as total 
+            FROM loan_detail ld
+            JOIN loan l ON l.loan_id = ld.loan_detail_loan_id
+            WHERE ld.loan_detail_status = 'Borrowed' 
+            AND l.loan_member_id = ?",
+                [$memberId]
+            );
+
+            $currentLoans = $currentLoansQuery->getRow()->total;
+
+            if ($currentLoans >= 3) {
+                return $this->respondWithError("Tidak dapat meminjam lebih dari 3 buku dalam satu waktu", null, 400);
+            }
+
+            $booksToBorrow = array_filter($borrowBooks, function ($book) {
+                return isset($book['book_id']);
+            });
+
+            if (count($booksToBorrow) + $currentLoans > 3) {
+                return $this->respondWithError("Hanya dapat meminjam " . (3 - $currentLoans) . " buku lagi.", null, 400);
+            }
+
+            $db->transBegin();
+
+            try {
+                // Insert ke tabel loan
+                $loanData = [
+                    'loan_member_id' => $memberId,
+                    'loan_date' => date('Y-m-d H:i:s'),
+                    'loan_member_institution' => $member->member_institution,
+                    'loan_member_email' => $member->member_email,
+                    'loan_member_full_name' => $member->member_full_name,
+                    'loan_member_address' => $member->member_address
+                ];
+
+                $db->table('loan')->insert($loanData);
+                $loanId = $db->insertID();
+
+
+
+                foreach ($booksToBorrow as $book) {
+                    $bookId = $book['book_id'];
+
+                    // Cek ketersediaan buku
+                    $bookQuery = $db->query("
+                    SELECT b.*, 
+                        a.author_name, 
+                        a.author_biography,
+                        p.publisher_name,
+                        p.publisher_address,
+                        p.publisher_phone,
+                        p.publisher_email
+                    FROM books b
+                    LEFT JOIN author a ON b.books_author_id = a.author_id
+                    LEFT JOIN publisher p ON b.books_publisher_id = p.publisher_id
+                    WHERE b.book_id = ? 
+                    FOR UPDATE",
+                        [$bookId]
+                    );
+
+                    $bookData = $bookQuery->getRow();
+
+                    if (!$bookData) {
+                        throw new \Exception("Buku dengan ID {$bookId} tidak ditemukan.");
+                    }
+
+                    if ($bookData->books_stock_quantity <= 0) {
+                        throw new \Exception("Stok buku '{$bookData->books_title}' tidak tersedia.");
+                    }
+
+                    // Insert loan detail
+                    $loanDetailData = [
+                        'loan_detail_loan_id' => $loanId,
+                        'loan_detail_book_id' => $bookId,
+                        'loan_detail_borrow_date' => date('Y-m-d H:i:s'),
+                        'loan_detail_status' => 'Borrowed',
+                        'loan_detail_book_title' => $bookData->books_title,
+                        'loan_detail_book_isbn' => $bookData->books_isbn,
+                        'loan_detail_book_publication_year' => $bookData->books_publication_year,
+                        'loan_detail_book_author_name' => $bookData->author_name,
+                        'loan_detail_book_author_biography' => $bookData->author_biography, // Menambahkan biografi penulis
+                        'loan_detail_book_publisher_name' => $bookData->publisher_name,
+                        'loan_detail_book_publisher_address' => $bookData->publisher_address, // Menambahkan alamat penerbit
+                        'loan_detail_book_publisher_phone' => $bookData->publisher_phone, // Menambahkan telepon penerbit
+                        'loan_detail_book_publisher_email' => $bookData->publisher_email, // Menambahkan email penerbit
+                        'loan_detail_book_publisher_id' => $bookData->books_publisher_id,
+                        'loan_detail_book_author_id' => $bookData->books_author_id,
+                    ];
+
+                    $db->table('loan_detail')->insert($loanDetailData); // Pastikan ini dieksekusi
+
+                    // Update stok buku
+                    $result = $db->query("
+                    UPDATE books 
+                    SET books_stock_quantity = books_stock_quantity - 1 
+                    WHERE book_id = ? AND books_stock_quantity > 0",
+                        [$bookId]
+                    );
+
+                    if ($db->affectedRows() === 0) {
+                        throw new \Exception("Gagal mengupdate stok buku '{$bookData->books_title}'.");
+                    }
+                }
+
+
+
+                $db->transCommit();
+
+                return $this->respondWithSuccess("Berhasil meminjam buku", [
+                    "loan_id" => $loanId,
+                    "member" => [
+                        "id" => $memberId,
+                        "name" => $member->member_full_name
+                    ],
+                    "borrowed_books" => count($booksToBorrow)
+                ]);
+
+            } catch (\Exception $e) {
+                $db->transRollback();
+                return $this->respondWithError("Error: " . $e->getMessage(), null, 400);
+            }
+
+        } catch (\Exception $e) {
+            return $this->respondWithError("Terjadi kesalahan sistem: " . $e->getMessage(), null, 500);
         }
-
-        if (empty($request['member_id']) || empty($request['borrow_book'])) {
-            return $this->respondWithError("Member buku dan id buku di perlukan.", null, 400);
-        }
-
-        $memberId = $request['member_id'];
-        $borrowBooks = $request['borrow_book'];
-
-        $db = Database::connect();
-
-        // Ambil detail member untuk diinsert ke tabel loan
-        $memberQuery = $db->query("SELECT member_username, member_email, member_full_name, member_address FROM member WHERE member_id = ?", [$memberId]);
-        $member = $memberQuery->getRow();
-
-        if (!$member) {
-            return $this->respondWithError("Member not found.", null, 404);
-        }
-
-        // Cek total buku yang sedang dipinjam oleh member
-        $currentLoansQuery = $db->query("
-        SELECT COUNT(*) as total 
-        FROM loan_detail 
-        WHERE loan_detail_status = 'Borrowed' 
-        AND loan_detail_loan_transaction_code IN (
-            SELECT loan_transaction_code 
-            FROM loan 
-            WHERE loan_member_id = ?
-        )", [$memberId]);
-        $currentLoans = $currentLoansQuery->getRow()->total;
-
-        // Periksa apakah sudah mencapai batas
-        if ($currentLoans >= 3) {
-            return $this->respondWithError("Anda tidak dapat meminjam lebih dari 3 buku dalam satu waktu", null, 400);
-        }
-
-        // Batasi jumlah buku yang dapat dipinjam
-        $booksToBorrow = array_filter($borrowBooks, function ($book) {
-            return isset($book['book_id']);
-        });
-
-        // Validasi total buku yang ingin dipinjam
-        if (count($booksToBorrow) + $currentLoans > 3) {
-            return $this->respondWithError("Anda hanya bisa meminjam " . (3 - $currentLoans) . "buku.", null, 400);
-        }
-
-        $db->transStart();
-
-        // Generate transaction code
-        $transactionCode = uniqid('loan_');
-
-        // Insert data ke tabel loan beserta detail member
-        $db->query("
-        INSERT INTO loan (loan_member_id, loan_transaction_code, loan_date, loan_member_username, loan_member_email, loan_member_full_name, loan_member_address) 
-        VALUES (?, ?, NOW(), ?, ?, ?, ?)",
-            [$memberId, $transactionCode, $member->member_username, $member->member_email, $member->member_full_name, $member->member_address]
-        );
-
-        foreach ($booksToBorrow as $book) {
-            $bookId = $book['book_id'];
-
-            // Cek stok buku dan ambil detail buku beserta publisher
-            $bookQuery = $db->query("
-            SELECT b.books_stock_quantity, b.books_title, b.books_isbn, b.books_publication_year, a.author_name, a.author_biography, 
-                   p.publisher_name, p.publisher_address, p.publisher_phone, p.publisher_email 
-            FROM books b
-            LEFT JOIN author a ON b.books_author_id = a.author_id
-            LEFT JOIN publisher p ON b.books_publisher_id = p.publisher_id
-            WHERE b.book_id = ?", [$bookId]);
-            $bookData = $bookQuery->getRow();
-
-
-
-            // Insert detail peminjaman dengan detail buku dan publisher
-
-
-            // Kurangi stok buku
-            $db->query("UPDATE books SET books_stock_quantity = books_stock_quantity - 1 WHERE book_id = ?", [$bookId]);
-        }
-
-        $db->transComplete();
-
-        if ($db->transStatus() === false) {
-            return $this->respondWithError("Terdapat kesalahan di sisi server:", null, 500);
-        }
-
-        return $this->respondWithSuccess("Behasil meminjam  buku");
     }
-
 
     public function deport()
     {
         $db = Database::connect();
-
-
-        $tokenValidation = $this->validateToken('superadmin'); // Fungsi helper dipanggil
+        $tokenValidation = $this->validateToken('superadmin');
 
         if ($tokenValidation !== true) {
             return $this->respond($tokenValidation, $tokenValidation['status']);
@@ -121,112 +178,137 @@ class LoanController extends AuthorizationController
 
         $request = $this->request->getJSON(true);
 
-        if (empty($request['member_id']) || empty($request['borrow_book'])) {
-            return $this->respondWithValidationError("Member ID and book details are required.");
+        if (empty($request['borrow_id']) || empty($request['borrow_book'])) {
+            return $this->respondWithError("ID peminjaman dan detail buku diperlukan.", null, 400);
         }
 
-        $memberId = $request['member_id'];
+        $loanId = $request['borrow_id'];
         $returnBooks = $request['borrow_book'];
 
-        // Ambil detail member
-        $memberQuery = $db->query("SELECT member_username, member_email, member_full_name, member_barcode FROM member WHERE member_id = ?", [$memberId]);
-        $member = $memberQuery->getRow();
+        // Cek peminjaman dengan raw query
+        $loanQuery = $db->query("
+        SELECT l.*, m.member_institution, m.member_email, m.member_full_name, m.member_barcode 
+        FROM loan l
+        JOIN member m ON m.member_id = l.loan_member_id
+        WHERE l.loan_id = ?",
+            [$loanId]
+        );
 
-        if (!$member) {
-            return $this->respondWithSuccess("Member not found.");
+        $loan = $loanQuery->getRow();
+
+        if (!$loan) {
+            return $this->respondWithError("Data peminjaman tidak ditemukan.", null, 404);
         }
 
-        // Definisikan status yang valid
-        $validStatuses = ['Good', 'Borrowed', 'Broken', 'Missing'];
+        // Ambil data keterlambatan dengan raw query
+        $punishmentQuery = $db->query("
+        SELECT percentage_object 
+        FROM percentage 
+        WHERE percentage_name = 'keterlambatan_pengembalian'
+        ORDER BY punishment_created_at DESC 
+        LIMIT 1"
+        );
 
+        $punishmentData = $punishmentQuery->getRow();
+        // Parse the JSON object from 'percentage_object'
+        $punishmentDaysPerLateDay = isset($punishmentData) ? json_decode($punishmentData->percentage_object)->day : 1;
+
+        $validStatuses = ['Good', 'Borrowed', 'Broken', 'Missing'];
+        $maxLoanDays = 7; // Maksimal hari peminjaman
+        $totalPunishmentDays = 0;
+
+        // Mulai transaksi
         $db->transStart();
 
         foreach ($returnBooks as $book) {
             $bookId = $book['book_id'];
             $status = $book['status'];
 
-            // Validasi status
             if (!in_array($status, $validStatuses)) {
-                return $this->respondWithValidationError("Invalid status '$status'. Allowed statuses are: " . implode(', ', $validStatuses));
+                $db->transRollback();
+                return $this->respondWithError(
+                    "Status '$status' tidak valid. Status yang diperbolehkan: " . implode(', ', $validStatuses),
+                    null,
+                    400
+                );
             }
 
-            // Ambil data buku untuk validasi
-            $bookQuery = $db->query("SELECT books_title FROM books WHERE book_id = ?", [$bookId]);
-            $bookData = $bookQuery->getRow();
-
-            if (!$bookData) {
-                return $this->respondWithSuccess("Book with ID $bookId not found.");
-            }
-
-            // Cek apakah member telah meminjam buku ini
+            // Cek buku yang dipinjam
             $loanDetailQuery = $db->query("
-                SELECT loan_detail_borrow_date, loan_detail_loan_transaction_code 
-                FROM loan_detail 
-                JOIN loan ON loan.loan_transaction_code = loan_detail.loan_detail_loan_transaction_code 
-                WHERE loan.loan_member_id = ? AND loan_detail.loan_detail_book_id = ? AND loan_detail.loan_detail_status = 'Borrowed'",
-                [$memberId, $bookId]
+            SELECT ld.* 
+            FROM loan_detail ld
+            WHERE ld.loan_detail_loan_id = ? 
+            AND ld.loan_detail_book_id = ? 
+            AND ld.loan_detail_status = 'Borrowed'",
+                [$loanId, $bookId]
             );
 
             $loanDetail = $loanDetailQuery->getRow();
 
-            // Jika member tidak meminjam buku tersebut
             if (!$loanDetail) {
-                return $this->respondWithError("Member did not borrow this book.", [
-                    "username" => $member->member_username,
-                    "email" => $member->member_email,
-                    "full_name" => $member->member_full_name,
-                    "barcode" => $member->member_barcode,
-                    "book_id" => $bookId,
-                    "book_title" => $bookData->books_title
-                ]);
+                $db->transRollback();
+                return $this->respondWithError("Buku ini tidak tercatat dalam peminjaman tersebut.", null, 400);
             }
 
-            // Hitung periode peminjaman dalam hari
-            $returnDate = date('Y-m-d H:i:s'); // Tanggal pengembalian saat ini
+            // Hitung durasi peminjaman
             $borrowDateTime = new \DateTime($loanDetail->loan_detail_borrow_date);
-            $returnDateTime = new \DateTime($returnDate);
+            $returnDateTime = new \DateTime();
             $interval = $borrowDateTime->diff($returnDateTime);
-            $loanPeriod = $interval->days; // Periode dalam hari
+            $loanPeriod = $interval->days;
 
-            // Cek status buku dan lakukan update yang sesuai
-            if ($status === 'Broken') {
-                $db->query("UPDATE loan_detail 
-                            SET loan_detail_status = 'Broken', loan_detail_return_date = NOW(), loan_detail_period = ? 
-                            WHERE loan_detail_book_id = ? AND loan_detail_status = 'Borrowed'",
-                    [$loanPeriod, $bookId]
-                );
-            } else if ($status === 'Good') {
-                $db->query("UPDATE loan_detail 
-                            SET loan_detail_status = 'Returned', loan_detail_return_date = NOW(), loan_detail_period = ? 
-                            WHERE loan_detail_book_id = ? AND loan_detail_status = 'Borrowed'",
-                    [$loanPeriod, $bookId]
-                );
+            // Hitung hari keterlambatan
+            $lateDays = max(0, $loanPeriod - $maxLoanDays);
+            $bookPunishmentDays = $lateDays * $punishmentDaysPerLateDay;
+            $totalPunishmentDays += $bookPunishmentDays;
 
+            // Prepare update data for loan_detail using raw SQL query
+            $updateQuery = "
+            UPDATE loan_detail
+            SET loan_detail_status = ?, 
+                loan_detail_return_date = NOW(),
+                loan_detail_period = ?,
+                loan_detail_late_days = ?,
+                loan_detail_punishment_days = ?
+            WHERE loan_detail_loan_id = ? 
+            AND loan_detail_book_id = ?
+        ";
+
+            $db->query($updateQuery, [
+                $status === 'Good' ? 'Returned' : $status,  // Only mark as 'Returned' if status is 'Good'
+                $loanPeriod,
+                $lateDays,
+                $bookPunishmentDays,
+                $loanId,
+                $bookId
+            ]);
+
+            // Jika buku dikembalikan dalam kondisi 'Good', tambah stok buku
+            if ($status === 'Good') {
                 $db->query("UPDATE books SET books_stock_quantity = books_stock_quantity + 1 WHERE book_id = ?", [$bookId]);
-            } else if ($status === 'Missing') {
-                $db->query("UPDATE loan_detail 
-                            SET loan_detail_status = 'Missing', loan_detail_return_date = NOW(), loan_detail_period = ? 
-                            WHERE loan_detail_book_id = ? AND loan_detail_status = 'Borrowed'",
-                    [$loanPeriod, $bookId]
-                );
             }
         }
 
         $db->transComplete();
 
+        // Cek apakah transaksi berhasil
         if ($db->transStatus() === false) {
-            return $this->respondWithDeleted("Failed to return books.");
+            return $this->respondWithError("Gagal memproses pengembalian buku.", null, 500);
         }
 
-        return $this->respondWithSuccess("Books returned successfully.", [
-            "member_id" => $memberId,
-            "username" => $member->member_username,
-            "full_name" => $member->member_full_name,
-            "barcode" => $member->member_barcode,
-            "book_id" => $bookId,
-            "book_title" => $bookData->books_title
+        return $this->respondWithSuccess("Buku berhasil dikembalikan.", [
+            "loan_id" => $loanId,
+            "member_info" => [
+                "institution" => $loan->member_institution,
+                "full_name" => $loan->member_full_name,
+                "barcode" => $loan->member_barcode
+            ],
+            "punishment_info" => [
+                "total_punishment_days" => $totalPunishmentDays,
+                "punishment_per_late_day" => (int) $punishmentDaysPerLateDay
+            ]
         ]);
     }
+
 
 
     public function get_all_borrow()
@@ -250,13 +332,13 @@ class LoanController extends AuthorizationController
         $offset = ($page - 1) * $limit;
 
         // Start building the query
-        $query = "SELECT loan_id, loan_member_id, loan_transaction_code, loan_date, loan_member_username, loan_member_email, loan_member_full_name, loan_member_address FROM loan";
+        $query = "SELECT loan_id, loan_member_id, loan_transaction_code, loan_date, loan_member_institution, loan_member_email, loan_member_full_name, loan_member_address FROM loan";
         $conditions = [];
         $params = [];
 
         // Handle search condition across all fields
         if ($search) {
-            $conditions[] = "(loan_member_username LIKE ? OR loan_member_full_name LIKE ? OR loan_member_email LIKE ? OR loan_transaction_code LIKE ? OR loan_member_address LIKE ?)";
+            $conditions[] = "(loan_member_institution LIKE ? OR loan_member_full_name LIKE ? OR loan_member_email LIKE ? OR loan_transaction_code LIKE ? OR loan_member_address LIKE ?)";
             $searchParam = '%' . $search . '%'; // Prepare search parameter
             $params = array_fill(0, 5, $searchParam); // Fill params array for each searchable column
         }
@@ -265,7 +347,7 @@ class LoanController extends AuthorizationController
         $filterMapping = [
             'member_id' => 'loan_member_id',
             'transaction_code' => 'loan_transaction_code',
-            'username' => 'loan_member_username',
+            'institution' => 'loan_member_institution',
             'full_name' => 'loan_member_full_name',
             'email' => 'loan_member_email',
             'address' => 'loan_member_address',
@@ -313,7 +395,7 @@ class LoanController extends AuthorizationController
                     'member_id' => $loan['loan_member_id'],
                     'transaction_code' => $loan['loan_transaction_code'],
                     'loan_date' => $loan['loan_date'],
-                    'username' => $loan['loan_member_username'],
+                    'institution' => $loan['loan_member_institution'],
                     'email' => $loan['loan_member_email'],
                     'full_name' => $loan['loan_member_full_name'],
                     'address' => $loan['loan_member_address'],
@@ -387,7 +469,7 @@ class LoanController extends AuthorizationController
             loan.loan_member_id,
             loan.loan_transaction_code,
             loan.loan_date,
-            loan.loan_member_username,
+            loan.loan_member_institution,
             loan.loan_member_email,
             loan.loan_member_full_name,
             loan.loan_member_address,
@@ -451,7 +533,7 @@ class LoanController extends AuthorizationController
                     'member_id' => (int) $detail['loan_member_id'],
                     'transaction_code' => $detail['loan_transaction_code'],
                     'loan_date' => $detail['loan_date'],
-                    'username' => $detail['loan_member_username'],
+                    'institution' => $detail['loan_member_institution'],
                     'email' => $detail['loan_member_email'],
                     'full_name' => $detail['loan_member_full_name'],
                     'address' => $detail['loan_member_address'],
@@ -512,7 +594,7 @@ class LoanController extends AuthorizationController
             if ($memberDetails) {
                 $detailedMembers[] = [
                     'member_id' => $memberDetails['member_id'],
-                    'username' => $memberDetails['member_username'],
+                    'institution' => $memberDetails['member_institution'],
                     'email' => $memberDetails['member_email'],
                     'full_name' => $memberDetails['member_full_name'],
                     'address' => $memberDetails['member_address'],

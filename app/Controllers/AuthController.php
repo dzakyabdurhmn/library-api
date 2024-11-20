@@ -266,7 +266,7 @@ class AuthController extends AuthorizationController
         ]
       ],
       'nik' => [
-        'rules' => 'required|min_length[13]|max_length[30]',
+        'rules' => 'required|min_length[16]|max_length[30]',
         'errors' => [
           'required' => 'NIK wajib diisi.',
           'min_length' => 'NIK minimal harus 16 karakter.',
@@ -859,6 +859,7 @@ class AuthController extends AuthorizationController
     }
   }
 
+
   public function resetPassword()
   {
     $db = \Config\Database::connect();
@@ -877,6 +878,14 @@ class AuthController extends AuthorizationController
       return $this->respondWithValidationError('Validasi error', $this->validator->getErrors());
     }
 
+    // Cek apakah email ada di database
+    $emailQuery = "SELECT * FROM admin WHERE admin_email = ?";
+    $adminData = $db->query($emailQuery, [$email])->getRowArray();
+
+    if (!$adminData) {
+      return $this->respondWithUnauthorized('Email tidak ditemukan.');
+    }
+
     // Cari token di database dan cek masa berlaku
     $query = "SELECT * FROM admin_otp WHERE admin_otp_email = ? AND admin_otp_otp = ? AND admin_otp_expires_at > NOW()";
     $tokenData = $db->query($query, [$email, $otp])->getRowArray();
@@ -891,7 +900,7 @@ class AuthController extends AuthorizationController
     // Update password di tabel admin
     try {
       $query = "UPDATE admin SET admin_password = ? WHERE admin_id = ?";
-      $db->query($query, [$hashedPassword, $tokenData['admin_otp_email']]);
+      $db->query($query, [$hashedPassword, $adminData['admin_id']]); // Pastikan menggunakan admin_id, bukan email
     } catch (\Exception $e) {
       return $this->respondWithError('Gagal memperbarui password: ' . $e->getMessage());
     }
@@ -906,8 +915,6 @@ class AuthController extends AuthorizationController
 
     return $this->respondWithSuccess('Password berhasil direset.');
   }
-
-
 }
 
 

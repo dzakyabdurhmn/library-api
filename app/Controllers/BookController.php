@@ -48,10 +48,9 @@ class BookController extends AuthorizationController
                 ]
             ],
             'isbn' => [
-                'rules' => 'required|integer',
+                'rules' => 'required',
                 'errors' => [
-                    'required' => 'ISBN wajib diisi.',
-                    'integer' => 'ISBN harus berupa angka.'
+                    'required' => 'ISBN wajib diisi.'
                 ]
             ],
             'stock_quantity' => [
@@ -536,6 +535,8 @@ class BookController extends AuthorizationController
         }
 
         try {
+            $db->transBegin(); // Start transaction
+
             // Cek apakah buku dengan ID tersebut ada
             $query = "SELECT * FROM books WHERE book_id = ?";
             $book = $db->query($query, [$id])->getRow();
@@ -544,26 +545,42 @@ class BookController extends AuthorizationController
                 return $this->respondWithError('Failed to update stock: Book not found.', null, 404);
             }
 
-            // Debugging: Log the initial stock and additional stock
-            log_message('debug', 'Initial stock: ' . $book->books_stock_quantity);
-            log_message('debug', 'Additional stock: ' . $additional_stock);
-
             // Hitung stock baru berdasarkan type
+            $stock_before = (int) $book->books_stock_quantity;
             if ($type === 'masuk') {
                 // Untuk 'masuk', tambahkan stock
-                $new_stock = (int) $book->books_stock_quantity + (int) $additional_stock;
+                $new_stock = $stock_before + (int) $additional_stock;
             } else {
                 // Untuk 'keluar', kurangi stock
-                $new_stock = (int) $book->books_stock_quantity - (int) $additional_stock;
+                $new_stock = $stock_before - (int) $additional_stock;
                 // Pastikan stock tidak menjadi negatif
                 if ($new_stock < 0) {
                     return $this->respondWithError('Stock tidak bisa kurang dari 0.', null, 400);
                 }
             }
 
-            // Lakukan update stock
+            // Update stock di tabel books
             $query = "UPDATE books SET books_stock_quantity = ? WHERE book_id = ?";
             $db->query($query, [$new_stock, $id]);
+
+            // Catat history perubahan stock
+            $query = "INSERT INTO stock_history (book_id, book_name, quantity_change, stock_before, stock_after, type) 
+                 VALUES (?, ?, ?, ?, ?, ?)";
+            $db->query($query, [
+                $book->book_id,
+                $book->books_title,
+                $additional_stock,
+                $stock_before,
+                $new_stock,
+                $type
+            ]);
+
+            if ($db->transStatus() === false) {
+                $db->transRollback();
+                return $this->respondWithError('Failed to update stock: Transaction failed');
+            }
+
+            $db->transCommit();
 
             // Kembalikan respons lengkap
             return $this->respond([
@@ -573,17 +590,18 @@ class BookController extends AuthorizationController
                     'data' => [
                         'id' => $book->book_id,
                         'title' => $book->books_title,
-                        'author_id' => $book->books_author_id,
-                        'publisher_id' => $book->books_publisher_id,
-                        'publication_year' => $book->books_publication_year,
-                        'isbn' => $book->books_isbn,
-                        'stock_quantity' => $new_stock,
-                        'price' => $book->books_price,
-                        'barcode' => $book->books_barcode
+                        'stock_history' => [
+                            'type' => $type,
+                            'quantity_change' => $additional_stock,
+                            'stock_before' => $stock_before,
+                            'stock_after' => $new_stock,
+                            'timestamp' => date('Y-m-d H:i:s')
+                        ]
                     ]
                 ]
             ], 200);
         } catch (\Exception $e) {
+            $db->transRollback();
             return $this->respondWithError('Failed to update stock: ' . $e->getMessage());
         }
     }

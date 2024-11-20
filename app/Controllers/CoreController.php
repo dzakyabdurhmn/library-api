@@ -13,7 +13,7 @@ class CoreController extends ResourceController
         $response = [
             'status' => $code,
             'message' => $message,
-            'error' => null,
+            'error' => "",
         ];
 
         $response['result'] = $result == null ? (object) ['data' => (object) []] : $result;
