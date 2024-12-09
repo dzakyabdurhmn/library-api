@@ -505,10 +505,3 @@ class MemberController extends AuthorizationController
 
 
 
-// semua field bisa di sort termasuk id
-// kalo berhasil error tetep ada tapi string kosong
-// is unique ketika update kalo ga berubah ga usah pakai
-// di api add stock di kasi tipe keluar / masuk
-// harusnya yang detail bisa di copy di update
-// pas reset juga kasih email
-// rapiin db transaksi

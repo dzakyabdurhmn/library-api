@@ -201,6 +201,17 @@
 
 ## 11. Loan Detail & Pengelolaan Error
 
+
+
+
+
+
+
+
+
+
+
+
 ### 1. Loan Detail dengan ID Lengkap
 
 - Detail pinjaman (`loan_id`) sekarang mencakup seluruh ID terkait untuk kemudahan tracking. [DONE]
@@ -225,9 +236,32 @@
 
 - Beberapa proses sekarang mengandalkan ` [DONE]
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 ## 12
 
-### 1. Untuk denda/aturan menggunakan Object [DONE SELASA] db
+### 1. Untuk denda/aturan menggunakan Object [DONE SELASA] db [DONE SEMUA KAMIS]
 
 ```json
 [
@@ -236,7 +270,7 @@
 ]
 ```
 
-### 2. Get all transction di kasi id loan
+### 2. Get all transction di kasi id loan [DONE KAMIS]
 
 ### 3. Masih ada kesalahan di get loan detail
 
@@ -296,8 +330,35 @@
 }
 ```
 
-### 4. Masih belum bisa update return date dan status di table_loan detail [PROSESS]
+### 4. Masih belum bisa update return date dan status di table_loan detail [DONE KAMIS]
 
-### 5. Report yang berupa list cukup di beri parameter limit saja dan bisa di filter tanggal
+### 5. Report yang berupa list cukup di beri parameter limit saja dan bisa di filter tanggal [DONE SENIN 25 11 24]
 
-### 6. detail stock activity dapat di filter by books
+### 6. detail stock activity dapat di filter by books [DONE KAYAKNYA DI HARI KAMIS]
+
+## 13
+
+
+
+
+
+
+
+
+### 1. Config di sesuaikan dengan ketentuan [DONE GA TAU PERLU FOLLOW UP]
+
+### 2. Keterlambatan di tentukan di awal (engga flat 7 hari) [DONE BELOM DI CEK RABU 04 12]
+
+### 3. Nama variable di deport yang sama dengan yang borrow [DONE KAMIS 05/12]
+
+### 4. di loan_detail untuk denda/hukuman di simpen [DONE PERLU CEK UP // db masi ga jelas namanya]
+
+### 5. Broken or missing di kasih count aja [DONE]
+
+### 6. Active berdasarkan count yang terbanyak [DONE]
+
+### 7. loans_activity di hapus [GA NEMU BANG YANG MANA]
+
+### 8. Data report di benerin [kayaknya di bagian active user]
+
+### 9. Di kasih export excel [DONE KAMIS]

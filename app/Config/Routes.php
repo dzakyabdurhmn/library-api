@@ -76,13 +76,22 @@ $routes->group('', ['filter' => 'authToken'], function ($routes) {
         $routes->get('least-borrowed-books', 'ReportController::least_borrowed_books');
         $routes->get('broken-missing-books', 'ReportController::broken_missing_books');
         $routes->get('most-active-users', 'ReportController::most_active_users');
-        $routes->get('inactive-users', 'ReportController::inactive_users');
+        $routes->get('active-users', 'ReportController::inactive_users');
         $routes->get('active-admins', 'ReportController::active_admins');
         $routes->get('detailed-member-activity', 'ReportController::detailed_member_activity');
         $routes->get('detailed-borrowed-books', 'ReportController::detailed_borrowed_books');
         $routes->get('count-books-status', 'ReportController::count_books_status');
         $routes->get('detail-stock-history', 'ReportController::getStockHistoryByBookId');
         $routes->get('stock-history', 'ReportController::getAllStockHistory');
+        // export
+        $routes->get('export/most-borrowed-books', 'ReportController::export_most_borrowed_books');
+        $routes->get('export/least-borrowed-books', 'ReportController::export_least_borrowed_books');
+        $routes->get('export/broken-missing-books', 'ReportController::export_broken_missing_books');
+        $routes->get('export/active-users', 'ReportController::export_inactive_users');
+        $routes->get('export/detailed-member-activity', 'ReportController::export_detailed_member_activity');
+        $routes->get('export/stock-history', 'ReportController::export_all_stock_history');
+
+
     });
 
 
