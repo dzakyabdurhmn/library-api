@@ -3,10 +3,20 @@
 namespace App\Controllers;
 
 use CodeIgniter\RESTful\ResourceController;
+use Config\Database;
 
 class CoreController extends ResourceController
 {
     protected $format = 'json';
+
+    protected $db; // Gunakan 'protected' agar bisa diakses oleh kelas turunan
+
+    public function __construct()
+    {
+        $this->db = Database::connect();
+    }
+
+
 
     protected function respondWithSuccess($message, $result = null, $code = 200)
     {

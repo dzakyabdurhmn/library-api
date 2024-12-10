@@ -11,17 +11,8 @@ use PhpOffice\PhpSpreadsheet\Style\Alignment;
 
 class ReportController extends AuthorizationController
 {
-    private $db;
-
-    public function __construct()
-    {
-        $this->db = Database::connect();
-    }
-
     public function most_borrowed_books()
     {
-        $db = \Config\Database::connect();
-
         $limit = (int) ($this->request->getVar("limit") ?? 10);
         $page = (int) ($this->request->getVar("page") ?? 1);
         $search = $this->request->getVar("search");
@@ -38,7 +29,7 @@ class ReportController extends AuthorizationController
         // Count total rows
         $countQuery =
             "SELECT COUNT(DISTINCT loan_detail_book_id) as total FROM loan_detail";
-        $totalData = $db->query($countQuery)->getRow()->total;
+        $totalData = $this->db->query($countQuery)->getRow()->total;
 
         // Start building the base query
         $baseQuery = "
@@ -133,7 +124,7 @@ class ReportController extends AuthorizationController
 
         // Execute query
         try {
-            $books = $db->query($baseQuery, $params)->getResult();
+            $books = $this->db->query($baseQuery, $params)->getResult();
 
             // Pagination calculation
             $pagination = new \stdClass();
@@ -170,8 +161,6 @@ class ReportController extends AuthorizationController
 
     public function least_borrowed_books()
     {
-        $db = \Config\Database::connect();
-
         $limit = (int) ($this->request->getVar("limit") ?? 10);
         $page = (int) ($this->request->getVar("page") ?? 1);
         $search = $this->request->getVar("search");
@@ -227,7 +216,7 @@ class ReportController extends AuthorizationController
         }
 
         // Execute count query
-        $totalData = $db->query($countQuery, $params)->getRow()->total;
+        $totalData = $this->db->query($countQuery, $params)->getRow()->total;
 
         // Main query
         $baseQuery = "SELECT 
@@ -278,7 +267,7 @@ class ReportController extends AuthorizationController
 
         // Execute query
         try {
-            $books = $db->query($baseQuery, $params)->getResult();
+            $books = $this->db->query($baseQuery, $params)->getResult();
 
             // Calculate pagination
             $pagination = new \stdClass();
@@ -320,8 +309,6 @@ class ReportController extends AuthorizationController
 
     public function inactive_users()
     {
-        $db = \Config\Database::connect();
-
         $limit = (int) ($this->request->getVar("limit") ?? 10);
         $page = (int) ($this->request->getVar("page") ?? 1);
         $search = $this->request->getVar("search");
@@ -338,7 +325,7 @@ class ReportController extends AuthorizationController
         // Count query for total data
         $countQuery =
             "SELECT COUNT(DISTINCT loan_member_id) as total FROM loan";
-        $totalData = $db->query($countQuery)->getRow()->total;
+        $totalData = $this->db->query($countQuery)->getRow()->total;
 
         // Main query
         $baseQuery = "SELECT 
@@ -415,7 +402,7 @@ class ReportController extends AuthorizationController
 
         // Execute query
         try {
-            $users = $db->query($baseQuery, $params)->getResult();
+            $users = $this->db->query($baseQuery, $params)->getResult();
 
             // Calculate pagination
             $pagination = new \stdClass();
@@ -455,8 +442,6 @@ class ReportController extends AuthorizationController
 
     public function broken_missing_books()
     {
-        $db = \Config\Database::connect();
-
         $limit = (int) ($this->request->getVar("limit") ?? 10);
         $page = (int) ($this->request->getVar("page") ?? 1);
         $search = $this->request->getVar("search");
@@ -478,7 +463,7 @@ class ReportController extends AuthorizationController
     FROM loan_detail 
     WHERE loan_detail_status IN ('Broken', 'Missing')";
 
-        $totalData = $db->query($countQuery)->getRow();
+        $totalData = $this->db->query($countQuery)->getRow();
 
         // Count per book query
         $countPerBookQuery = "SELECT 
@@ -491,7 +476,7 @@ class ReportController extends AuthorizationController
     WHERE loan_detail_status IN ('Broken', 'Missing')
     GROUP BY loan_detail_book_id, loan_detail_book_title";
 
-        $countPerBook = $db->query($countPerBookQuery)->getResult();
+        $countPerBook = $this->db->query($countPerBookQuery)->getResult();
 
         // Main query
         $baseQuery = "SELECT 
@@ -552,7 +537,7 @@ class ReportController extends AuthorizationController
 
         // Execute query
         try {
-            $books = $db->query($baseQuery, $params)->getResult();
+            $books = $this->db->query($baseQuery, $params)->getResult();
 
             // Calculate pagination
             $pagination = new \stdClass();
@@ -597,8 +582,6 @@ class ReportController extends AuthorizationController
     }
     public function detailed_member_activity()
     {
-        $db = \Config\Database::connect();
-
         $limit = (int) ($this->request->getVar("limit") ?? 10);
         $page = (int) ($this->request->getVar("page") ?? 1);
         $search = $this->request->getVar("search");
@@ -621,9 +604,10 @@ class ReportController extends AuthorizationController
         // Tambahkan kondisi untuk end_date jika ada
         if ($endDate) {
             $countQuery .= " WHERE l.loan_date <= ?";
-            $totalData = $db->query($countQuery, [$endDate])->getRow()->total;
+            $totalData = $this->db->query($countQuery, [$endDate])->getRow()
+                ->total;
         } else {
-            $totalData = $db->query($countQuery)->getRow()->total;
+            $totalData = $this->db->query($countQuery)->getRow()->total;
         }
 
         // Main query with aggregation to handle GROUP BY issues
@@ -710,7 +694,7 @@ class ReportController extends AuthorizationController
 
         // Execute query
         try {
-            $activities = $db->query($baseQuery, $params)->getResult();
+            $activities = $this->db->query($baseQuery, $params)->getResult();
 
             // Calculate pagination
             $pagination = new \stdClass();
@@ -751,8 +735,6 @@ class ReportController extends AuthorizationController
 
     public function count_books_status()
     {
-        $db = Database::connect();
-
         // Ambil parameter tanggal dari request
         $startDate = $this->request->getVar("start_date"); // Tanggal awal
         $endDate = $this->request->getVar("end_date"); // Tanggal akhir
@@ -770,11 +752,11 @@ class ReportController extends AuthorizationController
         if ($startDate && $endDate) {
             $booksStatusQuery .=
                 " WHERE loan_detail_borrow_date BETWEEN ? AND ?";
-            $booksStatus = $db
+            $booksStatus = $this->db
                 ->query($booksStatusQuery, [$startDate, $endDate])
                 ->getRow();
         } else {
-            $booksStatus = $db->query($booksStatusQuery)->getRow();
+            $booksStatus = $this->db->query($booksStatusQuery)->getRow();
         }
 
         // Loans Activity
@@ -789,11 +771,11 @@ class ReportController extends AuthorizationController
         // Tambahkan filter berdasarkan tanggal jika ada
         if ($startDate && $endDate) {
             $loansActivityQuery .= " WHERE loan_date BETWEEN ? AND ?";
-            $loansActivity = $db
+            $loansActivity = $this->db
                 ->query($loansActivityQuery, [$startDate, $endDate])
                 ->getRow();
         } else {
-            $loansActivity = $db->query($loansActivityQuery)->getRow();
+            $loansActivity = $this->db->query($loansActivityQuery)->getRow();
         }
 
         // Users Statistics (We are using loan_member_id from the loan table)
@@ -801,7 +783,7 @@ class ReportController extends AuthorizationController
     SELECT 
         (SELECT COUNT(DISTINCT loan_member_id) FROM loan) as total_members
     FROM dual";
-        $usersStats = $db->query($usersStatsQuery)->getRow();
+        $usersStats = $this->db->query($usersStatsQuery)->getRow();
 
         // Library Resources (Publishers and Authors based on book data from loan_detail)
         $libraryResourcesQuery = "
@@ -809,7 +791,7 @@ class ReportController extends AuthorizationController
         (SELECT COUNT(DISTINCT loan_detail_book_publisher_name) FROM loan_detail) as total_publishers,
         (SELECT COUNT(DISTINCT loan_detail_book_author_name) FROM loan_detail) as total_authors
     FROM dual";
-        $libraryResources = $db->query($libraryResourcesQuery)->getRow();
+        $libraryResources = $this->db->query($libraryResourcesQuery)->getRow();
 
         // Calculate percentages and additional metrics
         $availableBooks =
@@ -864,8 +846,6 @@ class ReportController extends AuthorizationController
 
     public function getStockHistoryByBookId()
     {
-        $db = \Config\Database::connect();
-
         $bookId = $this->request->getVar("id") ?? 10;
 
         // Validate book ID
@@ -880,7 +860,7 @@ class ReportController extends AuthorizationController
         try {
             // Check if book exists
             $bookQuery = "SELECT * FROM books WHERE book_id = ?";
-            $book = $db->query($bookQuery, [$bookId])->getRow();
+            $book = $this->db->query($bookQuery, [$bookId])->getRow();
 
             if (!$book) {
                 return $this->respondWithError("Book not found", null, 404);
@@ -898,7 +878,7 @@ class ReportController extends AuthorizationController
                  WHERE sh.book_id = ?
                  ORDER BY sh.created_at DESC";
 
-            $history = $db->query($query, [$bookId])->getResult();
+            $history = $this->db->query($query, [$bookId])->getResult();
 
             if (empty($history)) {
                 return $this->respond([
@@ -938,8 +918,6 @@ class ReportController extends AuthorizationController
 
     public function getAllStockHistory()
     {
-        $db = \Config\Database::connect();
-
         try {
             // Validasi token (opsional, sesuaikan dengan kebutuhan)
             $tokenValidation = $this->validateToken("warehouse,superadmin");
@@ -1009,7 +987,8 @@ class ReportController extends AuthorizationController
 
             // Count total records for pagination
             $countQuery = "SELECT COUNT(*) as total " . $baseQuery;
-            $totalRecords = $db->query($countQuery, $params)->getRow()->total;
+            $totalRecords = $this->db->query($countQuery, $params)->getRow()
+                ->total;
 
             // Prepare pagination details
             $totalPages = ceil($totalRecords / $limit);
@@ -1034,7 +1013,7 @@ class ReportController extends AuthorizationController
             $params[] = $limit;
             $params[] = $offset;
 
-            $history = $db->query($query, $params)->getResult();
+            $history = $this->db->query($query, $params)->getResult();
 
             // Format response data
             $formattedHistory = array_map(function ($item) {
@@ -1093,12 +1072,9 @@ class ReportController extends AuthorizationController
         }
     }
 
-    // EXPORT TO EXCEL
 
     public function export_most_borrowed_books()
     {
-        $db = \Config\Database::connect();
-
         // Query tanpa pagination untuk mendapatkan semua data
         $baseQuery = "
     SELECT 
@@ -1120,7 +1096,7 @@ class ReportController extends AuthorizationController
     ORDER BY borrow_count DESC
     ";
 
-        $books = $db->query($baseQuery)->getResult();
+        $books = $this->db->query($baseQuery)->getResult();
 
         // Membuat spreadsheet baru
         $spreadsheet = new Spreadsheet();
@@ -1212,8 +1188,6 @@ class ReportController extends AuthorizationController
 
     public function export_least_borrowed_books()
     {
-        $db = \Config\Database::connect();
-
         // Query tanpa pagination untuk mendapatkan semua data
         $baseQuery = "SELECT 
         loan_detail_book_id as id,
@@ -1227,7 +1201,7 @@ class ReportController extends AuthorizationController
     GROUP BY loan_detail_book_id
     ORDER BY borrow_count ASC";
 
-        $books = $db->query($baseQuery)->getResult();
+        $books = $this->db->query($baseQuery)->getResult();
 
         // Membuat spreadsheet baru
         $spreadsheet = new Spreadsheet();
@@ -1319,8 +1293,6 @@ class ReportController extends AuthorizationController
 
     public function export_inactive_users()
     {
-        $db = \Config\Database::connect();
-
         // Query tanpa pagination untuk mendapatkan semua data
         $baseQuery = "SELECT 
         loan_member_id as id,
@@ -1333,7 +1305,7 @@ class ReportController extends AuthorizationController
     GROUP BY loan_member_id
     ORDER BY loan_count DESC";
 
-        $users = $db->query($baseQuery)->getResult();
+        $users = $this->db->query($baseQuery)->getResult();
 
         // Membuat spreadsheet baru
         $spreadsheet = new Spreadsheet();
@@ -1423,8 +1395,6 @@ class ReportController extends AuthorizationController
 
     public function export_broken_missing_books()
     {
-        $db = \Config\Database::connect();
-
         // Query untuk mendapatkan semua data buku rusak dan hilang
         $baseQuery = "SELECT 
         loan_detail_book_id as id,
@@ -1437,7 +1407,7 @@ class ReportController extends AuthorizationController
     WHERE loan_detail_status IN ('Broken', 'Missing')
     ORDER BY loan_detail_borrow_date DESC";
 
-        $books = $db->query($baseQuery)->getResult();
+        $books = $this->db->query($baseQuery)->getResult();
 
         // Membuat spreadsheet baru
         $spreadsheet = new Spreadsheet();
@@ -1514,7 +1484,7 @@ class ReportController extends AuthorizationController
     FROM loan_detail 
     WHERE loan_detail_status IN ('Broken', 'Missing')";
 
-        $summary = $db->query($summaryQuery)->getRow();
+        $summary = $this->db->query($summaryQuery)->getRow();
 
         // Tambahkan sheet ringkasan
         $summarySheet = $spreadsheet->createSheet();
@@ -1554,8 +1524,6 @@ class ReportController extends AuthorizationController
 
     public function export_detailed_member_activity()
     {
-        $db = \Config\Database::connect();
-
         $search = $this->request->getVar("search");
         $sort = $this->request->getVar("sort") ?? "";
         $filters = $this->request->getVar("filter") ?? [];
@@ -1637,7 +1605,7 @@ class ReportController extends AuthorizationController
 
         // Execute query
         try {
-            $activities = $db->query($baseQuery, $params)->getResult();
+            $activities = $this->db->query($baseQuery, $params)->getResult();
 
             // Membuat spreadsheet baru
             $spreadsheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet();
@@ -1743,157 +1711,8 @@ class ReportController extends AuthorizationController
         }
     }
 
-    // public function export_stock_history_by_book_id()
-    // {
-    //     $db = \Config\Database::connect();
-
-    //     $bookId = $this->request->getVar("id") ?? 10;
-
-    //     // Validate book ID
-    //     if (!$bookId || !is_numeric($bookId)) {
-    //         return $this->respondWithError(
-    //             "Invalid book ID provided",
-    //             null,
-    //             400
-    //         );
-    //     }
-
-    //     try {
-    //         // Check if book exists
-    //         $bookQuery = "SELECT * FROM books WHERE book_id = ?";
-    //         $book = $db->query($bookQuery, [$bookId])->getRow();
-
-    //         if (!$book) {
-    //             return $this->respondWithError("Book not found", null, 404);
-    //         }
-
-    //         // Get stock history with book details
-    //         $query = "SELECT 
-    //             sh.*,
-    //             b.books_title,
-    //             b.books_isbn,
-    //             b.books_publication_year,
-    //             b.books_stock_quantity as current_stock
-    //          FROM stock_history sh
-    //          JOIN books b ON sh.book_id = b.book_id
-    //          WHERE sh.book_id = ?
-    //          ORDER BY sh.created_at DESC";
-
-    //         $history = $db->query($query, [$bookId])->getResult();
-
-    //         // Membuat spreadsheet baru
-    //         $spreadsheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet();
-    //         $sheet = $spreadsheet->getActiveSheet();
-
-    //         // Set judul
-    //         $sheet->setTitle("Riwayat Stok Buku");
-
-    //         // Header
-    //         $headers = [
-    //             "No",
-    //             "Judul Buku",
-    //             "ISBN",
-    //             "Tahun Terbit",
-    //             "Stok Saat Ini",
-    //             "Tipe Perubahan",
-    //             "Perubahan Jumlah",
-    //             "Stok Sebelum",
-    //             "Stok Setelah",
-    //             "Tanggal",
-    //         ];
-
-    //         // Menulis header
-    //         $col = "A";
-    //         foreach ($headers as $header) {
-    //             $sheet->setCellValue($col . "1", $header);
-    //             $col++;
-    //         }
-
-    //         // Styling header
-    //         $headerStyle = [
-    //             "font" => ["bold" => true],
-    //             "alignment" => [
-    //                 "horizontal" =>
-    //                     \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER,
-    //             ],
-    //             "fill" => [
-    //                 "fillType" =>
-    //                     \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID,
-    //                 "startColor" => ["argb" => "FFE5E5E5"],
-    //             ],
-    //             "borders" => [
-    //                 "allBorders" => [
-    //                     "borderStyle" =>
-    //                         \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN,
-    //                 ],
-    //             ],
-    //         ];
-    //         $sheet->getStyle("A1:J1")->applyFromArray($headerStyle);
-
-    //         // Menulis data
-    //         $row = 2;
-    //         foreach ($history as $index => $item) {
-    //             $sheet->setCellValue("A" . $row, $index + 1);
-    //             $sheet->setCellValue("B" . $row, $item->books_title);
-    //             $sheet->setCellValue("C" . $row, $item->books_isbn);
-    //             $sheet->setCellValue("D" . $row, $item->books_publication_year);
-    //             $sheet->setCellValue("E" . $row, $item->current_stock);
-    //             $sheet->setCellValue("F" . $row, $item->type);
-    //             $sheet->setCellValue("G" . $row, $item->quantity_change);
-    //             $sheet->setCellValue("H" . $row, $item->stock_before);
-    //             $sheet->setCellValue("I" . $row, $item->stock_after);
-    //             $sheet->setCellValue("J" . $row, $item->created_at);
-    //             $row++;
-    //         }
-
-    //         // Auto width kolom
-    //         foreach (range("A", "J") as $columnID) {
-    //             $sheet->getColumnDimension($columnID)->setAutoSize(true);
-    //         }
-
-    //         // Styling data
-    //         $dataStyle = [
-    //             "borders" => [
-    //                 "allBorders" => [
-    //                     "borderStyle" =>
-    //                         \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN,
-    //                 ],
-    //             ],
-    //         ];
-    //         $sheet->getStyle("A2:J" . ($row - 1))->applyFromArray($dataStyle);
-
-    //         // Menyiapkan file untuk download
-    //         $filename =
-    //             "Riwayat_Stok_Buku_" .
-    //             $book->books_title .
-    //             "_" .
-    //             date("YmdHis") .
-    //             ".xlsx";
-
-    //         // Set headers untuk download
-    //         header(
-    //             "Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-    //         );
-    //         header(
-    //             'Content-Disposition: attachment;filename="' . $filename . '"'
-    //         );
-    //         header("Cache-Control: max-age=0");
-
-    //         // Membuat file Excel
-    //         $writer = new \PhpOffice\PhpSpreadsheet\Writer\Xlsx($spreadsheet);
-    //         $writer->save("php://output");
-    //         exit();
-    //     } catch (\Exception $e) {
-    //         return $this->respondWithError(
-    //             "Failed to export stock history: " . $e->getMessage()
-    //         );
-    //     }
-    // }
-
     public function export_all_stock_history()
     {
-        $db = \Config\Database::connect();
-
         try {
             // Validasi token (opsional, sesuaikan dengan kebutuhan)
             $tokenValidation = $this->validateToken("warehouse,superadmin");
@@ -1970,7 +1789,7 @@ class ReportController extends AuthorizationController
                 "
             ORDER BY sh.created_at DESC";
 
-            $history = $db->query($query, $params)->getResult();
+            $history = $this->db->query($query, $params)->getResult();
 
             // Membuat spreadsheet baru
             $spreadsheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet();
