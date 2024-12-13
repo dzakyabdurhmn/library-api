@@ -9,7 +9,7 @@ class BookController extends AuthorizationController
     // Fungsi untuk menambahkan buku (Create)
     public function create()
     {
-        $db = \Config\Database::connect();
+
 
         $tokenValidation = $this->validateToken('superadmin,warehouse'); // Fungsi helper dipanggil
 
@@ -93,14 +93,14 @@ class BookController extends AuthorizationController
         ];
 
         // Cek apakah author_id valid
-        $authorExists = $db->query("SELECT COUNT(*) as count FROM author WHERE author_id = ?", [$data['books_author_id']])->getRow()->count;
+        $authorExists = $this->db->query("SELECT COUNT(*) as count FROM author WHERE author_id = ?", [$data['books_author_id']])->getRow()->count;
 
         if ($authorExists == 0) {
             return $this->respondWithError('Failed to add book: Author not found.', null, 404);
         }
 
         // Cek apakah publisher_id valid
-        $publisherExists = $db->query("SELECT COUNT(*) as count FROM publisher WHERE publisher_id = ?", [$data['books_publisher_id']])->getRow()->count;
+        $publisherExists = $this->db->query("SELECT COUNT(*) as count FROM publisher WHERE publisher_id = ?", [$data['books_publisher_id']])->getRow()->count;
 
         if ($publisherExists == 0) {
             return $this->respondWithError('Failed to add book: Publisher not found.', null, 404);
@@ -110,7 +110,7 @@ class BookController extends AuthorizationController
             $query = "INSERT INTO books (books_publisher_id, books_author_id, books_title, books_publication_year, books_isbn, books_stock_quantity, books_price, books_barcode) 
                   VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
 
-            $db->query($query, array_values($data));
+            $this->db->query($query, array_values($data));
 
             return $this->respondWithSuccess('Book added successfully.');
         } catch (DatabaseException $e) {
@@ -121,7 +121,7 @@ class BookController extends AuthorizationController
     // Fungsi untuk mendapatkan semua buku dengan pagination, search, dan filter (Read)
     public function index()
     {
-        $db = \Config\Database::connect();
+
 
         $tokenValidation = $this->validateToken('superadmin,warehouse'); // Fungsi helper dipanggil
 
@@ -200,7 +200,7 @@ class BookController extends AuthorizationController
         }
 
         try {
-            $books = $db->query($query, $params)->getResultArray();
+            $books = $this->db->query($query, $params)->getResultArray();
 
             $result = [];
             foreach ($books as $book) {
@@ -231,7 +231,7 @@ class BookController extends AuthorizationController
                 if (count($conditions) > 0) {
                     $totalQuery .= ' WHERE ' . implode(' AND ', $conditions);
                 }
-                $total = $db->query($totalQuery, array_slice($params, 0, count($params) - 2))->getRow()->total;
+                $total = $this->db->query($totalQuery, array_slice($params, 0, count($params) - 2))->getRow()->total;
 
                 $jumlah_page = ceil($total / $limit);
                 $pagination = [
@@ -259,7 +259,7 @@ class BookController extends AuthorizationController
     // Fungsi untuk mendapatkan buku berdasarkan ID (Read)
     public function get_detail()
     {
-        $db = \Config\Database::connect();
+
 
         $id = $this->request->getVar('id'); // Get ID from query parameter
 
@@ -276,7 +276,7 @@ class BookController extends AuthorizationController
 
         try {
             $query = "SELECT * FROM books WHERE book_id = ?";
-            $book = $db->query($query, [$id])->getRowArray();
+            $book = $this->db->query($query, [$id])->getRowArray();
 
             $data = [
 
@@ -311,7 +311,7 @@ class BookController extends AuthorizationController
     // Fungsi untuk memperbarui data buku (Update)
     public function update_book()
     {
-        $db = \Config\Database::connect();
+
 
         $tokenValidation = $this->validateToken('superadmin,warehouse'); // Fungsi helper dipanggil
 
@@ -387,7 +387,7 @@ class BookController extends AuthorizationController
 
         // Cek apakah buku dengan ID tersebut ada
         $query = "SELECT * FROM books WHERE book_id = ?";
-        $book = $db->query($query, [$id])->getRowArray();
+        $book = $this->db->query($query, [$id])->getRowArray();
 
         if (!$book) {
             return $this->respondWithError('Failed to update book: Book not found.', null, 404);
@@ -423,10 +423,10 @@ class BookController extends AuthorizationController
                     books_barcode = COALESCE(?, books_barcode) 
                   WHERE book_id = ?";
 
-            $db->query($query, array_merge(array_values($data), [$id]));
+            $this->db->query($query, array_merge(array_values($data), [$id]));
 
             $query = "SELECT * FROM books WHERE book_id = ?";
-            $book = $db->query($query, [$id])->getRowArray();
+            $book = $this->db->query($query, [$id])->getRowArray();
 
 
             $data = [
@@ -453,7 +453,7 @@ class BookController extends AuthorizationController
     // Fungsi untuk menghapus buku (Delete)
     public function delete_book()
     {
-        $db = \Config\Database::connect();
+
         $id = $this->request->getVar(index: 'id'); // Default limit = 10
 
 
@@ -466,7 +466,7 @@ class BookController extends AuthorizationController
         try {
             // Cek apakah buku dengan ID tersebut ada
             $query = "SELECT COUNT(*) as count FROM books WHERE book_id = ?";
-            $exists = $db->query($query, [$id])->getRow()->count;
+            $exists = $this->db->query($query, [$id])->getRow()->count;
 
             if ($exists == 0) {
                 return $this->respondWithError('Failed to delete book: Book not found.', null, 404);
@@ -474,7 +474,7 @@ class BookController extends AuthorizationController
 
             // Lakukan penghapusan data
             $query = "DELETE FROM books WHERE book_id = ?";
-            $db->query($query, [$id]);
+            $this->db->query($query, [$id]);
 
             return $this->respondWithSuccess('Book deleted successfully.');
         } catch (DatabaseException $e) {
@@ -485,7 +485,7 @@ class BookController extends AuthorizationController
 
     public function stock()
     {
-        $db = \Config\Database::connect();
+
         $id = $this->request->getVar('id');
         $additional_stock = $this->request->getVar('stock');
         $type = $this->request->getVar('type');
@@ -535,11 +535,10 @@ class BookController extends AuthorizationController
         }
 
         try {
-            $db->transBegin(); // Start transaction
-
+            $this->db->transBegin(); // Start transaction
             // Cek apakah buku dengan ID tersebut ada
             $query = "SELECT * FROM books WHERE book_id = ?";
-            $book = $db->query($query, [$id])->getRow();
+            $book = $this->db->query($query, [$id])->getRow();
 
             if (!$book) {
                 return $this->respondWithError('Failed to update stock: Book not found.', null, 404);
@@ -561,12 +560,12 @@ class BookController extends AuthorizationController
 
             // Update stock di tabel books
             $query = "UPDATE books SET books_stock_quantity = ? WHERE book_id = ?";
-            $db->query($query, [$new_stock, $id]);
+            $this->db->query($query, [$new_stock, $id]);
 
             // Catat history perubahan stock
             $query = "INSERT INTO stock_history (book_id, book_name, quantity_change, stock_before, stock_after, type) 
                  VALUES (?, ?, ?, ?, ?, ?)";
-            $db->query($query, [
+            $this->db->query($query, [
                 $book->book_id,
                 $book->books_title,
                 $additional_stock,
@@ -575,12 +574,12 @@ class BookController extends AuthorizationController
                 $type
             ]);
 
-            if ($db->transStatus() === false) {
-                $db->transRollback();
+            if ($this->db->transStatus() === false) {
+                $this->db->transRollback();
                 return $this->respondWithError('Failed to update stock: Transaction failed');
             }
 
-            $db->transCommit();
+            $this->db->transCommit();
 
             // Kembalikan respons lengkap
             return $this->respond([
@@ -601,7 +600,7 @@ class BookController extends AuthorizationController
                 ]
             ], 200);
         } catch (\Exception $e) {
-            $db->transRollback();
+            $this->db->transRollback();
             return $this->respondWithError('Failed to update stock: ' . $e->getMessage());
         }
     }

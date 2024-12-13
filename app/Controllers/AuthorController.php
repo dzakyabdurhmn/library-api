@@ -9,7 +9,7 @@ class AuthorController extends AuthorizationController
 {
     public function create()
     {
-        $db = \Config\Database::connect();
+
 
         $tokenValidation = $this->validateToken('superadmin'); // Fungsi helper dipanggil
 
@@ -55,7 +55,7 @@ class AuthorController extends AuthorizationController
         try {
             // Query untuk insert data ke tabel author
             $query = "INSERT INTO author (author_name, author_biography) VALUES (?, ?)";
-            $db->query($query, array_values($data));
+            $this->db->query($query, array_values($data));
 
             return $this->respondWithSuccess('Berhasil menambahkan data author.');
         } catch (\Exception $e) {
@@ -66,7 +66,7 @@ class AuthorController extends AuthorizationController
     // Fungsi untuk mendapatkan semua penulis dengan pagination, search, dan filter (Read)
     public function index()
     {
-        $db = \Config\Database::connect();
+
 
         $tokenValidation = $this->validateToken('superadmin,warehouse,frontliner');
 
@@ -136,7 +136,7 @@ class AuthorController extends AuthorizationController
             }
 
             // Execute query to get author data
-            $authors = $db->query($query, $params)->getResultArray();
+            $authors = $this->db->query($query, $params)->getResultArray();
 
             // Format the result
             $result = [];
@@ -158,7 +158,7 @@ class AuthorController extends AuthorizationController
                 }
                 // Exclude the LIMIT and OFFSET parameters from total count
                 $totalParams = array_slice($params, 0, count($params) - 2);
-                $total = $db->query($totalQuery, $totalParams)->getRow()->total;
+                $total = $this->db->query($totalQuery, $totalParams)->getRow()->total;
 
                 // Calculate pagination details
                 $jumlah_page = ceil($total / $limit);
@@ -198,7 +198,7 @@ class AuthorController extends AuthorizationController
     // Fungsi untuk mendapatkan penulis berdasarkan ID (Read)
     public function get_detail()
     {
-        $db = \Config\Database::connect();
+
         $id = $this->request->getVar('id'); // Get ID from query parameter
 
 
@@ -214,7 +214,7 @@ class AuthorController extends AuthorizationController
 
         try {
             $query = "SELECT * FROM author WHERE author_id = ?";
-            $author = $db->query($query, [$id])->getRowArray();
+            $author = $this->db->query($query, [$id])->getRowArray();
 
             $data = [
 
@@ -243,7 +243,7 @@ class AuthorController extends AuthorizationController
     // Fungsi untuk memperbarui data penulis (Update)
     public function update_author()
     {
-        $db = \Config\Database::connect();
+
 
         $tokenValidation = $this->validateToken('superadmin'); // Fungsi helper dipanggil
         $id = $this->request->getVar('id');
@@ -282,7 +282,7 @@ class AuthorController extends AuthorizationController
 
         // Cek apakah penulis dengan ID tersebut ada
         $query = "SELECT COUNT(*) as count FROM author WHERE author_id = ?";
-        $exists = $db->query($query, [$id])->getRow()->count;
+        $exists = $this->db->query($query, [$id])->getRow()->count;
 
         if ($exists == 0) {
             return $this->respondWithError('Auhor tidak di temukan.', null, 404);
@@ -299,12 +299,12 @@ class AuthorController extends AuthorizationController
                       author_biography = COALESCE(?, author_biography) 
                       WHERE author_id = ?";
 
-            $db->query($query, array_merge(array_values($data), [$id]));
+            $this->db->query($query, array_merge(array_values($data), [$id]));
 
 
             $query = "SELECT * FROM author WHERE author_id = ?";
             $params = [$id]; // Menyediakan parameter untuk menggantikan tanda tanya
-            $result = $db->query($query, $params)->getRow(); // Mengambil hasil query
+            $result = $this->db->query($query, $params)->getRow(); // Mengambil hasil query
 
             $data = [
                 'data' => [
@@ -324,7 +324,7 @@ class AuthorController extends AuthorizationController
     // Fungsi untuk menghapus penulis (Delete)
     public function delete_author()
     {
-        $db = \Config\Database::connect();
+
         $id = $this->request->getVar(index: 'id'); // Default limit = 10
 
 
@@ -340,14 +340,14 @@ class AuthorController extends AuthorizationController
         try {
             // Cek apakah penulis dengan ID tersebut ada
             $query = "SELECT COUNT(*) as count FROM author WHERE author_id = ?";
-            $exists = $db->query($query, [$id])->getRow()->count;
+            $exists = $this->db->query($query, [$id])->getRow()->count;
 
             if ($exists == 0) {
                 return $this->respondWithError('Author tidak di temukan.', null, 404);
             }
 
             // Cek apakah penulis sedang digunakan di tabel buku
-            $bookCount = $db->query("SELECT COUNT(*) as count FROM books WHERE books_author_id = ?", [$id])->getRow()->count;
+            $bookCount = $this->db->query("SELECT COUNT(*) as count FROM books WHERE books_author_id = ?", [$id])->getRow()->count;
 
             if ($bookCount > 0) {
                 return $this->respondWithError('Gagal menghapus penulis: Penulis ini saat ini terkait dengan buku dan tidak dapat dihapus.', null, 400);
@@ -355,7 +355,7 @@ class AuthorController extends AuthorizationController
 
             // Lakukan penghapusan data
             $query = "DELETE FROM author WHERE author_id = ?";
-            $db->query($query, [$id]);
+            $this->db->query($query, [$id]);
 
             return $this->respondWithSuccess('Berhasil menghapus data author.');
         } catch (DatabaseException $e) {

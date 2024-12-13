@@ -12,7 +12,6 @@ class AuthorizationController extends CoreController
 
     function validateToken($role)
     {
-        $db = Database::connect();
 
         $token = $this->request->getHeaderLine('token');
 
@@ -27,7 +26,7 @@ class AuthorizationController extends CoreController
 
         // Cek token di database
         $query = "SELECT * FROM admin_token WHERE admin_token_token = ?";
-        $tokenData = $db->query($query, [$token])->getRowArray();
+        $tokenData = $this->db->query($query, [$token])->getRowArray();
 
 
         if (!$tokenData) {
@@ -35,7 +34,7 @@ class AuthorizationController extends CoreController
         }
 
         $sql_get_employee = "SELECT admin_role FROM admin WHERE admin_id = ?";
-        $get_employee = $db->query($sql_get_employee, [$tokenData['admin_token_admin_id']])->getRowArray();
+        $get_employee = $this->db->query($sql_get_employee, [$tokenData['admin_token_admin_id']])->getRowArray();
         $admin_role = $get_employee['admin_role'];
 
 

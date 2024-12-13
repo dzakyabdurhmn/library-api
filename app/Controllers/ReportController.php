@@ -2,7 +2,6 @@
 
 namespace App\Controllers;
 
-use Config\Database;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 use PhpOffice\PhpSpreadsheet\Style\Border;
@@ -11,8 +10,11 @@ use PhpOffice\PhpSpreadsheet\Style\Alignment;
 
 class ReportController extends AuthorizationController
 {
+
+
     public function most_borrowed_books()
     {
+
         $limit = (int) ($this->request->getVar("limit") ?? 10);
         $page = (int) ($this->request->getVar("page") ?? 1);
         $search = $this->request->getVar("search");
@@ -161,6 +163,7 @@ class ReportController extends AuthorizationController
 
     public function least_borrowed_books()
     {
+
         $limit = (int) ($this->request->getVar("limit") ?? 10);
         $page = (int) ($this->request->getVar("page") ?? 1);
         $search = $this->request->getVar("search");
@@ -309,6 +312,7 @@ class ReportController extends AuthorizationController
 
     public function inactive_users()
     {
+
         $limit = (int) ($this->request->getVar("limit") ?? 10);
         $page = (int) ($this->request->getVar("page") ?? 1);
         $search = $this->request->getVar("search");
@@ -442,6 +446,7 @@ class ReportController extends AuthorizationController
 
     public function broken_missing_books()
     {
+
         $limit = (int) ($this->request->getVar("limit") ?? 10);
         $page = (int) ($this->request->getVar("page") ?? 1);
         $search = $this->request->getVar("search");
@@ -582,6 +587,7 @@ class ReportController extends AuthorizationController
     }
     public function detailed_member_activity()
     {
+
         $limit = (int) ($this->request->getVar("limit") ?? 10);
         $page = (int) ($this->request->getVar("page") ?? 1);
         $search = $this->request->getVar("search");
@@ -604,8 +610,7 @@ class ReportController extends AuthorizationController
         // Tambahkan kondisi untuk end_date jika ada
         if ($endDate) {
             $countQuery .= " WHERE l.loan_date <= ?";
-            $totalData = $this->db->query($countQuery, [$endDate])->getRow()
-                ->total;
+            $totalData = $this->db->query($countQuery, [$endDate])->getRow()->total;
         } else {
             $totalData = $this->db->query($countQuery)->getRow()->total;
         }
@@ -735,6 +740,7 @@ class ReportController extends AuthorizationController
 
     public function count_books_status()
     {
+
         // Ambil parameter tanggal dari request
         $startDate = $this->request->getVar("start_date"); // Tanggal awal
         $endDate = $this->request->getVar("end_date"); // Tanggal akhir
@@ -846,6 +852,7 @@ class ReportController extends AuthorizationController
 
     public function getStockHistoryByBookId()
     {
+
         $bookId = $this->request->getVar("id") ?? 10;
 
         // Validate book ID
@@ -918,6 +925,7 @@ class ReportController extends AuthorizationController
 
     public function getAllStockHistory()
     {
+
         try {
             // Validasi token (opsional, sesuaikan dengan kebutuhan)
             $tokenValidation = $this->validateToken("warehouse,superadmin");
@@ -987,8 +995,7 @@ class ReportController extends AuthorizationController
 
             // Count total records for pagination
             $countQuery = "SELECT COUNT(*) as total " . $baseQuery;
-            $totalRecords = $this->db->query($countQuery, $params)->getRow()
-                ->total;
+            $totalRecords = $this->db->query($countQuery, $params)->getRow()->total;
 
             // Prepare pagination details
             $totalPages = ceil($totalRecords / $limit);
@@ -1072,9 +1079,11 @@ class ReportController extends AuthorizationController
         }
     }
 
+    // EXPORT TO EXCEL
 
     public function export_most_borrowed_books()
     {
+
         // Query tanpa pagination untuk mendapatkan semua data
         $baseQuery = "
     SELECT 
@@ -1188,6 +1197,7 @@ class ReportController extends AuthorizationController
 
     public function export_least_borrowed_books()
     {
+
         // Query tanpa pagination untuk mendapatkan semua data
         $baseQuery = "SELECT 
         loan_detail_book_id as id,
@@ -1293,6 +1303,7 @@ class ReportController extends AuthorizationController
 
     public function export_inactive_users()
     {
+
         // Query tanpa pagination untuk mendapatkan semua data
         $baseQuery = "SELECT 
         loan_member_id as id,
@@ -1395,6 +1406,7 @@ class ReportController extends AuthorizationController
 
     public function export_broken_missing_books()
     {
+
         // Query untuk mendapatkan semua data buku rusak dan hilang
         $baseQuery = "SELECT 
         loan_detail_book_id as id,
@@ -1524,6 +1536,7 @@ class ReportController extends AuthorizationController
 
     public function export_detailed_member_activity()
     {
+
         $search = $this->request->getVar("search");
         $sort = $this->request->getVar("sort") ?? "";
         $filters = $this->request->getVar("filter") ?? [];
@@ -1711,8 +1724,10 @@ class ReportController extends AuthorizationController
         }
     }
 
+
     public function export_all_stock_history()
     {
+
         try {
             // Validasi token (opsional, sesuaikan dengan kebutuhan)
             $tokenValidation = $this->validateToken("warehouse,superadmin");

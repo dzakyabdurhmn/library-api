@@ -36,7 +36,7 @@ class LoanController extends AuthorizationController
             $memberId = $request["member_id"];
             $borrowBooks = $request["borrow_book"];
 
-            $db = Database::connect();
+
 
             // Validasi durasi peminjaman
             foreach ($borrowBooks as $book) {
@@ -54,7 +54,7 @@ class LoanController extends AuthorizationController
             }
 
             // Ambil detail member
-            $memberQuery = $db->query(
+            $memberQuery = $this->db->query(
                 "SELECT member_institution, member_email, member_full_name, member_address FROM member WHERE member_id = ?",
                 [$memberId]
             );
@@ -69,7 +69,7 @@ class LoanController extends AuthorizationController
             }
 
             // Cek total buku yang sedang dipinjam
-            $currentLoansQuery = $db->query(
+            $currentLoansQuery = $this->db->query(
                 "
         SELECT COUNT(*) as total 
         FROM loan_detail ld
@@ -103,8 +103,9 @@ class LoanController extends AuthorizationController
                 );
             }
 
-            $db->transBegin();
+            $this->db->transBegin();
 
+            $error = '';
             try {
                 // Insert ke tabel loan
                 $loanData = [
@@ -116,8 +117,8 @@ class LoanController extends AuthorizationController
                     "loan_member_address" => $member->member_address,
                 ];
 
-                $db->table("loan")->insert($loanData);
-                $loanId = $db->insertID();
+                $this->db->table("loan")->insert($loanData);
+                $loanId = $this->db->insertID();
 
                 // Generate unique transaction code
                 $transactionCode =
@@ -127,7 +128,7 @@ class LoanController extends AuthorizationController
                     str_pad($loanId, 5, "0", STR_PAD_LEFT);
 
                 // Update loan with transaction code
-                $db->table("loan")
+                $this->db->table("loan")
                     ->where("loan_id", $loanId)
                     ->update(["loan_transaction_code" => $transactionCode]);
 
@@ -138,7 +139,7 @@ class LoanController extends AuthorizationController
                     $duration = $book["duration"];
 
                     // Cek ketersediaan buku
-                    $bookQuery = $db->query(
+                    $bookQuery = $this->db->query(
                         "
                 SELECT b.*, 
                     a.author_name, 
@@ -208,7 +209,7 @@ class LoanController extends AuthorizationController
 
                     try {
                         // Siapkan query insert
-                        $query = $db->query(
+                        $query = $this->db->query(
                             "
     INSERT INTO loan_detail (
         loan_detail_loan_id,
@@ -263,7 +264,7 @@ class LoanController extends AuthorizationController
                         // Cek apakah query berhasil dieksekusi
                         if (!$query) {
                             // Tangkap error database
-                            $error = $db->error();
+                            $error = $this->db->error();
                             throw new \Exception(
                                 "Gagal insert loan detail: " . $error["message"]
                             );
@@ -283,7 +284,7 @@ class LoanController extends AuthorizationController
                     }
 
                     // Update stok buku
-                    $db->query(
+                    $this->db->query(
                         "
                 UPDATE books 
                 SET books_stock_quantity = books_stock_quantity - 1 
@@ -291,7 +292,7 @@ class LoanController extends AuthorizationController
                         [$bookId]
                     );
 
-                    if ($db->affectedRows() === 0) {
+                    if ($this->db->affectedRows() === 0) {
                         throw new \Exception(
                             "Gagal mengupdate stok buku '{$bookData->books_title}'."
                         );
@@ -305,7 +306,7 @@ class LoanController extends AuthorizationController
                     ];
                 }
 
-                $db->transCommit();
+                $this->db->transCommit();
 
                 return $this->respondWithSuccess("Berhasil meminjam buku", [
                     "data" => [
@@ -315,8 +316,13 @@ class LoanController extends AuthorizationController
                     ],
                 ]);
             } catch (\Exception $e) {
-                $db->transRollback();
+                $this->db->transRollback();
+                $error = $e->getMessage();
                 return $this->respondWithError($e->getMessage(), null, 500);
+            }
+
+            if (!empty($error)) {
+                throw new \Exception("Error Processing Request", 1);
             }
         } catch (\Throwable $e) {
             return $this->respondWithError(
@@ -329,7 +335,7 @@ class LoanController extends AuthorizationController
 
     public function deport()
     {
-        $db = Database::connect();
+
         $tokenValidation = $this->validateToken('superadmin');
 
         if ($tokenValidation !== true) {
@@ -346,7 +352,7 @@ class LoanController extends AuthorizationController
         $returnBooks = $request['borrow_book'];
 
         // Cek peminjaman dengan raw query
-        $loanQuery = $db->query("
+        $loanQuery = $this->db->query("
     SELECT l.loan_id, l.loan_member_id, l.loan_transaction_code,
            m.member_institution, m.member_email, m.member_full_name, m.member_barcode, 
            m.member_address
@@ -367,7 +373,7 @@ class LoanController extends AuthorizationController
         $totalLateDays = 0; // Tambahkan variabel untuk total late days
 
         // Mulai transaksi manual
-        $db->query("START TRANSACTION");
+        $this->db->query("START TRANSACTION");
 
         try {
             foreach ($returnBooks as $book) {
@@ -375,7 +381,7 @@ class LoanController extends AuthorizationController
                 $status = $book['status'];
 
                 if (!in_array($status, $validStatuses)) {
-                    $db->query("ROLLBACK");
+                    $this->db->query("ROLLBACK");
                     return $this->respondWithError(
                         "Status '$status' tidak valid. Status yang diperbolehkan: " . implode(', ', $validStatuses),
                         null,
@@ -384,7 +390,7 @@ class LoanController extends AuthorizationController
                 }
 
                 // Cek buku yang dipinjam
-                $loanDetailQuery = $db->query("
+                $loanDetailQuery = $this->db->query("
             SELECT * 
             FROM loan_detail 
             WHERE loan_detail_loan_id = ? 
@@ -396,12 +402,12 @@ class LoanController extends AuthorizationController
                 $loanDetail = $loanDetailQuery->getRow();
 
                 if (!$loanDetail) {
-                    $db->query("ROLLBACK");
+                    $this->db->query("ROLLBACK");
                     return $this->respondWithError("Buku ini tidak tercatat dalam peminjaman tersebut.", null, 400);
                 }
 
                 // Ambil detail buku
-                $bookQuery = $db->query("
+                $bookQuery = $this->db->query("
             SELECT b.*, p.publisher_id, a.author_id
             FROM books b
             LEFT JOIN publisher p ON b.books_publisher_id = p.publisher_id
@@ -423,7 +429,7 @@ class LoanController extends AuthorizationController
                 $totalLateDays += $lateDays; // Akumulasi total late days
 
                 // Update loan_detail dengan status baru
-                $db->query("
+                $this->db->query("
             UPDATE loan_detail 
             SET loan_detail_status = ?, 
                 loan_detail_return_date = NOW(),
@@ -439,7 +445,7 @@ class LoanController extends AuthorizationController
 
                 // Tambah stok buku jika kondisi baik
                 if ($status === 'Good') {
-                    $db->query("
+                    $this->db->query("
                 UPDATE books 
                 SET books_stock_quantity = books_stock_quantity + 1 
                 WHERE book_id = ?
@@ -449,7 +455,7 @@ class LoanController extends AuthorizationController
                 // Hitung denda jika terlambat atau rusak/hilang
                 if ($lateDays > 0 || $status !== 'Good') {
                     // Ambil persentase denda
-                    $fineQuery = $db->query("
+                    $fineQuery = $this->db->query("
                 SELECT percentage_object 
                 FROM percentage 
                 WHERE percentage_name = CASE 
@@ -473,7 +479,7 @@ class LoanController extends AuthorizationController
                     $totalPunishmentAmount += $punishmentAmount;
 
                     // Ambil informasi member tambahan
-                    $memberQuery = $db->query("
+                    $memberQuery = $this->db->query("
                 SELECT member_job, member_status, member_religion, member_gender 
                 FROM member 
                 WHERE member_id = ?",
@@ -482,7 +488,7 @@ class LoanController extends AuthorizationController
                     $memberData = $memberQuery->getRow();
 
                     // Insert punishment
-                    $db->query("
+                    $this->db->query("
                 INSERT INTO punishment (
                     member_id, member_institution, member_email, 
                     member_full_name, member_address, 
@@ -522,7 +528,7 @@ class LoanController extends AuthorizationController
             }
 
             // Commit transaksi jika semua berhasil
-            $db->query("COMMIT");
+            $this->db->query("COMMIT");
 
             return $this->respondWithSuccess("Buku berhasil dikembalikan.", [
                 "loan_id" => $loanId,
@@ -538,14 +544,14 @@ class LoanController extends AuthorizationController
                 ]
             ]);
         } catch (\Exception $e) {
-            $db->query("ROLLBACK");
+            $this->db->query("ROLLBACK");
             return $this->respondWithError("Terjadi kesalahan: " . $e->getMessage(), null, 500);
         }
     }
 
     public function get_all_borrow()
     {
-        $db = Database::connect();
+
 
         $tokenValidation = $this->validateToken("superadmin,frontliner");
         if ($tokenValidation !== true) {
@@ -619,7 +625,7 @@ class LoanController extends AuthorizationController
 
         try {
             // Execute query to get loan data
-            $loanData = $db->query($query, $params)->getResultArray();
+            $loanData = $this->db->query($query, $params)->getResultArray();
 
             // Jika tidak ada data dan filter 'id' digunakan, kembalikan respons khusus
             if (empty($loanData) && isset($filters["id"])) {
@@ -652,7 +658,7 @@ class LoanController extends AuthorizationController
                 if (count($conditions) > 0) {
                     $totalQuery .= " WHERE " . implode(" AND ", $conditions);
                 }
-                $total = $db
+                $total = $this->db
                     ->query(
                         $totalQuery,
                         array_slice($params, 0, count($params) - 2)
@@ -695,7 +701,7 @@ class LoanController extends AuthorizationController
 
     public function get_detail_loan()
     {
-        $db = Database::connect();
+
 
         $tokenValidation = $this->validateToken("superadmin,frontliner");
 
@@ -765,7 +771,7 @@ class LoanController extends AuthorizationController
 
         try {
             // Eksekusi query dan ambil hasilnya
-            $loanDetail = $db->query($query, $params)->getResultArray();
+            $loanDetail = $this->db->query($query, $params)->getResultArray();
 
             if (empty($loanDetail)) {
                 return $this->respondWithSuccess("Data tidak tersedia.", []);
@@ -824,7 +830,7 @@ class LoanController extends AuthorizationController
 
     public function detailed_member_activity()
     {
-        $db = Database::connect();
+
 
         $tokenValidation = $this->validateToken("superadmin,frontliner"); // Fungsi helper dipanggil
 
@@ -838,14 +844,14 @@ class LoanController extends AuthorizationController
             GROUP BY loan_member_id
             ORDER BY activity_count DESC
             LIMIT 10";
-        $members = $db->query($query)->getResultArray();
+        $members = $this->db->query($query)->getResultArray();
 
         $detailedMembers = [];
         foreach ($members as $member) {
             $memberId = $member["loan_member_id"];
 
             $memberQuery = "SELECT * FROM member WHERE member_id = ?";
-            $memberDetails = $db
+            $memberDetails = $this->db
                 ->query($memberQuery, [$memberId])
                 ->getRowArray();
 
@@ -869,7 +875,7 @@ class LoanController extends AuthorizationController
 
     public function detailed_borrowed_books()
     {
-        $db = Database::connect();
+
 
         $tokenValidation = $this->validateToken("superadmin,frontliner"); // Fungsi helper dipanggil
 
@@ -882,14 +888,14 @@ class LoanController extends AuthorizationController
                    loan_detail_borrow_date as borrow_date, loan_detail_return_date as return_date,
                    loan_detail_status as status, loan_detail_loan_transaction_code
             FROM loan_detail";
-        $borrowedBooks = $db->query($query)->getResultArray();
+        $borrowedBooks = $this->db->query($query)->getResultArray();
 
         $detailedBooks = [];
         foreach ($borrowedBooks as $borrowedBook) {
             $bookId = $borrowedBook["book_id"];
 
             $bookQuery = "SELECT * FROM books WHERE book_id = ?";
-            $bookDetails = $db->query($bookQuery, [$bookId])->getRowArray();
+            $bookDetails = $this->db->query($bookQuery, [$bookId])->getRowArray();
 
             if ($bookDetails) {
                 $detailedBooks[] = [

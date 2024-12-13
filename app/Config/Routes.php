@@ -17,6 +17,7 @@ $routes->group('', ['filter' => 'authToken'], function ($routes) {
     $routes->post('auth/logout', 'AuthController::logout');
     $routes->delete('admin/delete_account', 'AuthController::delete_account');
     $routes->put('/admin/edit-employee', 'AuthController::edit_account');
+    $routes->put('/auth/edit_account', 'AuthController::edit_account');
 
     $routes->get('admin/get-allemployee', 'AuthController::get_all_users'); // Mendapatkan semua pengguna
     $routes->get('admin/get-detailemployee', 'AuthController::get_user_by_id'); // Mendapatkan pengguna berdasarkan ID

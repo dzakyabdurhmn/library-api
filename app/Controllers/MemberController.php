@@ -9,7 +9,7 @@ class MemberController extends AuthorizationController
     // Fungsi untuk menambahkan member baru (Create)
     public function create()
     {
-        $db = \Config\Database::connect();
+
 
         $tokenValidation = $this->validateToken('superadmin,frontliner'); // Fungsi helper dipanggil
 
@@ -100,7 +100,7 @@ class MemberController extends AuthorizationController
             $query = "INSERT INTO member (member_institution, member_email, member_full_name, member_address, member_job, member_status, member_religion, member_barcode, member_gender) 
                       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
-            $db->query($query, [
+            $this->db->query($query, [
                 $data['member_institution'],
                 $data['member_email'],
                 $data['member_full_name'],
@@ -121,7 +121,7 @@ class MemberController extends AuthorizationController
     // Fungsi untuk mendapatkan detail member berdasarkan member_id (Read)
     public function get_detail()
     {
-        $db = \Config\Database::connect();
+
 
         $id = $this->request->getVar('id'); // Get ID from query parameter
 
@@ -140,7 +140,7 @@ class MemberController extends AuthorizationController
         try {
             // Raw query untuk mendapatkan data member berdasarkan member_id
             $query = "SELECT * FROM member WHERE member_id = ?";
-            $member = $db->query($query, [$id])->getRowArray();
+            $member = $this->db->query($query, [$id])->getRowArray();
 
 
 
@@ -181,7 +181,7 @@ class MemberController extends AuthorizationController
 
     public function update_member()
     {
-        $db = \Config\Database::connect();
+
 
         $id = $this->request->getVar('id'); // Get ID from query parameter
 
@@ -261,7 +261,7 @@ class MemberController extends AuthorizationController
 
         // Cek apakah member dengan ID tersebut ada
         $query = "SELECT COUNT(*) as count FROM member WHERE member_id = ?";
-        $exists = $db->query($query, [$id])->getRow()->count;
+        $exists = $this->db->query($query, [$id])->getRow()->count;
 
         if ($exists == 0) {
             return $this->respondWithError('Member tidak ditemukan.', null, 404);
@@ -296,10 +296,10 @@ class MemberController extends AuthorizationController
 
             $query = "UPDATE member SET " . implode(', ', $setClauses) . " WHERE member_id = ?";
 
-            $db->query($query, $params);
+            $this->db->query($query, $params);
 
             $query = "SELECT * FROM member WHERE member_id = ?";
-            $member = $db->query($query, [$id])->getRowArray();
+            $member = $this->db->query($query, [$id])->getRowArray();
 
             $data = [
                 'data' => [
@@ -326,7 +326,7 @@ class MemberController extends AuthorizationController
     // Fungsi untuk menghapus member berdasarkan member_id (Delete)
     public function delete_member()
     {
-        $db = \Config\Database::connect();
+
         $id = $this->request->getVar('id');
 
         // Validate token
@@ -338,7 +338,7 @@ class MemberController extends AuthorizationController
         try {
             // Check if member exists
             $query = "SELECT COUNT(*) as count FROM member WHERE member_id = ?";
-            $exists = $db->query($query, [$id])->getRow()->count;
+            $exists = $this->db->query($query, [$id])->getRow()->count;
 
             if ($exists == 0) {
                 return $this->respondWithError('Member tidak ditemukan.', null, 404);
@@ -351,7 +351,7 @@ class MemberController extends AuthorizationController
             JOIN loan_detail ld ON l.loan_transaction_code = ld.loan_detail_loan_transaction_code
             WHERE l.loan_member_id = ? AND ld.loan_detail_status = 'Borrowed'
             ";
-            $loanCount = $db->query($loanQuery, [$id])->getRow()->loan_count;
+            $loanCount = $this->db->query($loanQuery, [$id])->getRow()->loan_count;
 
             if ($loanCount > 0) {
                 return $this->respondWithError('Member ini sedang meminjam buku dan tidak bisa dihapus.', null, 400);
@@ -359,7 +359,7 @@ class MemberController extends AuthorizationController
 
             // Proceed to delete the member
             $deleteQuery = "DELETE FROM member WHERE member_id = ?";
-            $db->query($deleteQuery, [$id]);
+            $this->db->query($deleteQuery, [$id]);
 
             return $this->respondWithSuccess('berhasil menghapus member.');
         } catch (DatabaseException $e) {
@@ -373,7 +373,7 @@ class MemberController extends AuthorizationController
     // Fungsi untuk mendapatkan semua member dengan pagination, search, dan filter
     public function index()
     {
-        $db = \Config\Database::connect();
+
 
         $tokenValidation = $this->validateToken('superadmin,frontliner');
         if ($tokenValidation !== true) {
@@ -449,7 +449,7 @@ class MemberController extends AuthorizationController
             }
 
             // Execute query and fetch results
-            $members = $db->query($query, $params)->getResultArray();
+            $members = $this->db->query($query, $params)->getResultArray();
 
             // Prepare response to include all required fields
             $response = array_map(function ($member) {
@@ -474,7 +474,7 @@ class MemberController extends AuthorizationController
                 if (!empty($conditions)) {
                     $totalQuery .= ' WHERE ' . implode(' AND ', $conditions);
                 }
-                $total = $db->query($totalQuery, array_slice($params, 0, count($params) - 2))->getRow()->total;
+                $total = $this->db->query($totalQuery, array_slice($params, 0, count($params) - 2))->getRow()->total;
 
                 $jumlah_page = ceil($total / $limit);
                 $pagination = [

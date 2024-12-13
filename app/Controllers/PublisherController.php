@@ -9,7 +9,7 @@ class PublisherController extends AuthorizationController
     // Fungsi untuk menambahkan penerbit (Create)
     public function create()
     {
-        $db = \Config\Database::connect();
+
 
         $tokenValidation = $this->validateToken('superadmin'); // Fungsi helper dipanggil
 
@@ -63,7 +63,7 @@ class PublisherController extends AuthorizationController
 
         try {
             $query = "INSERT INTO publisher (publisher_name, publisher_address, publisher_phone, publisher_email) VALUES (?, ?, ?, ?)";
-            $db->query($query, array_values($data));
+            $this->db->query($query, array_values($data));
 
             return $this->respondWithSuccess('Berhasil mengupdate data publiser.');
         } catch (DatabaseException $e) {
@@ -75,7 +75,7 @@ class PublisherController extends AuthorizationController
 
     public function index()
     {
-        $db = \Config\Database::connect();
+
 
         $tokenValidation = $this->validateToken('superadmin,warehouse,frontliner');
 
@@ -143,7 +143,7 @@ class PublisherController extends AuthorizationController
                 $params[] = (int) $offset;
             }
 
-            $publishers = $db->query($query, $params)->getResultArray();
+            $publishers = $this->db->query($query, $params)->getResultArray();
 
             $result = [];
             foreach ($publishers as $publisher) {
@@ -162,7 +162,7 @@ class PublisherController extends AuthorizationController
                 if (count($conditions) > 0) {
                     $totalQuery .= ' WHERE ' . implode(' AND ', $conditions);
                 }
-                $total = $db->query($totalQuery, array_slice($params, 0, count($params) - 2))->getRow()->total;
+                $total = $this->db->query($totalQuery, array_slice($params, 0, count($params) - 2))->getRow()->total;
 
                 $jumlah_page = ceil($total / $limit);
                 $pagination = [
@@ -192,7 +192,7 @@ class PublisherController extends AuthorizationController
     // Fungsi untuk mendapatkan penerbit berdasarkan ID (Read)
     public function get_detail()
     {
-        $db = \Config\Database::connect();
+
 
         $id = $this->request->getVar('id'); // Get ID from query parameter
 
@@ -209,7 +209,7 @@ class PublisherController extends AuthorizationController
 
         try {
             $query = "SELECT * FROM publisher WHERE publisher_id = ?";
-            $publisher = $db->query($query, [$id])->getRowArray();
+            $publisher = $this->db->query($query, [$id])->getRowArray();
 
 
 
@@ -244,7 +244,7 @@ class PublisherController extends AuthorizationController
     // Fungsi untuk memperbarui data penerbit (Update)
     public function update_publiser()
     {
-        $db = \Config\Database::connect();
+
 
         $id = $this->request->getVar('id'); // Get ID from query parameter
 
@@ -303,7 +303,7 @@ class PublisherController extends AuthorizationController
 
         // Cek apakah penerbit dengan ID tersebut ada
         $query = "SELECT COUNT(*) as count FROM publisher WHERE publisher_id = ?";
-        $exists = $db->query($query, [$id])->getRow()->count;
+        $exists = $this->db->query($query, [$id])->getRow()->count;
 
         if ($exists == 0) {
             return $this->respondWithError('Publiser tidak di temukan.', null, 404);
@@ -324,11 +324,11 @@ class PublisherController extends AuthorizationController
                       publisher_email = COALESCE(?, publisher_email) 
                       WHERE publisher_id = ?";
 
-            $db->query($query, array_merge(array_values($data), [$id]));
+            $this->db->query($query, array_merge(array_values($data), [$id]));
 
 
             $query = "SELECT * FROM publisher WHERE publisher_id = ?";
-            $publisher = $db->query($query, [$id])->getRowArray();
+            $publisher = $this->db->query($query, [$id])->getRowArray();
 
             $data = [
                 'data' => [
@@ -352,7 +352,7 @@ class PublisherController extends AuthorizationController
     // Fungsi untuk menghapus penerbit (Delete)
     public function delete_publiser()
     {
-        $db = \Config\Database::connect();
+
         $id = $this->request->getVar(index: 'id'); // Default limit = 10
 
 
@@ -365,14 +365,14 @@ class PublisherController extends AuthorizationController
         try {
             // Cek apakah penerbit dengan ID tersebut ada
             $query = "SELECT COUNT(*) as count FROM publisher WHERE publisher_id = ?";
-            $exists = $db->query($query, [$id])->getRow()->count;
+            $exists = $this->db->query($query, [$id])->getRow()->count;
 
             if ($exists == 0) {
                 return $this->respondWithError('Failed to delete publisher: Publisher not found.', null, 404);
             }
 
             // Cek apakah penerbit sedang digunakan di tabel buku
-            $bookCount = $db->query("SELECT COUNT(*) as count FROM books WHERE books_publisher_id = ?", [$id])->getRow()->count;
+            $bookCount = $this->db->query("SELECT COUNT(*) as count FROM books WHERE books_publisher_id = ?", [$id])->getRow()->count;
 
             if ($bookCount > 0) {
                 return $this->respondWithError('Failed to delete publisher: This publisher is currently associated with books and cannot be deleted.', null, 400);
@@ -380,7 +380,7 @@ class PublisherController extends AuthorizationController
 
             // Lakukan penghapusan data
             $query = "DELETE FROM publisher WHERE publisher_id = ?";
-            $db->query($query, [$id]);
+            $this->db->query($query, [$id]);
 
             return $this->respondWithSuccess('Berhasil menghapus data publiser');
         } catch (DatabaseException $e) {
